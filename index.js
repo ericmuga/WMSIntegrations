@@ -1,8 +1,8 @@
 // index.js
 import express from 'express';
 import logger from './logger.js';
-import connectRabbitMQ from './RabbitMQService.js';
-import { rabbitmqConfig } from './config/default.js';  // Import the config
+// import connectRabbitMQ from './RabbitMQService.js';
+import { getRabbitMQConnection } from './config/default.js';  // Import the config
 
 const app = express();
 app.use(express.json());
@@ -12,7 +12,7 @@ app.post('/sendMessage', async (req, res) => {
 
     try {
         // Establish RabbitMQ connection using the config from config.js
-        const connection = await connectRabbitMQ(rabbitmqConfig);
+        const connection = getRabbitMQConnection();
         const channel = await connection.createChannel();
 
         const queue = 'item_modify_queue';

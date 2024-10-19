@@ -6,13 +6,13 @@ import logger from './logger.js'; // Assuming you have a logger module set up
 let rabbitConnection;  // To store a single connection for RabbitMQ
 
 // Utility function to encode credentials for Basic Auth
-const getAuthHeader = () => {
+export const getAuthHeader = () => {
     const { username, password } = config;
     return 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
 };
 
 // Function to send data to Business Central OData API
-const sendProductionOrderToBusinessCentral = async (prodOrderData) => {
+export const sendProductionOrderToBusinessCentral = async (prodOrderData) => {
     const url = getODataUrl();  // Get the OData URL from config
     try {
         const response = await axios.post(url, prodOrderData, {
@@ -35,7 +35,7 @@ export const consumeProductionOrder = async () => {
     try {
         const connection = await getRabbitMQConnection();
         const channel = await connection.createChannel();
-        await channel.assertQueue(queueName, { durable: false });
+        await channel.assertQueue(queueName, { durable: true });
 
         logger.info(`Waiting for messages in queue: ${queueName}. To exit press CTRL+C`);
 
@@ -62,21 +62,21 @@ export const consumeProductionOrder = async () => {
 export const pushDummyProductionOrder = async () => {
     const queueName='production_order.bc'
     const dummyOrder = {
-        ItemNo: "1000",
+        ItemNo: "J31031702",
         Quantity: 10,
         SourceType: "Item",
         ProductionJournalLines: [
             {
-                ItemNo: "1001",
+                ItemNo: "G2044",
                 Quantity: 5,
-                LocationCode: "MAIN",
-                BIN: "BIN001"
+                LocationCode: "3535",
+                BIN: ""
             },
             {
-                ItemNo: "1002",
+                ItemNo: "G2001",
                 Quantity: 3,
-                LocationCode: "MAIN",
-                BIN: "BIN002"
+                LocationCode: "3535",
+                BIN: ""
             }
         ],
         routing: {  // Adding the routing key
