@@ -1,7 +1,9 @@
 import amqp from 'amqplib';
 import axios from 'axios';
-import { rabbitmqConfig, getODataUrl, config } from './config/default.js';  // Import necessary configs and helper functions
+import { rabbitmqConfig, getODataUrl, config,getRabbitMQConnection } from './config/default.js';  // Import necessary configs and helper functions
 import logger from './logger.js'; // Assuming you have a logger module set up
+
+let rabbitConnection;  // To store a single connection for RabbitMQ
 
 // Utility function to encode credentials for Basic Auth
 const getAuthHeader = () => {
@@ -10,7 +12,7 @@ const getAuthHeader = () => {
 };
 
 // Function to send data to Business Central OData API
-const sendToBusinessCentral = async (prodOrderData) => {
+const sendProductionOrderToBusinessCentral = async (prodOrderData) => {
     const url = getODataUrl();  // Get the OData URL from config
     try {
         const response = await axios.post(url, prodOrderData, {
@@ -25,44 +27,74 @@ const sendToBusinessCentral = async (prodOrderData) => {
     }
 };
 
-// Function to connect to RabbitMQ and consume messages
-async function connectRabbitMQ() {
+// Function to establish and reuse RabbitMQ connection
+
+// Function to consume messages from the RabbitMQ queue for production orders
+export const consumeProductionOrder = async () => {
+    const queueName='production_order.bc'
     try {
-        // Access the properties directly from the rabbitmqConfig object
-        const connection = await amqp.connect({
-            protocol: 'amqp',
-            hostname: rabbitmqConfig.host,
-            port: rabbitmqConfig.port,
-            username: rabbitmqConfig.user,
-            password: rabbitmqConfig.password
-        });
-
-        logger.info('RabbitMQ connection established successfully.');
-        
+        const connection = await getRabbitMQConnection();
         const channel = await connection.createChannel();
-        await channel.assertQueue(rabbitmqConfig.queueName, { durable: false });
+        await channel.assertQueue(queueName, { durable: false });
 
-        logger.info(`Waiting for messages in queue: ${rabbitmqConfig.queueName}. To exit press CTRL+C`);
+        logger.info(`Waiting for messages in queue: ${queueName}. To exit press CTRL+C`);
 
         // Consume messages from RabbitMQ
-        channel.consume(rabbitmqConfig.queueName, async (msg) => {
+        channel.consume(queueName, async (msg) => {
             if (msg !== null) {
                 const prodOrderData = msg.content.toString();
                 logger.info(`Received message: ${prodOrderData}`);
                 
                 // Send the data to Business Central
-                await sendToBusinessCentral(prodOrderData);
+                await sendProductionOrderToBusinessCentral(prodOrderData);
                 
                 // Acknowledge the message
                 channel.ack(msg);
             }
         });
-
-        return connection;
     } catch (error) {
-        logger.error('Failed to establish RabbitMQ connection: ' + error.message);
+        logger.error('Error consuming production order from RabbitMQ: ' + error.message);
         throw error;
     }
-}
+};
 
-export default connectRabbitMQ;
+// Mock function to push a dummy production order to the RabbitMQ queue
+export const pushDummyProductionOrder = async () => {
+    const queueName='production_order.bc'
+    const dummyOrder = {
+        ItemNo: "1000",
+        Quantity: 10,
+        SourceType: "Item",
+        ProductionJournalLines: [
+            {
+                ItemNo: "1001",
+                Quantity: 5,
+                LocationCode: "MAIN",
+                BIN: "BIN001"
+            },
+            {
+                ItemNo: "1002",
+                Quantity: 3,
+                LocationCode: "MAIN",
+                BIN: "BIN002"
+            }
+        ],
+        routing: {  // Adding the routing key
+            key: "production_order.bc"
+        }
+    };
+
+    try {
+        const connection = await getRabbitMQConnection();
+        const channel = await connection.createChannel();
+        await channel.assertQueue(queueName, { durable: true });
+
+        // Push the dummy production order to the queue
+        channel.sendToQueue(queueName, Buffer.from(JSON.stringify(dummyOrder)));
+        logger.info(`Dummy production order pushed to queue: ${JSON.stringify(dummyOrder)}`);
+
+    } catch (error) {
+        logger.error('Error pushing dummy production order to RabbitMQ: ' + error.message);
+        throw error;
+    }
+};
