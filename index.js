@@ -2,7 +2,7 @@
 
 import express from 'express';
 import logger from './logger.js';
-import { getRabbitMQConnection } from './config/default.js';
+import { getRabbitMQConnection, rabbitmqConfig } from './config/default.js';
 import { generateProductionOrderData } from './Services/fetchProductionOrders.js';
 import { generateOrders } from './Services/fetchPortalOrders.js';
 import { groupOrdersByExtDocNo } from './Services/fetchBOTOrders.js';
@@ -10,8 +10,10 @@ import { generateTransferOrders } from './Services/transferOrderGenerator.js';
 import { generateSlaughterData } from './Services/fetchSlaughterLines.js';
 import { generateReceiptNo } from './Services/postReceipts.js'; // Import the utility function for receipt numbers
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
+import { sendSlaughterReceipt } from './RabbitMQService.js';
 const app = express();
 app.use(express.json());
+// app.use(bodyParser.json());
 
 app.post('/sendMessage', async (req, res) => {
   const item = req.body;
@@ -114,29 +116,35 @@ app.post('/print-order', (req, res) => {
   });
 
 
- 
-
-
-
 // POST endpoint to receive receipt data and respond with a new receipt_no
-app.post('/submit-slaughter-receipt', (req, res) => {
+app.post('/submit-slaughter-receipt', async (req, res) => {
   const { routing, receiptLines } = req.body;
-if (!routing || !receiptLines || !Array.isArray(receiptLines) || receiptLines.length === 0) {
+
+  if (!routing || !receiptLines || !Array.isArray(receiptLines) || receiptLines.length === 0) {
     return res.status(400).json({ error: 'Invalid request format or missing required data.' });
   }
 
-  // Generate a new receipt number
-  const newReceiptNo = generateReceiptNo();
+  try {
+    await sendSlaughterReceipt(routing, receiptLines);
+    res.status(200).json({ message: 'Slaughter receipt sent successfully.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to send slaughter receipt.' });
+  }
+});
 
-  // Log the received data (optional, for debugging)
-  logger.info('Received slaughter receipt:', {
-    routing,
-    receiptLines,
-    generatedReceiptNo: newReceiptNo
-  });
+app.post('/production-order-error', async (req, res) => {
+  const { errorMessage, orderNo } = req.body;
 
-  // Respond with the new receipt number
-  res.status(201).json({ success: true, newReceiptNo });
+  if (!errorMessage || !orderNo) {
+    return res.status(400).send('Missing required fields: errorMessage, orderNo');
+  }
+
+  try {
+    await sendProductionOrderError(errorMessage, orderNo);
+    res.status(200).send('Production order error sent successfully.');
+  } catch (error) {
+    res.status(500).send('Failed to send production order error.');
+  }
 });
 
 
