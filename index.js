@@ -10,33 +10,26 @@ import { generateTransferOrders } from './Services/transferOrderGenerator.js';
 import { generateSlaughterData } from './Services/fetchSlaughterLines.js';
 import { generateReceiptNo } from './Services/postReceipts.js'; // Import the utility function for receipt numbers
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
-import { sendSlaughterReceipt } from './RabbitMQService.js';
+import { sendSlaughterReceipt,sendProductionOrderError,consumeButcheryData,getLatestButcheryData,consumeSlaughterData } from './RabbitMQService.js';
+import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
+
 const app = express();
 app.use(express.json());
-// app.use(bodyParser.json());
 
-app.post('/sendMessage', async (req, res) => {
-  const item = req.body;
+// consumeButcheryData();
 
-  try {
-    const connection = getRabbitMQConnection();
-    const channel = await connection.createChannel();
-
-    const queue = 'item_modify_queue';
-    const message = JSON.stringify(item);
-
-    await channel.assertQueue(queue, { durable: true });
-    channel.sendToQueue(queue, Buffer.from(message));
-
-    logger.info(` [x] Sent item: ${message}`);
-    res.status(200).send(`success`);
-  } catch (error) {
-    logger.error('Error connecting to RabbitMQ: ' + error.message);
-    res.status(500).send('Error connecting to RabbitMQ');
-  }
+app.get('/fetch-butchery-data', (req, res) => {
+    const butcheryData = getLatestButcheryData();
+    if (butcheryData) {
+        res.json(butcheryData);
+    } else {
+        res.status(404).json({ error: 'No butchery data available.' });
+    }
 });
 
 app.get('/fetch-production-orders', (req, res) => {
+
+  // consumeButcheryData()
   const { date, item, production_order_no } = req.query;
   let productionOrders = generateProductionOrderData();
 
@@ -81,35 +74,23 @@ app.get('/fetch-transfer-orders', (req, res) => {
   res.json(transferOrders);
 });
 
-app.get('/fetch-slaughter-data', (req, res) => {
-    // Optionally accept query parameters for custom generation
-    const numReceipts = parseInt(req.query.numReceipts) || 3;
-    const maxLinesPerReceipt = parseInt(req.query.maxLinesPerReceipt) || 5;
-    const slaughterData = generateSlaughterData(numReceipts, maxLinesPerReceipt);
-    res.json(slaughterData);
-  });
+
+app.get('/fetch-slaughter-data', async (req, res) => {
+  try {
+      const slaughterData = await consumeSlaughterData();
+      if (slaughterData) {
+          res.json(slaughterData);
+      } else {
+          res.status(404).json({ message: 'No slaughter data available in queue.' });
+      }
+  } catch (error) {
+      logger.error(`Error fetching slaughter data: ${error.message}`);
+      res.status(500).json({ error: 'Failed to fetch slaughter data.' });
+  }
+});
 
 
-  const isNonEmptyString = (value) => typeof value === 'string' && value.trim() !== '';
-const isValidDate = (value) => !isNaN(Date.parse(value));
-const isPositiveNumber = (value) => typeof value === 'number' && value > 0;
 
-const validateLine = (line) => {
-  return isPositiveNumber(line.line_no) &&
-         isNonEmptyString(line.item_no) &&
-         isNonEmptyString(line.item_description) &&
-         isPositiveNumber(line.order_qty) &&
-         isPositiveNumber(line.qty_base);
-};
-
-const validateOrder = (order) => {
-  return isNonEmptyString(order.order_no) &&
-         isNonEmptyString(order.ended_by) &&
-         isNonEmptyString(order.customer_no) &&
-         isNonEmptyString(order.customer_name) &&
-         isValidDate(order.shp_date) &&
-         order.lines.every(validateLine);
-};
 
 app.post('/print-order', (req, res) => {
   return res.status(201).json({message:'success'})

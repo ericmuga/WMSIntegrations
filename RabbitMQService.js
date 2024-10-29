@@ -132,7 +132,6 @@ export const sendSlaughterReceipt = async (routing, receiptLines) => {
       const routingKey = 'production.order.error';
       const payload = JSON.stringify({
         errorMessage,
-        queue: 'production_error_queue',
         routingKey,
         orderNo,
         timestamp: new Date().toISOString()
@@ -149,3 +148,140 @@ export const sendSlaughterReceipt = async (routing, receiptLines) => {
       throw error;
     }
   };
+
+
+  // Add this function to your rabbitMQService.js
+
+// Function to consume messages from RabbitMQ for butchery data processing
+let latestButcheryData = null; // Global variable to store the latest message data
+
+const convertToProductionOrder = (data) => {
+    const currentDateTime = new Date().toISOString();
+
+    const productionOrder = {
+        production_order_no: "PO001",
+        ItemNo: "G1030",
+        Quantity: 10,
+        uom: "PC",
+        LocationCode: "1020",
+        BIN: "",
+        user: "EMUGA",
+        line_no: 1000,
+        routing: "production_order.bc",
+        date_time: currentDateTime,
+        ProductionJournalLines: []
+    };
+
+    data.forEach((item, index) => {
+        productionOrder.ProductionJournalLines.push({
+            ItemNo: item.item_code,
+            Quantity: parseFloat(item.net_weight),
+            uom: "KG",
+            LocationCode: "1020",
+            BIN: "",
+            line_no: productionOrder.line_no + (index * 1000),
+            type: "output",
+            date_time: currentDateTime,
+            user: item.user_id || "EMUGA"
+        });
+
+        productionOrder.ProductionJournalLines.push({
+            ItemNo: "G0110",
+            Quantity: parseFloat(item.net_weight),
+            uom: "KG",
+            LocationCode: "1020",
+            BIN: "",
+            line_no: productionOrder.line_no + (index * 1000) + 1000,
+            type: "consumption",
+            date_time: currentDateTime,
+            user: item.user_id || "EMUGA"
+        });
+    });
+
+    return [productionOrder];
+};
+
+export const consumeButcheryData = async () => {
+    const queueName = 'production_data_order_beheading.bc';
+    const exchange = 'fcl.exchange.direct';
+    const routingKey = 'production_data_order_beheading.bc';
+
+    try {
+        const connection = await getRabbitMQConnection();
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(exchange, 'direct', { durable: true });
+        await channel.assertQueue(queueName, { durable: true });
+        await channel.bindQueue(queueName, exchange, routingKey);
+
+        logger.info(`Waiting for messages in queue: ${queueName}. To exit press CTRL+C`);
+        
+        return {'message':'success'};
+        // channel.consume(queueName, (msg) => {
+        //     if (msg !== null) {
+        //         const butcheryData = JSON.parse(msg.content.toString());
+        //         logger.info(`Received butchery data: ${JSON.stringify(butcheryData)}`);
+                
+        //         // Transform butchery data into production order format and store in memory
+        //         latestButcheryData = convertToProductionOrder(butcheryData);
+        //         logger.info(`Transformed Production Order: ${JSON.stringify(latestButcheryData)}`);
+                
+        //         // Uncomment if you want to acknowledge the message
+        //         // channel.ack(msg);
+        //     }
+        }
+    // );
+     catch (error) {
+        logger.error('Error consuming butchery data from RabbitMQ: ' + error.message);
+        throw error;
+    }
+};
+
+// Expose latestButcheryData for external access
+export const getLatestButcheryData = () => latestButcheryData;
+  
+export const consumeSlaughterData = async () => {
+    const queueName = 'slaughter_line.bc';
+    const exchange = 'fcl.exchange.direct';
+    const routingKey = 'slaughter_line.bc';
+
+    try {
+        const connection = await getRabbitMQConnection();
+        const channel = await connection.createChannel();
+
+        await channel.assertExchange(exchange, 'direct', { durable: true });
+        await channel.assertQueue(queueName, { durable: true });
+        await channel.bindQueue(queueName, exchange, routingKey);
+        await channel.assertExchange(exchange, 'direct', { durable: true });
+
+        // Create a temporary exclusive queue
+        
+        await channel.bindQueue(queueName, exchange, routingKey);
+
+        logger.info(`Fetching a single message from exchange: ${exchange} with routing key: ${routingKey}`);
+
+        // Get a single message from the queue
+        const msg = await channel.get(queueName, { noAck: false });
+        
+        if (msg) {
+            const slaughterData = JSON.parse(msg.content.toString());
+            logger.info(`Received slaughter data: ${JSON.stringify(slaughterData)}`);
+
+            // Acknowledge the message after processing
+            // channel.ack(msg);
+
+            // Close the channel and connection
+            await channel.close();
+
+            return slaughterData; // Return the parsed data
+        } else {
+            logger.warn(`No messages available with routing key: ${routingKey} in exchange: ${exchange}`);
+            await channel.close();
+            return null; // Return null if no messages were available
+        }
+    } catch (error) {
+        logger.error('Error consuming slaughter data from RabbitMQ: ' + error.message);
+        throw error;
+    }
+};
+
