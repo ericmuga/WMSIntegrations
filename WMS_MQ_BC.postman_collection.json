@@ -158,6 +158,14 @@
 				"description": "http://100.100.2.39:3000/print-order"
 			},
 			"response": []
+		},
+		{
+			"name": "get_sales_orders_from_bot",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
 		}
 	],
 	"event": [
