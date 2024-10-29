@@ -1,0 +1,202 @@
+{
+	"info": {
+		"_postman_id": "6749e471-1aaa-4a07-823c-5f1271163280",
+		"name": "WMS_MQ_BC",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15462652"
+	},
+	"item": [
+		{
+			"name": "fetch_production_orders_from_wms",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\r\n  {\r\n    \"ItemNo\": \"J31031702\",\r\n    \"Quantity\": 10,\r\n    \"SourceType\": \"Item\",\r\n    \"ProductionJournalLines\": [\r\n      {\r\n        \"ItemNo\": \"G2044\",\r\n        \"Quantity\": 5,\r\n        \"LocationCode\": \"3535\",\r\n        \"BIN\": \"\"\r\n      },\r\n      {\r\n        \"ItemNo\": \"G2001\",\r\n        \"Quantity\": 3,\r\n        \"LocationCode\": \"3535\",\r\n        \"BIN\": \"\"\r\n      }\r\n    ],\r\n    \"routing\": {\r\n      \"key\": \"production_order.bc\"\r\n    }\r\n  },\r\n  {\r\n    \"ItemNo\": \"J31015401\",\r\n    \"Quantity\": 20,\r\n    \"SourceType\": \"Item\",\r\n    \"ProductionJournalLines\": [\r\n      {\r\n        \"ItemNo\": \"G3022\",\r\n        \"Quantity\": 8,\r\n        \"LocationCode\": \"1234\",\r\n        \"BIN\": \"A12\"\r\n      },\r\n      {\r\n        \"ItemNo\": \"G1005\",\r\n        \"Quantity\": 4,\r\n        \"LocationCode\": \"1234\",\r\n        \"BIN\": \"A13\"\r\n      }\r\n    ],\r\n    \"routing\": {\r\n      \"key\": \"production_order.bc\"\r\n    }\r\n  },\r\n  {\r\n    \"ItemNo\": \"J31070102\",\r\n    \"Quantity\": 15,\r\n    \"SourceType\": \"Item\",\r\n    \"ProductionJournalLines\": [\r\n      {\r\n        \"ItemNo\": \"G2033\",\r\n        \"Quantity\": 6,\r\n        \"LocationCode\": \"5678\",\r\n        \"BIN\": \"\"\r\n      },\r\n      {\r\n        \"ItemNo\": \"G4002\",\r\n        \"Quantity\": 7,\r\n        \"LocationCode\": \"5678\",\r\n        \"BIN\": \"B15\"\r\n      }\r\n    ],\r\n    \"routing\": {\r\n      \"key\": \"production_order.bc\"\r\n    }\r\n  },\r\n  {\r\n    \"ItemNo\": \"J31045123\",\r\n    \"Quantity\": 12,\r\n    \"SourceType\": \"Item\",\r\n    \"ProductionJournalLines\": [\r\n      {\r\n        \"ItemNo\": \"G2055\",\r\n        \"Quantity\": 4,\r\n        \"LocationCode\": \"9876\",\r\n        \"BIN\": \"\"\r\n      },\r\n      {\r\n        \"ItemNo\": \"G1008\",\r\n        \"Quantity\": 6,\r\n        \"LocationCode\": \"9876\",\r\n        \"BIN\": \"B20\"\r\n      }\r\n    ],\r\n    \"routing\": {\r\n      \"key\": \"production_order.bc\"\r\n    }\r\n  }\r\n]\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"description": "base_url:{{mq_url}}/fetch-production-orders"
+			},
+			"response": []
+		},
+		{
+			"name": "fetch_sales_orders_from_portal",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"description": "base_url:{{mq_url}}/fetch-portal-orders"
+			},
+			"response": []
+		},
+		{
+			"name": "fetch_sales_invoices_from_portal",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"description": "base_url:{{mq_url}}/fetch-portal-orders"
+			},
+			"response": []
+		},
+		{
+			"name": "fetch_transfer_orders_from_wms",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"description": "base_url: {{mq_url}}/fetch-transfer-orders"
+			},
+			"response": []
+		},
+		{
+			"name": "fetch_slaughter_lines_from_wms",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"description": "base_url:{{mq_url}}/fetch-slaughter-data"
+			},
+			"response": []
+		},
+		{
+			"name": "post_receipt_lines_from_bc",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"routing\": {\r\n        \"key\": \"slaughter_receipts.wms\"\r\n    },\r\n    \"receiptLines\": [\r\n        {\r\n            \"ReceiptNo\": \"FRT-0000053131\",\r\n            \"Item\": \"G0101\",\r\n            \"ItemDescription\": \"Pig, Livestock\",\r\n            \"Slapmark\": \"2912\",\r\n            \"FarmerNo\": \"PF08094\",\r\n            \"FarmerName\": \"Williamson John W. Mugotho\",\r\n            \"ReceivedQty\": 9,\r\n            \"OrderQty\": 9,\r\n            \"ReceiptDate\": \"2024-10-14 00:00:00.000\",\r\n            \"ReceiptTime\": \"1754-01-01 07:27:09.277\",\r\n            \"ReceivedBy\": \"FARMERSCHOICE\\\\NNZUKI\",\r\n            \"Status\": 1,\r\n            \"ModeOfPayment\": 4,\r\n            \"DeliveredBy\": \"OWNER\",\r\n            \"SelfDelivery\": 1,\r\n            \"HaulierNo\": \"KBP 910U\",\r\n            \"City\": \"Kinoo, Kiambu\",\r\n            \"MileageCode\": \"T060\",\r\n            \"HauliageDistance\": \"60.00\"\r\n        }\r\n    ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{mq_url}}/submit-slaughter-receipt",
+					"host": [
+						"{{mq_url}}"
+					],
+					"path": [
+						"submit-slaughter-receipt"
+					]
+				},
+				"description": "base_url: {{mq_url}}/fetch-slaughter-data"
+			},
+			"response": []
+		},
+		{
+			"name": "fetch-bot-orders (ungrouped)",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://fchoice-endpoint-prod.docwyn.com/?api_key=412cce7c-a737-4d01-b929-534fcc80e79d&company=FCL&recieved_date=2023-11-08&from=100&to=150",
+					"protocol": "https",
+					"host": [
+						"fchoice-endpoint-prod",
+						"docwyn",
+						"com"
+					],
+					"path": [
+						""
+					],
+					"query": [
+						{
+							"key": "api_key",
+							"value": "412cce7c-a737-4d01-b929-534fcc80e79d"
+						},
+						{
+							"key": "company",
+							"value": "FCL"
+						},
+						{
+							"key": "recieved_date",
+							"value": "2023-11-08"
+						},
+						{
+							"key": "from",
+							"value": "100"
+						},
+						{
+							"key": "to",
+							"value": "150"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "print-order-packing",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "\r\n    {\r\n      \"order_no\": \"12345\",\r\n      \"ended_by\": \"user123\",\r\n      \"customer_no\": \"cust001\",\r\n      \"customer_name\": \"Customer A\",\r\n      \"shp_code\": \"SHP01\",\r\n      \"shp_name\": \"Shipping Location A\",\r\n      \"route_code\": \"NOT ROUTED\",\r\n      \"sp_code\": \"SP01\",\r\n      \"sp_name\": \"Salesperson Name\",\r\n      \"shp_date\": \"2023-10-25\",\r\n      \"assembler\": \"\",\r\n      \"checker\": \"\",\r\n      \"status\": \"Execute\",\r\n      \"pda\":false,\r\n      \"ending_time\": \"10:30\",\r\n      \"ending_date\": \"2023-10-25\",\r\n      \"ext_doc_no\": \"EXT123\",\r\n      \"company_flag\": \"FCL\",\r\n      \"lines\": [\r\n        {\r\n          \"line_no\": 1,\r\n          \"item_no\": \"ITM001\",\r\n          \"item_description\": \"Item Description A\",\r\n          \"customer_spec\": \"Spec A\",\r\n          \"posting_group\": \"Group A\",\r\n          \"part\": \"A\",\r\n          \"order_qty\": 10,\r\n          \"ass_qty\": 0,\r\n          \"exec_qty\": 0,\r\n          \"assembler\": \"\",\r\n          \"checker\": \"\",\r\n          \"barcode\": \"BC001\",\r\n          \"qty_base\": 10\r\n        },\r\n        {\r\n          \"line_no\": 2,\r\n          \"item_no\": \"ITM002\",\r\n          \"item_description\": \"Item Description A\",\r\n          \"customer_spec\": \"Spec A\",\r\n          \"posting_group\": \"Group A\",\r\n          \"part\": \"B\",\r\n          \"order_qty\": 10,\r\n          \"ass_qty\": 0,\r\n          \"exec_qty\": 0,\r\n          \"assembler\": \"\",\r\n          \"checker\": \"\",\r\n          \"barcode\": \"BC001\",\r\n          \"qty_base\": 10\r\n        }\r\n      ]\r\n    }\r\n \r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{mq_url}}/print-order",
+					"host": [
+						"{{mq_url}}"
+					],
+					"path": [
+						"print-order"
+					]
+				},
+				"description": "http://100.100.2.39:3000/print-order"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "mq_url",
+			"value": "http://100.100.2.39:3000",
+			"type": "string"
+		},
+		{
+			"key": "docwyn_url",
+			"value": "https://fchoice-endpoint-prod.docwyn.com",
+			"type": "string"
+		},
+		{
+			"key": "app_key",
+			"value": "412cce7c-a737-4d01-b929-534fcc80e79d",
+			"type": "string"
+		}
+	]
+}
