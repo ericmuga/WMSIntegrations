@@ -12,7 +12,7 @@ export const transformData = (responseData) => {
       ItemNo: responseData.item_code,
       Quantity: responseData.net_weight,
       uom: 'KG', // Default to "KG" if not provided
-      LocationCode: getProcessByProcessName(responseData.process_name).location_code,
+      LocationCode: getProcessByProcessName(responseData.process_name).output_location,
       BIN: "", // Default to empty if not provided
       user: responseData.user_id || "EMUGA", // Default to "EMUGA" if not provided
       line_no: 1000, // Default to 1000 if not provided
@@ -30,7 +30,7 @@ export const transformData = (responseData) => {
             ItemNo: item.item_code,
             Quantity: parseFloat(item.net_weight), // Convert string to number for Quantity
             uom: item.uom || "KG", // Assume default "KG" if not provided
-            LocationCode: processDetails.location_code,
+            LocationCode: processDetails.output_location,
             BIN: item.bin || "",
             line_no: 1000, // Increment line_no by 1000 for each line
             type: "output",
@@ -41,7 +41,7 @@ export const transformData = (responseData) => {
             ItemNo: processDetails.intake_item,
             Quantity: parseFloat(item.net_weight), // Convert string to number for Quantity
             uom: item.uom || "KG", // Assume default "KG" if not provided
-            LocationCode: processDetails.location_code,
+            LocationCode: processDetails.input_location,
             BIN: item.bin || "",
             line_no: 2000, // Increment line_no by 1000 for each line
             type: "intake",
