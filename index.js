@@ -10,26 +10,25 @@ import { generateTransferOrders } from './Services/transferOrderGenerator.js';
 import { generateSlaughterData } from './Services/fetchSlaughterLines.js';
 import { generateReceiptNo } from './Services/postReceipts.js'; // Import the utility function for receipt numbers
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
-import { sendSlaughterReceipt,sendProductionOrderError,consumeButcheryData,getLatestButcheryData,consumeSlaughterData } from './RabbitMQService.js';
+import { sendSlaughterReceipt,sendProductionOrderError,consumeSlaughterData } from './RabbitMQService.js';
 import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
-
+import { consumeBeheadingData } from './Services/Consumers/consumeBeheadingQueue.js';
 const app = express();
 app.use(express.json());
 
-// consumeButcheryData();
-
-app.get('/fetch-butchery-data', (req, res) => {
-    const butcheryData = getLatestButcheryData();
-    if (butcheryData) {
-        res.json(butcheryData);
-    } else {
-        res.status(404).json({ error: 'No butchery data available.' });
-    }
+app.get('/fetch-beheading-data', async (req, res) => {
+  const beheadingData = await consumeBeheadingData();
+  if (beheadingData) {
+      res.json(beheadingData);
+  } else {
+      res.status(404).json({ error: 'No butchery data available.' });
+  }
 });
+
+
 
 app.get('/fetch-production-orders', (req, res) => {
 
-  // consumeButcheryData()
   const { date, item, production_order_no } = req.query;
   let productionOrders = generateProductionOrderData();
 
@@ -73,7 +72,6 @@ app.get('/fetch-transfer-orders', (req, res) => {
   const transferOrders = generateTransferOrders(numOrders, maxItemsPerOrder);
   res.json(transferOrders);
 });
-
 
 app.get('/fetch-slaughter-data', async (req, res) => {
   try {
@@ -130,7 +128,7 @@ app.post('/production-order-error', async (req, res) => {
 
 
 // Start the server
-const port = 3000;
+const port = 5000;
 app.listen(port, () => {
   logger.info(`API running at http://localhost:${port}`);
 });

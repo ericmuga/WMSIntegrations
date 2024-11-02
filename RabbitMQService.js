@@ -201,44 +201,10 @@ const convertToProductionOrder = (data) => {
     return [productionOrder];
 };
 
-export const consumeButcheryData = async () => {
-    const queueName = 'production_data_order_beheading.bc';
-    const exchange = 'fcl.exchange.direct';
-    const routingKey = 'production_data_order_beheading.bc';
 
-    try {
-        const connection = await getRabbitMQConnection();
-        const channel = await connection.createChannel();
-
-        await channel.assertExchange(exchange, 'direct', { durable: true });
-        await channel.assertQueue(queueName, { durable: true });
-        await channel.bindQueue(queueName, exchange, routingKey);
-
-        logger.info(`Waiting for messages in queue: ${queueName}. To exit press CTRL+C`);
-        
-        return {'message':'success'};
-        // channel.consume(queueName, (msg) => {
-        //     if (msg !== null) {
-        //         const butcheryData = JSON.parse(msg.content.toString());
-        //         logger.info(`Received butchery data: ${JSON.stringify(butcheryData)}`);
-                
-        //         // Transform butchery data into production order format and store in memory
-        //         latestButcheryData = convertToProductionOrder(butcheryData);
-        //         logger.info(`Transformed Production Order: ${JSON.stringify(latestButcheryData)}`);
-                
-        //         // Uncomment if you want to acknowledge the message
-        //         // channel.ack(msg);
-        //     }
-        }
-    // );
-     catch (error) {
-        logger.error('Error consuming butchery data from RabbitMQ: ' + error.message);
-        throw error;
-    }
-};
 
 // Expose latestButcheryData for external access
-export const getLatestButcheryData = () => latestButcheryData;
+//export const getLatestButcheryData = () => latestButcheryData;
   
 export const consumeSlaughterData = async () => {
     const queueName = 'slaughter_line.bc';
@@ -252,13 +218,8 @@ export const consumeSlaughterData = async () => {
         await channel.assertExchange(exchange, 'direct', { durable: true });
         await channel.assertQueue(queueName, { durable: true });
         await channel.bindQueue(queueName, exchange, routingKey);
-        await channel.assertExchange(exchange, 'direct', { durable: true });
-
-        // Create a temporary exclusive queue
-        
-        await channel.bindQueue(queueName, exchange, routingKey);
-
-        logger.info(`Fetching a single message from exchange: ${exchange} with routing key: ${routingKey}`);
+       
+        // logger.info(`Fetching a single message from exchange: ${exchange} with routing key: ${routingKey}`);
 
         // Get a single message from the queue
         const msg = await channel.get(queueName, { noAck: false });
@@ -271,7 +232,7 @@ export const consumeSlaughterData = async () => {
             // channel.ack(msg);
 
             // Close the channel and connection
-            await channel.close();
+            // await channel.close();
 
             return slaughterData; // Return the parsed data
         } else {
