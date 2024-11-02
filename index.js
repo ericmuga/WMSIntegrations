@@ -8,7 +8,7 @@ import { generateOrders } from './Services/fetchPortalOrders.js';
 import { groupOrdersByExtDocNo } from './Services/fetchBOTOrders.js';
 import { generateTransferOrders } from './Services/transferOrderGenerator.js';
 import { generateSlaughterData } from './Services/fetchSlaughterLines.js';
-import { generateReceiptNo } from './Services/postReceipts.js'; // Import the utility function for receipt numbers
+import { generateReceiptNo } from './Services/postReceipts.js'; 
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError,consumeSlaughterData } from './RabbitMQService.js';
 import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
@@ -91,8 +91,9 @@ app.get('/fetch-slaughter-data', async (req, res) => {
 
 
 app.post('/print-order', (req, res) => {
-  return res.status(201).json({message:'success'})
-  });
+  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+  return res.status(201).json({ message: 'success' });
+});
 
 
 // POST endpoint to receive receipt data and respond with a new receipt_no
@@ -128,7 +129,7 @@ app.post('/production-order-error', async (req, res) => {
 
 
 // Start the server
-const port = 5000;
+const port = 3000;
 app.listen(port, () => {
   logger.info(`API running at http://localhost:${port}`);
 });
