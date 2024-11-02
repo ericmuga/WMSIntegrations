@@ -5,10 +5,10 @@ export const transformData = (responseData) => {
 
   // Check if responseData is an array, otherwise wrap it in an array
   const items = Array.isArray(responseData) ? responseData : [responseData];
-  
+
   return [
     {
-      production_order_no: "1",
+      production_order_no: getProcessByProcessName(items[0].process_name).production_order_series+"-01",
       ItemNo: responseData.item_code,
       Quantity: responseData.net_weight,
       uom: 'KG', // Default to "KG" if not provided
