@@ -10,9 +10,11 @@ import { generateTransferOrders } from './Services/transferOrderGenerator.js';
 import { generateSlaughterData } from './Services/fetchSlaughterLines.js';
 import { generateReceiptNo } from './Services/postReceipts.js'; 
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
-import { sendSlaughterReceipt,sendProductionOrderError,consumeSlaughterData } from './RabbitMQService.js';
+import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
 import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
 import { consumeBeheadingData } from './Services/Consumers/consumeBeheadingQueue.js';
+import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
+
 const app = express();
 app.use(express.json());
 
@@ -124,6 +126,24 @@ app.post('/production-order-error', async (req, res) => {
     res.status(200).send('Production order error sent successfully.');
   } catch (error) {
     res.status(500).send('Failed to send production order error.');
+  }
+});
+
+
+
+app.post('/master-data', async (req, res) => {
+  const { type, no } = req.body;
+
+  logger.info(`Received master data : ${JSON.stringify(req.body)}`);
+  if (!type || !no) {
+    return res.status(400).send('Missing required fields: type, no');
+  }
+
+  try {
+    await sendProductionOrderError(type, no);
+    res.status(200).send('Master data sent successfully.');
+  } catch (error) {
+    res.status(500).send('Failed to send master data.');
   }
 });
 

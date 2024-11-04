@@ -206,43 +206,4 @@ const convertToProductionOrder = (data) => {
 // Expose latestButcheryData for external access
 //export const getLatestButcheryData = () => latestButcheryData;
   
-export const consumeSlaughterData = async () => {
-    const queueName = 'slaughter_line.bc';
-    const exchange = 'fcl.exchange.direct';
-    const routingKey = 'slaughter_line.bc';
-
-    try {
-        const connection = await getRabbitMQConnection();
-        const channel = await connection.createChannel();
-
-        await channel.assertExchange(exchange, 'direct', { durable: true });
-        await channel.assertQueue(queueName, { durable: true });
-        await channel.bindQueue(queueName, exchange, routingKey);
-       
-        // logger.info(`Fetching a single message from exchange: ${exchange} with routing key: ${routingKey}`);
-
-        // Get a single message from the queue
-        const msg = await channel.get(queueName, { noAck: false });
-        
-        if (msg) {
-            const slaughterData = JSON.parse(msg.content.toString());
-            logger.info(`Received slaughter data: ${JSON.stringify(slaughterData)}`);
-
-            // Acknowledge the message after processing
-            // channel.ack(msg);
-
-            // Close the channel and connection
-            // await channel.close();
-
-            return slaughterData; // Return the parsed data
-        } else {
-            logger.warn(`No messages available with routing key: ${routingKey} in exchange: ${exchange}`);
-            await channel.close();
-            return null; // Return null if no messages were available
-        }
-    } catch (error) {
-        logger.error('Error consuming slaughter data from RabbitMQ: ' + error.message);
-        throw error;
-    }
-};
 
