@@ -166,6 +166,14 @@
 				"header": []
 			},
 			"response": []
+		},
+		{
+			"name": "fetch-beheading-data",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
 		}
 	],
 	"event": [
