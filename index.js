@@ -14,6 +14,7 @@ import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService
 import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
 import { consumeBeheadingData } from './Services/Consumers/consumeBeheadingQueue.js';
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
+import { printInit } from './Services/printerService.js'
 
 const app = express();
 app.use(express.json());
@@ -26,8 +27,6 @@ app.get('/fetch-beheading-data', async (req, res) => {
       res.status(404).json({ error: 'No butchery data available.' });
   }
 });
-
-
 
 app.get('/fetch-production-orders', (req, res) => {
 
@@ -89,11 +88,10 @@ app.get('/fetch-slaughter-data', async (req, res) => {
   }
 });
 
-
-
-
 app.post('/print-order', (req, res) => {
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+  
+  printInit(req.body)
   return res.status(201).json({ message: 'success' });
 });
 
