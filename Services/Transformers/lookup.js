@@ -8,7 +8,7 @@ const processLookup = {
       intake_item: "G0110", 
       input_location: "1020", 
       output_location: "1570", 
-      production_order_series: `P${String(0).padStart(3, '0')}`
+      production_order_series: `P${String(0).padStart(2, '0')}`
     },
     2: { 
       process_code: 1, 
@@ -17,7 +17,7 @@ const processLookup = {
       intake_item: "G0111", 
       input_location: "1020", 
       output_location: "1570", 
-      production_order_series: `P${String(1).padStart(3, '0')}`
+      production_order_series: `P${String(1).padStart(2, '0')}`
     },
     3: { 
       process_code: 2, 
@@ -26,7 +26,7 @@ const processLookup = {
       intake_item: "G1030", 
       input_location: "1570", 
       output_location: "1570", 
-      production_order_series: `P${String(2).padStart(3, '0')}`
+      production_order_series: `P${String(2).padStart(2, '0')}`
     },
     4: { 
       process_code: 3, 
@@ -35,7 +35,7 @@ const processLookup = {
       intake_item: "G1031", 
       input_location: "1570", 
       output_location: "1570", 
-      production_order_series: `P${String(3).padStart(3, '0')}`
+      production_order_series: `P${String(3).padStart(2, '0')}`
     },
     5: { 
       process_code: 4, 
@@ -44,7 +44,7 @@ const processLookup = {
       intake_item: "G1100", 
       input_location: "1570", 
       output_location: "1570", 
-      production_order_series: `P${String(4).padStart(3, '0')}`
+      production_order_series: `P${String(4).padStart(2, '0')}`
     },
     6: { 
       process_code: 5, 
@@ -53,7 +53,7 @@ const processLookup = {
       intake_item: "G1102", 
       input_location: "1570", 
       output_location: "1570", 
-      production_order_series: `P${String(5).padStart(3, '0')}`
+      production_order_series: `P${String(5).padStart(2, '0')}`
     },
     7: { 
       process_code: 6, 
@@ -62,7 +62,7 @@ const processLookup = {
       intake_item: "G1101", 
       input_location: "1570", 
       output_location: "2570", 
-      production_order_series: `P${String(6).padStart(3, '0')}`
+      production_order_series: `P${String(6).padStart(2, '0')}`
     },
     8: { 
       process_code: 7, 
@@ -71,7 +71,7 @@ const processLookup = {
       intake_item: "G1108", 
       input_location: "1570", 
       output_location: "1570", 
-      production_order_series: `P${String(7).padStart(3, '0')}`
+      production_order_series: `P${String(7).padStart(2, '0')}`
     },
     11: { 
       process_code: 10, 
@@ -80,7 +80,7 @@ const processLookup = {
       intake_item: "Pork Fat Rinds", 
       input_location: "LOC011", 
       output_location: "LOC021", 
-      production_order_series: `P${String(10).padStart(3, '0')}`
+      production_order_series: `P${String(10).padStart(2, '0')}`
     },
     10005: { 
       process_code: 17, 
@@ -89,7 +89,7 @@ const processLookup = {
       intake_item: "G1110", 
       input_location: "LOC018", 
       output_location: "LOC028", 
-      production_order_series: `P${String(9).padStart(3, '0')}`
+      production_order_series: `P${String(9).padStart(2, '0')}`
     },
     10006: { 
       process_code: 18, 
@@ -98,7 +98,7 @@ const processLookup = {
       intake_item: "G1109", 
       input_location: "LOC019", 
       output_location: "LOC029", 
-      production_order_series: `P${String(8).padStart(3, '0')}`
+      production_order_series: `P${String(8).padStart(2, '0')}`
     },
     20005: { 
       process_code: 101, 
@@ -107,7 +107,7 @@ const processLookup = {
       intake_item: "Deboned Beef", 
       input_location: "LOC020", 
       output_location: "LOC030", 
-      production_order_series: `P${String(101).padStart(3, '0')}`
+      production_order_series: `P${String(101).padStart(2, '0')}`
     }
   };
   

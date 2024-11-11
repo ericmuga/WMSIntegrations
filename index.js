@@ -29,10 +29,11 @@ app.get('/fetch-beheading-data', async (req, res) => {
 
 
 
-app.get('/fetch-production-orders', (req, res) => {
+app.get('/fetch-production-orders', async (req, res) => {
 
   const { date, item, production_order_no } = req.query;
-  let productionOrders = generateProductionOrderData();
+  // let productionOrders = generateProductionOrderData();
+  let productionOrders = await consumeBeheadingData();
 
   if (date) {
     productionOrders = productionOrders.filter(order =>
@@ -52,7 +53,7 @@ app.get('/fetch-production-orders', (req, res) => {
     );
   }
 
-  res.json(productionOrders);
+  res.json(productionOrders.flat());
 });
 
 app.get('/fetch-portal-orders', (req, res) => res.json(generateOrders(3, 5)));
