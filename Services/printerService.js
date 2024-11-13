@@ -4,47 +4,42 @@ import fs from 'fs';
 import { exec } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import PDFDocument from 'pdfkit-table';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable'; // For table generation support
+import 'jspdf-autotable';
 
 export const printInit = (data) => {
-    // Init directories
     // Resolve __dirname in ES module
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
-    // Define the folder paths
     const pdfDirPath = path.resolve(__dirname, '../pdf');
     if (!fs.existsSync(pdfDirPath)) {
         fs.mkdirSync(pdfDirPath);
     }
 
-    console.log("Folder path:", pdfDirPath);
-
     const printedDirPath = path.resolve(__dirname, '../printed');
     if (!fs.existsSync(printedDirPath)) {
         fs.mkdirSync(printedDirPath);
     }
-    console.log("Printed folder path:", printedDirPath);
-
 
     // Process incoming data and generate print files
     // Group lines by part
-    const partsMap = data.lines.reduce((acc, line) => {
-        const { part, item_no } = line;
-        const key = `${item_no}_${part}`;
-        if (!acc[key]) {
-            acc[key] = [];
+    const partsMap = data.lines.reduce((accumulator, line) => {
+        console.log('acumulator',)
+        const { part } = line;
+        const key = `${data.order_no}_${part}`;
+
+        if (!accumulator[key]) {
+            accumulator[key] = [];
         }
-        acc[key].push(line);
-        return acc;
+        accumulator[key].push(line);
+        return accumulator;
     }, {});
 
     // Generate PDF for each group
     Object.entries(partsMap).forEach(([key, lines]) => {
         const [itemNo, part] = key.split('_');
-        createPDFAlt(data, pdfDirPath, itemNo, part, lines);
+        createPDF(data, pdfDirPath, itemNo, part, lines);
     });
 
     // Initialize printing
@@ -55,111 +50,22 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     const fileName = `${itemNo}_${part}.pdf`;
     const filePath = path.join(pdfDirPath, fileName);
 
-    const doc = new PDFDocument({ size: 'A4', margin: 30 });
-    doc.pipe(fs.createWriteStream(filePath));
-
-    // Pagination (Top right corner)
-    const totalPages = 1;
-    doc.font('Helvetica').fontSize(10)
-        .text(`Page 1 of ${totalPages}`, 480, 20, { align: 'right' });
-
-    // Header section (centered)
-    doc.moveTo(30, 40);
-    doc.fontSize(18)
-        .text(`DISPATCH Packing List ${part}`, 0, 50, { align: 'center', width: 540 })
-        .moveDown();
-
-    doc.fontSize(12)
-        .text('FarmersChoice/Emuga', 0, 75, { align: 'center', width: 540 })
-        .text('11/7/2024 8:12:02 PM +03:00', 0, 90, { align: 'center', width: 540 })
-        .moveDown();
-
-    // Order details section (left-aligned)
-    doc.fontSize(10)
-        .text('Order No.: DSP+0000563937', 30)
-        .moveDown()
-        .text('Delivery Date: 11/7/2024 12:00:00 AM', 30)
-        .moveDown()
-        .text('Order Date: 11/7/2024 12:00:00 AM', 30)
-        .moveDown()
-        .text('Customer Name: Naivas Limited', 30)
-        .moveDown()
-        .text('Ship To: Naivas - Kitui', 30)
-        .moveDown()
-        .text('Customer No.: 240', 30)
-        .moveDown();
-
-    // Table header
-    doc.font('Helvetica-Bold').fontSize(10);
-    doc.text('Pick Instruction', 30, undefined, { underline: true }).moveDown();
-
-    const table = {
-        headers: [
-            { label: 'Item No.', width: 70 },
-            { label: 'Description', width: 150 },
-            { label: 'Cust. Specs', width: 70 },
-            { label: 'Unit of Measure', width: 70 },
-            { label: 'Order Qty', width: 60 },
-            { label: 'QTY Supplied', width: 70 },
-            { label: 'No. Of Cartons', width: 70 },
-            { label: 'Carton Serial No.', width: 100 }
-        ],
-        datas: lines.map(line => [
-            line.item_no,
-            line.description,
-            line.custom_specs || 'N/A',
-            line.unit_of_measure,
-            line.order_qty,
-            line.qty_supplied,
-            line.cartons_count || 'N/A',
-            line.carton_serial || 'N/A'
-        ])
-    };
-
-    // Draw the table without header background color
-    doc.font('Helvetica').fontSize(10);
-    const options = {
-        columnsSize: [70, 150, 70, 70, 60, 70, 70, 100],
-        rowHeight: 20,
-        prepareHeader: () => {
-            doc.font('Helvetica-Bold').fontSize(10)
-        },
-        prepareRow: () => doc.font('Helvetica').fontSize(10),
-        columnSpacing: 5,
-        align: 'left'
-    };
-    doc.table(table, options);
-
-    // Footer section (left-aligned)
-    doc.moveDown()
-        .text('Total Order Quantity: 1', 30)
-        .text('Prepared By: (Name & Sign)', 30)
-        .text('Packed By: (Name & Sign)', 30)
-        .text('Total Net Weight: ___________', 30)
-        .text('Total Gross Weight: ___________', 30)
-        .text('Total No. Of Cartons: ___________', 30)
-        .text('Checked By: (Name & Sign)', 30)
-        .moveDown();
-
-    // Additional info (left-aligned)
-    doc.text('Order Receiver: Location: 3535', 30)
-        .text('Salesperson: 019', 30)
-        .text('MACHAKOS', 0, undefined, { align: 'center', width: 540 });
-
-    // Finalize the PDF
-    doc.end();
-};
-
-const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
-    const fileName = `${itemNo}_${part}.pdf`;
-    const filePath = path.join(pdfDirPath, fileName);
-
     const doc = new jsPDF('p', 'mm', 'a4'); // A4 size page
- 
+
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    const totalPages = 1;
-    doc.text(`Page 1 of ${totalPages}`, 190, 20, { align: 'right' });
+
+    // Pagination
+    const totalPages = () => doc.getNumberOfPages();
+    const addPageNumber = () => {
+        const pageCount = totalPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(10);
+            // doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' }); // Appears at the footer
+            doc.text(`Page ${i} of ${pageCount}`, 190, 19, { align: 'right' });
+        }
+    };
 
     const availableParts = [...new Set(data.lines.map(line => line.part))];
     const partsText = availableParts.join('|');
@@ -176,56 +82,56 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
     doc.text('11/7/2024 12:00:00 AM', 50, 40)
 
     doc.text('Sell To Address:', 120, 40)
-    doc.text('Naivas - Kitui', 160, 40)
+    doc.text(data.shp_name, 160, 40)
 
     // ----------------Line----------------
     doc.text('Order No.:', 10, 50)
-    doc.text('S+ORD0000563937', 50, 50)
+    doc.text(data.order_no, 50, 50)
 
     doc.text('Sales Person:', 120, 50)
-    doc.text('019', 160, 50)
+    doc.text(data.sp_code, 160, 50)
 
     // ----------------Line----------------
     doc.text('Customer No.:', 10, 60)
-    doc.text('240', 50, 60)
+    doc.text(data.customer_no, 50, 60)
 
-    doc.text('Sales Type:', 120, 60)
-    doc.text('Direct Sales', 160, 60)
+    doc.text('', 120, 60)
+    doc.text(data.sp_name, 160, 60)
 
     // ----------------Line----------------
     doc.text('Customer Name:', 10, 70)
-    doc.text('Naivas Limited', 50, 70)
+    doc.text(data.customer_name, 50, 70)
 
     doc.text('Delivery Date:', 120, 70)
-    doc.text('11/7/2024 12:00:00 AM', 160, 70)
+    doc.text(`${data.ending_date} ${data.ending_time}`, 160, 70)
 
     // ----------------Line----------------
     doc.text('External DocNo:', 10, 80)
     doc.text('N/A', 50, 80)
 
     doc.text('Ship To Name:', 120, 80)
-    doc.text('Naivas - Kitui', 160, 80)
+    doc.text(data.shp_name, 160, 80)
 
     // ----------------Line----------------
     doc.text('PDA Order:', 10, 90)
-    doc.text('No', 50, 90)
+    doc.text(data.pda ? 'Yes' : 'No', 50, 90)
 
     doc.text('Cust Ref. No:', 120, 90)
     doc.text('N/A', 160, 90)
 
     // ----------------Line----------------
     doc.text('Order Receiver:', 10, 100)
-    doc.text('FARMERSCHOICE\EMUGA', 50, 100)
+    doc.text(data.ended_by, 50, 100)
 
     doc.text('EXT Doc. No:', 120, 100)
-    doc.text('N/A', 160, 100)
+    doc.text(data.ext_doc_no, 160, 100)
 
     // ----------------Line----------------
     doc.text('Your Ref:', 10, 110)
     doc.text('N/A', 50, 110)
 
     doc.text('District Group:', 120, 110)
-    doc.text('Machakos', 160, 110)
+    doc.text('MACHAKOS', 160, 110)
 
     // ----------------Line----------------
     doc.text('Location:', 10, 120)
@@ -247,8 +153,8 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
 
     const tableData = lines.map(line => [
         line.item_no,
-        line.description,
-        line.custom_specs,
+        line.item_description,
+        line.customer_spec,
         line.unit_of_measure,
         line.order_qty,
         line.qty_supplied || '_______',
@@ -259,22 +165,24 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
     doc.autoTable({
         head: [tableColumnNames],
         body: tableData,
-        startY: 130,
+        startY: 140,
+        margin: { top: 30, bottom: 80 },
         columnStyles: {
-            0: { cellWidth: 20, fillColor: null },
+            0: { cellWidth: 20, fillColor: null, halign: 'center' },
             1: { cellWidth: 40, fillColor: null },
             2: { cellWidth: 20, fillColor: null },
-            3: { cellWidth: 20, fillColor: null },
-            4: { cellWidth: 20, fillColor: null },
-            5: { cellWidth: 20, fillColor: null },
-            6: { cellWidth: 20, fillColor: null },
-            7: { cellWidth: 30, fillColor: null },
+            3: { cellWidth: 20, fillColor: null, halign: 'center' },
+            4: { cellWidth: 20, fillColor: null, halign: 'center' },
+            5: { cellWidth: 20, fillColor: null, halign: 'center' },
+            6: { cellWidth: 20, fillColor: null, halign: 'center' },
+            7: { cellWidth: 30, fillColor: null, halign: 'left' },
         },
         headStyles: {
             fillColor: null,
             textColor: [0, 0, 0],
             fontSize: 9,
             fontStyle: 'bold',
+            halign: 'center'
         },
         didDrawCell: (data) => {
             if (data.row.index === 0 && data.section === 'head') {
@@ -296,32 +204,29 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
 
             data.cell.styles.textColor = [0, 0, 0]
         },
+        didDrawPage: (data) => {
+            const footerY = 250; // Fixed Y position for the footer
+
+            doc.setFont("helvetica", "bold");
+            doc.text('Prepared By (Name & Sign):', 10, footerY);
+            doc.rect(10 /*X*/, footerY + 2 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S' /*'S' for stroke only*/);
+
+            doc.text('Packed By (Name & Sign):', 75, footerY);
+            doc.rect(75, footerY + 2, 60, 12, 'S');
+
+            doc.text('Checked By (Name & Sign):', 140, footerY);
+            doc.rect(140, footerY + 2, 60, 12, 'S');
+
+            doc.text('Total Net Weight: ___________', 75, footerY + 20);
+            doc.text('Total Gross Weight: ___________', 75, footerY + 25);
+            doc.text('Total No. Of Cartons: ___________', 75, footerY + 30);
+        },
     });
 
     doc.setFont("helvetica", "normal");
     doc.text('Total Order Quantity: 1', 105, doc.lastAutoTable.finalY + 10, { align: 'center' });
 
-    doc.setFont("helvetica", "bold");
-    // ----------------Line----------------
-    doc.text('Prepared By (Name & Sign):', 10, doc.lastAutoTable.finalY + 98);
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.1); 
-    doc.rect(10 /*X*/, doc.lastAutoTable.finalY + 100 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S'); // 'S' for stroke only
-
-    doc.text('Packed By (Name & Sign):', 75, doc.lastAutoTable.finalY + 98);
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.1); 
-    doc.rect(75 /*X*/, doc.lastAutoTable.finalY + 100 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S'); // 'S' for stroke only
-
-    doc.text('Checked By (Name & Sign):', 140, doc.lastAutoTable.finalY + 98);
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.1); 
-    doc.rect(140 /*X*/, doc.lastAutoTable.finalY + 100 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S'); // 'S' for stroke only
-
-    
-    doc.text('Total Net Weight: ___________', 75, doc.lastAutoTable.finalY + 118);
-    doc.text('Total Gross Weight: ___________', 75, doc.lastAutoTable.finalY + 123);
-    doc.text('Total No. Of Cartons: ___________', 75, doc.lastAutoTable.finalY + 128);
+    addPageNumber();
 
     // Save the PDF
     doc.save(filePath);
