@@ -36,14 +36,13 @@ export const printInit = (data) => {
         return accumulator;
     }, {});
 
-    // Generate PDF for each group
+    // Generate a PDF for each group
     Object.entries(partsMap).forEach(([key, lines]) => {
         const [itemNo, part] = key.split('_');
         createPDF(data, pdfDirPath, itemNo, part, lines);
     });
 
-    // Initialize printing
-    // print(pdfDirPath, printedDirPath)
+    print(pdfDirPath, printedDirPath)
 }
 
 const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
@@ -73,13 +72,13 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     doc.setFontSize(14);
     doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
     doc.setFontSize(12);
-    doc.text('DSP+0000563937', 25, 30)
+    doc.text('DSP+0000563937', 25, 30) // TODO
 
-    doc.text('11/7/2024 8:12:02 PM +03:00', 200, 30, { align: 'right' })
+    doc.text('11/7/2024 8:12:02 PM +03:00', 200, 30, { align: 'right' }) // TODO
 
     // ----------------Line----------------
     doc.text('Order Date:', 10, 40)
-    doc.text('11/7/2024 12:00:00 AM', 50, 40)
+    doc.text('11/7/2024 12:00:00 AM', 50, 40) // TODO
 
     doc.text('Sell To Address:', 120, 40)
     doc.text(data.shp_name, 160, 40)
@@ -107,7 +106,7 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
 
     // ----------------Line----------------
     doc.text('External DocNo:', 10, 80)
-    doc.text('N/A', 50, 80)
+    doc.text('N/A', 50, 80) // TODO
 
     doc.text('Ship To Name:', 120, 80)
     doc.text(data.shp_name, 160, 80)
@@ -117,7 +116,7 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     doc.text(data.pda ? 'Yes' : 'No', 50, 90)
 
     doc.text('Cust Ref. No:', 120, 90)
-    doc.text('N/A', 160, 90)
+    doc.text('N/A', 160, 90) // TODO
 
     // ----------------Line----------------
     doc.text('Order Receiver:', 10, 100)
@@ -128,21 +127,21 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
 
     // ----------------Line----------------
     doc.text('Your Ref:', 10, 110)
-    doc.text('N/A', 50, 110)
+    doc.text('N/A', 50, 110) // TODO
 
     doc.text('District Group:', 120, 110)
-    doc.text('MACHAKOS', 160, 110)
+    doc.text('MACHAKOS', 160, 110) // TODO
 
     // ----------------Line----------------
     doc.text('Location:', 10, 120)
-    doc.text('3535', 50, 120)
+    doc.text('3535', 50, 120) // TODO
 
     doc.setFontSize(8);
-    doc.text('Time Stamp:', 163, 130)
-    doc.text('241107201159', 200, 130, { align: 'right' })
+    doc.text('Time Stamp:', 162, 130)
+    doc.text(Date.now().toString(), 200, 130, { align: 'right' })
 
     doc.text('Serial No:', 175, 135)
-    doc.text('1032279', 200, 135, { align: 'right' })
+    doc.text('1032279', 200, 135, { align: 'right' }) // TODO
 
     doc.setFontSize(10);
 
@@ -166,11 +165,11 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
         head: [tableColumnNames],
         body: tableData,
         startY: 140,
-        margin: { top: 30, bottom: 80 },
+        margin: { left: 5, top: 30, bottom: 80 },
         columnStyles: {
             0: { cellWidth: 20, fillColor: null, halign: 'center' },
-            1: { cellWidth: 40, fillColor: null },
-            2: { cellWidth: 20, fillColor: null },
+            1: { cellWidth: 50, fillColor: null, halign: 'center'  },
+            2: { cellWidth: 20, fillColor: null, halign: 'center'  },
             3: { cellWidth: 20, fillColor: null, halign: 'center' },
             4: { cellWidth: 20, fillColor: null, halign: 'center' },
             5: { cellWidth: 20, fillColor: null, halign: 'center' },
@@ -185,15 +184,11 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
             halign: 'center'
         },
         didDrawCell: (data) => {
-            if (data.row.index === 0 && data.section === 'head') {
-                const { table } = data;
-                const startX = table.head[0].x;
-                const endX = startX + table.width;
-                const y = data.cell.y + data.cell.height;
-
+            if (data.section === 'head' && data.row.index === 0) {
+                const lineY = data.cell.y + data.cell.height;
                 doc.setDrawColor(0);
                 doc.setLineWidth(0.5);
-                doc.line(15, y, 200, y);
+                doc.line(8, lineY, 203, lineY);
             }
         },
         didParseCell: (data) => {
@@ -224,7 +219,7 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     });
 
     doc.setFont("helvetica", "normal");
-    doc.text('Total Order Quantity: 1', 105, doc.lastAutoTable.finalY + 10, { align: 'center' });
+    doc.text(`Total Order Quantity: ${lines.length}`, 105, doc.lastAutoTable.finalY + 10, { align: 'center' });
 
     addPageNumber();
 
