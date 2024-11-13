@@ -48,7 +48,7 @@ export const printInit = (data) => {
     });
 
     // Initialize printing
-    print(pdfDirPath, printedDirPath)
+    // print(pdfDirPath, printedDirPath)
 }
 
 const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
@@ -123,7 +123,7 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
         rowHeight: 20,
         prepareHeader: () => {
             doc.font('Helvetica-Bold').fontSize(10)
-        }, 
+        },
         prepareRow: () => doc.font('Helvetica').fontSize(10),
         columnSpacing: 5,
         align: 'left'
@@ -156,64 +156,123 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
 
     const doc = new jsPDF('p', 'mm', 'a4'); // A4 size page
 
-    // Pagination (Top right corner)
-    const totalPages = 1; // You can calculate the total pages dynamically
+    // Pagination  
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
-    doc.text(`Page 1 of ${totalPages}`, 190, 10, { align: 'right' });
+    const totalPages = 1;
+    doc.text(`Page 1 of ${totalPages}`, 190, 20, { align: 'right' });
+
+    // Extract the available parts
+    const availableParts = [...new Set(data.lines.map(line => line.part))];
+    const partsText = availableParts.join('|');
 
     // Header section (centered)
-    doc.setFontSize(18);
-    doc.text(`DISPATCH Packing List ${part}`, 105, 50, { align: 'center' });
+    doc.setFontSize(14);
+    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
     doc.setFontSize(12);
-    doc.text('FarmersChoice/Emuga', 105, 60, { align: 'center' });
-    doc.text('11/7/2024 8:12:02 PM +03:00', 105, 70, { align: 'center' });
+    doc.text('DSP+0000563937', 25, 30)
 
-    // Order details section (left-aligned)
-    doc.setFontSize(10);
-    doc.text('Order No.: DSP+0000563937', 10, 85);
-    doc.text('Delivery Date: 11/7/2024 12:00:00 AM', 10, 95);
-    doc.text('Order Date: 11/7/2024 12:00:00 AM', 10, 105);
-    doc.text('Customer Name: Naivas Limited', 10, 115);
-    doc.text('Ship To: Naivas - Kitui', 10, 125);
-    doc.text('Customer No.: 240', 10, 135);
+    // ----------------Line----------------
+    doc.text('Order Date:', 10, 40)
+    doc.text('11/7/2024 12:00:00 AM', 50, 40)
 
-    // Table header
+    doc.text('Sell To Address:', 120, 40)
+    doc.text('Naivas - Kitui', 160, 40)
+
+    // ----------------Line----------------
+    doc.text('Order No.:', 10, 50)
+    doc.text('S+ORD0000563937', 50, 50)
+
+    doc.text('Sales Person:', 120, 50)
+    doc.text('019', 160, 50)
+
+    // ----------------Line----------------
+    doc.text('Customer No.:', 10, 60)
+    doc.text('240', 50, 60)
+
+    doc.text('Sales Type:', 120, 60)
+    doc.text('Direct Sales', 160, 60)
+
+    // ----------------Line----------------
+    doc.text('Customer Name:', 10, 70)
+    doc.text('Naivas Limited', 50, 70)
+
+    doc.text('Delivery Date:', 120, 70)
+    doc.text('11/7/2024 12:00:00 AM', 160, 70)
+
+    // ----------------Line----------------
+    doc.text('External DocNo:', 10, 80)
+    doc.text('N/A', 50, 80)
+
+    doc.text('Ship To Name:', 120, 80)
+    doc.text('Naivas - Kitui', 160, 80)
+
+    // ----------------Line----------------
+    doc.text('PDA Order:', 10, 90)
+    doc.text('No', 50, 90)
+
+    doc.text('Cust Ref. No:', 120, 90)
+    doc.text('N/A', 160, 90)
+    
+    // ----------------Line----------------
+    doc.text('Order Receiver:', 10, 100)
+    doc.text('FARMERSCHOICE\EMUGA', 50, 100)
+
+    doc.text('EXT Doc. No:', 120, 100)
+    doc.text('N/A', 160, 100)
+    
+    // ----------------Line----------------
+    doc.text('Your Ref:', 10, 110)
+    doc.text('N/A', 50, 110)
+
+    doc.text('District Group:', 120, 110)
+    doc.text('Machakos', 160, 110)
+
+    doc.text('Time Stamp:', 120, 120)
+    doc.text('241107201159', 160, 120)
+
+    doc.text('Serial No:', 120, 130)
+    doc.text('1032279', 160, 130)
+
+    
+    doc.setFontSize(8);
+    // Table
     const tableColumnNames = [
-        'Item No.', 'Description', 'Cust. Specs', 'Unit of Measure', 
+        'Item No.', 'Description', 'Cust. Specs', 'Unit of Measure',
         'Order Qty', 'QTY Supplied', 'No. Of Cartons', 'Carton Serial No.'
     ];
 
     const tableData = lines.map(line => [
         line.item_no,
         line.description,
-        line.custom_specs || 'N/A',
+        line.custom_specs,
         line.unit_of_measure,
         line.order_qty,
-        line.qty_supplied,
-        line.cartons_count || 'N/A',
-        line.carton_serial || 'N/A'
+        line.qty_supplied || '_______',
+        line.cartons_count || '_______',
+        line.carton_serial || '___________'
     ]);
 
     // Draw table using jsPDF autotable plugin
     doc.autoTable({
         head: [tableColumnNames],
         body: tableData,
-        startY: 145,
+        startY: 140,
         columnStyles: {
-            0: { cellWidth: 20, fillColor: null }, // No fill color for Item No.
-            1: { cellWidth: 50, fillColor: null }, // No fill color for Description
-            2: { cellWidth: 20, fillColor: null }, // No fill color for Cust. Specs
-            3: { cellWidth: 20, fillColor: null }, // No fill color for Unit of Measure
-            4: { cellWidth: 20, fillColor: null }, // No fill color for Order Qty
-            5: { cellWidth: 20, fillColor: null }, // No fill color for QTY Supplied
-            6: { cellWidth: 20, fillColor: null }, // No fill color for No. Of Cartons
-            7: { cellWidth: 30, fillColor: null }, // No fill color for Carton Serial No.
+            0: { cellWidth: 20, fillColor: null },
+            1: { cellWidth: 50, fillColor: null },
+            2: { cellWidth: 20, fillColor: null },
+            3: { cellWidth: 20, fillColor: null },
+            4: { cellWidth: 20, fillColor: null },
+            5: { cellWidth: 20, fillColor: null },
+            6: { cellWidth: 20, fillColor: null },
+            7: { cellWidth: 30, fillColor: null },
         },
         headStyles: {
-            fillColor: null, // Remove header background color
-            textColor: [0, 0, 0], // Optional: Set header text color to black
-            fontSize: 10, // Optional: Adjust font size for header
-            fontStyle: 'bold', // Optional: Make header text bold
+            fillColor: null,
+            textColor: [0, 0, 0],
+            fontSize: 9,
+            fontStyle: 'bold', 
         }
     });
 
