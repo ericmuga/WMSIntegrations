@@ -155,22 +155,21 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
     const filePath = path.join(pdfDirPath, fileName);
 
     const doc = new jsPDF('p', 'mm', 'a4'); // A4 size page
-
-    // Pagination  
+ 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     const totalPages = 1;
     doc.text(`Page 1 of ${totalPages}`, 190, 20, { align: 'right' });
 
-    // Extract the available parts
     const availableParts = [...new Set(data.lines.map(line => line.part))];
     const partsText = availableParts.join('|');
 
-    // Header section (centered)
     doc.setFontSize(14);
     doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
     doc.setFontSize(12);
     doc.text('DSP+0000563937', 25, 30)
+
+    doc.text('11/7/2024 8:12:02 PM +03:00', 200, 30, { align: 'right' })
 
     // ----------------Line----------------
     doc.text('Order Date:', 10, 40)
@@ -213,14 +212,14 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
 
     doc.text('Cust Ref. No:', 120, 90)
     doc.text('N/A', 160, 90)
-    
+
     // ----------------Line----------------
     doc.text('Order Receiver:', 10, 100)
     doc.text('FARMERSCHOICE\EMUGA', 50, 100)
 
     doc.text('EXT Doc. No:', 120, 100)
     doc.text('N/A', 160, 100)
-    
+
     // ----------------Line----------------
     doc.text('Your Ref:', 10, 110)
     doc.text('N/A', 50, 110)
@@ -228,15 +227,19 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
     doc.text('District Group:', 120, 110)
     doc.text('Machakos', 160, 110)
 
-    doc.text('Time Stamp:', 120, 120)
-    doc.text('241107201159', 160, 120)
+    // ----------------Line----------------
+    doc.text('Location:', 10, 120)
+    doc.text('3535', 50, 120)
 
-    doc.text('Serial No:', 120, 130)
-    doc.text('1032279', 160, 130)
-
-    
     doc.setFontSize(8);
-    // Table
+    doc.text('Time Stamp:', 163, 130)
+    doc.text('241107201159', 200, 130, { align: 'right' })
+
+    doc.text('Serial No:', 175, 135)
+    doc.text('1032279', 200, 135, { align: 'right' })
+
+    doc.setFontSize(10);
+
     const tableColumnNames = [
         'Item No.', 'Description', 'Cust. Specs', 'Unit of Measure',
         'Order Qty', 'QTY Supplied', 'No. Of Cartons', 'Carton Serial No.'
@@ -253,14 +256,13 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
         line.carton_serial || '___________'
     ]);
 
-    // Draw table using jsPDF autotable plugin
     doc.autoTable({
         head: [tableColumnNames],
         body: tableData,
-        startY: 140,
+        startY: 130,
         columnStyles: {
             0: { cellWidth: 20, fillColor: null },
-            1: { cellWidth: 50, fillColor: null },
+            1: { cellWidth: 40, fillColor: null },
             2: { cellWidth: 20, fillColor: null },
             3: { cellWidth: 20, fillColor: null },
             4: { cellWidth: 20, fillColor: null },
@@ -272,23 +274,54 @@ const createPDFAlt = (data, pdfDirPath, itemNo, part, lines) => {
             fillColor: null,
             textColor: [0, 0, 0],
             fontSize: 9,
-            fontStyle: 'bold', 
-        }
+            fontStyle: 'bold',
+        },
+        didDrawCell: (data) => {
+            if (data.row.index === 0 && data.section === 'head') {
+                const { table } = data;
+                const startX = table.head[0].x;
+                const endX = startX + table.width;
+                const y = data.cell.y + data.cell.height;
+
+                doc.setDrawColor(0);
+                doc.setLineWidth(0.5);
+                doc.line(15, y, 200, y);
+            }
+        },
+        didParseCell: (data) => {
+            if (data.section === 'body' && data.column.index === 0) {
+                data.cell.styles.fontStyle = 'bold'
+                data.cell.styles.fontSize = 10
+            }
+
+            data.cell.styles.textColor = [0, 0, 0]
+        },
     });
 
-    // Footer section (left-aligned)
-    doc.text('Total Order Quantity: 1', 10, doc.lastAutoTable.finalY + 10);
-    doc.text('Prepared By: (Name & Sign)', 10, doc.lastAutoTable.finalY + 20);
-    doc.text('Packed By: (Name & Sign)', 10, doc.lastAutoTable.finalY + 30);
-    doc.text('Total Net Weight: ___________', 10, doc.lastAutoTable.finalY + 40);
-    doc.text('Total Gross Weight: ___________', 10, doc.lastAutoTable.finalY + 50);
-    doc.text('Total No. Of Cartons: ___________', 10, doc.lastAutoTable.finalY + 60);
-    doc.text('Checked By: (Name & Sign)', 10, doc.lastAutoTable.finalY + 70);
+    doc.setFont("helvetica", "normal");
+    doc.text('Total Order Quantity: 1', 105, doc.lastAutoTable.finalY + 10, { align: 'center' });
 
-    // Additional info (left-aligned)
-    doc.text('Order Receiver: Location: 3535', 10, doc.lastAutoTable.finalY + 80);
-    doc.text('Salesperson: 019', 10, doc.lastAutoTable.finalY + 90);
-    doc.text('MACHAKOS', 105, doc.lastAutoTable.finalY + 100, { align: 'center' });
+    doc.setFont("helvetica", "bold");
+    // ----------------Line----------------
+    doc.text('Prepared By (Name & Sign):', 10, doc.lastAutoTable.finalY + 98);
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.1); 
+    doc.rect(10 /*X*/, doc.lastAutoTable.finalY + 100 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S'); // 'S' for stroke only
+
+    doc.text('Packed By (Name & Sign):', 75, doc.lastAutoTable.finalY + 98);
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.1); 
+    doc.rect(75 /*X*/, doc.lastAutoTable.finalY + 100 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S'); // 'S' for stroke only
+
+    doc.text('Checked By (Name & Sign):', 140, doc.lastAutoTable.finalY + 98);
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.1); 
+    doc.rect(140 /*X*/, doc.lastAutoTable.finalY + 100 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S'); // 'S' for stroke only
+
+    
+    doc.text('Total Net Weight: ___________', 75, doc.lastAutoTable.finalY + 118);
+    doc.text('Total Gross Weight: ___________', 75, doc.lastAutoTable.finalY + 123);
+    doc.text('Total No. Of Cartons: ___________', 75, doc.lastAutoTable.finalY + 128);
 
     // Save the PDF
     doc.save(filePath);
