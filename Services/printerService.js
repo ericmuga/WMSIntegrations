@@ -1,11 +1,13 @@
 // printerService.js
 
+
 import fs from 'fs';
 import { exec } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
+// import { companyParameter } from '../config/default';
 
 export const printInit = (data) => {
     // Resolve __dirname in ES module
@@ -22,7 +24,7 @@ export const printInit = (data) => {
         fs.mkdirSync(printedDirPath);
     }
 
-    // Process incoming data and generate print files
+    // Process incoming data and generate PDFs
     // Group lines by part
     const partsMap = data.lines.reduce((accumulator, line) => {
         console.log('acumulator',)
@@ -72,13 +74,15 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     doc.setFontSize(14);
     doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
     doc.setFontSize(12);
-    doc.text('DSP+0000563937', 25, 30) // TODO
 
-    doc.text('11/7/2024 8:12:02 PM +03:00', 200, 30, { align: 'right' }) // TODO
+    // const prefix = companyParameter.fcl // TODO
+    doc.text('DSP+0000563937', 25, 30) /* Prefix per company */
+
+doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' }) // TODO
 
     // ----------------Line----------------
     doc.text('Order Date:', 10, 40)
-    doc.text('11/7/2024 12:00:00 AM', 50, 40) // TODO
+    doc.text(data.shp_date, 50, 40)
 
     doc.text('Sell To Address:', 120, 40)
     doc.text(data.shp_name, 160, 40)
@@ -87,7 +91,7 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     doc.text('Order No.:', 10, 50)
     doc.text(data.order_no, 50, 50)
 
-    doc.text('Sales Person:', 120, 50)
+    doc.text('Load To Code:', 120, 50)
     doc.text(data.sp_code, 160, 50)
 
     // ----------------Line----------------
@@ -102,11 +106,11 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     doc.text(data.customer_name, 50, 70)
 
     doc.text('Delivery Date:', 120, 70)
-    doc.text(`${data.ending_date} ${data.ending_time}`, 160, 70)
+    doc.text(data.shp_date, 160, 70)
 
     // ----------------Line----------------
     doc.text('External DocNo:', 10, 80)
-    doc.text('N/A', 50, 80) // TODO
+    doc.text(data.ext_doc_no, 50, 80)
 
     doc.text('Ship To Name:', 120, 80)
     doc.text(data.shp_name, 160, 80)
@@ -116,32 +120,29 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     doc.text(data.pda ? 'Yes' : 'No', 50, 90)
 
     doc.text('Cust Ref. No:', 120, 90)
-    doc.text('N/A', 160, 90) // TODO
+    doc.text('N/A', 160, 90)
 
     // ----------------Line----------------
     doc.text('Order Receiver:', 10, 100)
     doc.text(data.ended_by, 50, 100)
 
-    doc.text('EXT Doc. No:', 120, 100)
-    doc.text(data.ext_doc_no, 160, 100)
-
     // ----------------Line----------------
     doc.text('Your Ref:', 10, 110)
-    doc.text('N/A', 50, 110) // TODO
+    doc.text('N/A', 50, 110) 
 
-    doc.text('District Group:', 120, 110)
-    doc.text('MACHAKOS', 160, 110) // TODO
+    doc.text('Route:', 120, 110)
+    doc.text(data.route_code, 160, 110) 
 
     // ----------------Line----------------
-    doc.text('Location:', 10, 120)
-    doc.text('3535', 50, 120) // TODO
+    // doc.text('Location:', 10, 120)
+    // doc.text('3535', 50, 120) // TODO
 
     doc.setFontSize(8);
     doc.text('Time Stamp:', 162, 130)
     doc.text(Date.now().toString(), 200, 130, { align: 'right' })
 
-    doc.text('Serial No:', 175, 135)
-    doc.text('1032279', 200, 135, { align: 'right' }) // TODO
+    // doc.text('Serial No:', 175, 135)
+    // doc.text('1032279', 200, 135, { align: 'right' }) // TODO
 
     doc.setFontSize(10);
 
