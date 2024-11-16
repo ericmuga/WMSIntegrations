@@ -12,14 +12,17 @@ import { generateReceiptNo } from './Services/postReceipts.js';
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
 import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
-import { consumeBeheadingData } from './Services/Consumers/consumeBeheadingQueue.js';
+import { consumeBeheadingData,respondWithMockData } from './Services/Consumers/consumeBeheadingQueue.js';
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
+import { consumeCarcassSalesData } from './Services/Consumers/consumeCarcassSales.js';
+
 
 const app = express();
 app.use(express.json());
 
 app.get('/fetch-beheading-data', async (req, res) => {
   const beheadingData = await consumeBeheadingData();
+  // const beheadingData = 
   if (beheadingData) {
       res.json(beheadingData);
   } else {
@@ -29,11 +32,39 @@ app.get('/fetch-beheading-data', async (req, res) => {
 
 
 
+function mergeProductionOrders(arr1, arr2) {
+  const merged = [...arr1]; // Start with a copy of the first array
+
+  arr2.forEach(order2 => {
+      const existingOrder = merged.find(order1 => order1.production_order_no === order2.production_order_no);
+      
+      if (existingOrder) {
+          // If production_order_no exists, merge ProductionJournalLines
+          existingOrder.ProductionJournalLines.push(...order2.ProductionJournalLines);
+      } else {
+          // If not, add the entire order2 to merged array
+          merged.push(order2);
+      }
+  });
+
+  return merged;
+}
+
+
+
+
 app.get('/fetch-production-orders', async (req, res) => {
 
   const { date, item, production_order_no } = req.query;
-  // let productionOrders = generateProductionOrderData();
-  let productionOrders = await consumeBeheadingData();
+  // let productionOrders = respondWithMockData()
+  // let productionOrders = await consumeBeheadingData();
+     let beheadingData= await consumeBeheadingData(); 
+     let carcassSales= await consumeCarcassSalesData();
+     let trottersFromSow= respondWithMockData();
+
+  let productionOrders = mergeProductionOrders(beheadingData, trottersFromSow);
+  productionOrders = mergeProductionOrders(productionOrders, carcassSales);  
+
 
   if (date) {
     productionOrders = productionOrders.filter(order =>
@@ -95,6 +126,7 @@ app.get('/fetch-slaughter-data', async (req, res) => {
 
 app.post('/print-order', (req, res) => {
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+  
   return res.status(201).json({ message: 'success' });
 });
 

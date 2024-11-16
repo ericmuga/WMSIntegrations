@@ -6,7 +6,7 @@ export const consumeSlaughterData = async () => {
     const queueName = 'slaughter_line.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'slaughter_line.bc';
-    const batchSize = 20;
+    const batchSize = 10;
     const queueOptions = {
         durable: true,
         arguments: {
@@ -20,7 +20,7 @@ export const consumeSlaughterData = async () => {
     await channel.assertExchange(exchange, 'direct', { durable: true });
     await channel.assertQueue(queueName, queueOptions);
     await channel.bindQueue(queueName, exchange, routingKey);
-
+    channel.prefetch(10);
     logger.info(`Waiting for up to ${batchSize} messages in queue: ${queueName}`);
 
     const messages = [];
@@ -35,7 +35,7 @@ export const consumeSlaughterData = async () => {
         if (msg !== null) {
             try {
                 const slaughterData = JSON.parse(msg.content.toString());
-                logger.info(`Received Slaughter data: ${JSON.stringify(slaughterData)}`);
+                // logger.info(`Received Slaughter data: ${JSON.stringify(slaughterData)}`);
                 messages.push(slaughterData);
                 channel.ack(msg);
 

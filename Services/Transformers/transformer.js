@@ -1,7 +1,8 @@
 import { getProcessDetails, getProcessByProcessName } from './lookup.js';
 
 export const transformData = (responseData) => {
-  const dateTime = new Date().toISOString(); // Get current timestamp for date_time
+  // const dateTime = new Date().toISOString(); // Get current timestamp for date_time
+  const dateTime = new Date(responseData.timestamp).toISOString()|| new Date().toISOString(); // Get current timestamp for date_time
 
   // Check if responseData is an array, otherwise wrap it in an array
   const items = Array.isArray(responseData) ? responseData : [responseData];
@@ -41,7 +42,7 @@ export const transformData = (responseData) => {
           },
           {
             ItemNo: processDetails.intake_item,
-            Quantity: parseFloat(item.net_weight), // Convert string to number for Quantity
+            Quantity:Math.round((parseFloat(item.net_weight) / (1 - parseFloat(processDetails.process_loss))) * 100) / 100, // Convert string to number for Quantity
             uom: item.uom || "KG", // Assume default "KG" if not provided
             LocationCode: processDetails.input_location,
             BIN: item.bin || "",

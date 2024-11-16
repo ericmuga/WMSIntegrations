@@ -2,6 +2,7 @@ import { getRabbitMQConnection } from '../../config/default.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
 import { transformData } from '../Transformers/transformer.js';
 import fs from 'fs';
+import {generateProductionOrderNo} from '../Utils/generators.js';
 export const consumeBeheadingData = async () => {
     const queueName = 'production_data_order_beheading.bc';
     const exchange = 'fcl.exchange.direct';
@@ -74,3 +75,50 @@ export const consumeBeheadingData = async () => {
         throw error;
     }
 };
+
+
+
+
+
+export const respondWithMockData = () =>  mockData;
+
+const mockData = [
+    {
+        "production_order_no":generateProductionOrderNo(),
+        // "production_order_no": "P00_16137X",
+        "ItemNo": "G1243",
+        "Quantity": 22.2,
+        "uom": "KG",
+        "LocationCode": "1570",
+        "BIN": "",
+        "user": "77",
+        "line_no": 1000,
+        "routing": "production_order.bc",
+        "date_time": "2024-11-08T11:37:08.000Z",
+        "ProductionJournalLines": [
+            {
+                "ItemNo": "G1243",
+                "Quantity": 22.2,
+                "uom": "KG",
+                "LocationCode": "1570",
+                "BIN": "",
+                "line_no": 1000,
+                "type": "output",
+                "date_time": "2024-11-08T11:37:08.000Z",
+                "user": "77"
+            },
+            {
+                "ItemNo": "G0111",
+                "Quantity": 22.2,
+                "uom": "KG",
+                "LocationCode": "1020",
+                "BIN": "",
+                "line_no": 2000,
+                "type": "consumption",
+                "date_time": "2024-11-08T11:37:08.000Z",
+                "user": "77"
+            }
+        ]
+    }
+]
+
