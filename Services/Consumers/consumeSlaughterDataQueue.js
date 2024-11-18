@@ -6,7 +6,7 @@ export const consumeSlaughterData = async () => {
     const queueName = 'slaughter_line.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'slaughter_line.bc';
-    const batchSize = 10;
+    const batchSize = 20;
     const queueOptions = {
         durable: true,
         arguments: {

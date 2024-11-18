@@ -1,6 +1,6 @@
 // lookup.js
 
-const processLookup = {
+export const processLookup = {
   1: { 
       process_code: 0, 
       shortcode: "BP", 
@@ -9,7 +9,8 @@ const processLookup = {
       input_location: "1020", 
       output_location: "1570", 
       production_order_series: `P${String(0).padStart(2, '0')}`,
-      process_loss: 0.02 // 5% loss
+      // process_loss: 0.02 // 5% loss
+      process_loss: 0.00 // 5% loss
   },
   2: { 
       process_code: 1, 
@@ -19,17 +20,18 @@ const processLookup = {
       input_location: "1020", 
       output_location: "1570", 
       production_order_series: `P${String(1).padStart(2, '0')}`,
+      // process_loss: 0.04 // 4% loss
       process_loss: 0.04 // 4% loss
   },
   3: { 
       process_code: 2, 
       shortcode: "PB", 
-      process_name: "Breaking Pig (Leg, Mdl, Shld)", 
+      process_name: "Breaking Pig, (Leg, Mdl, Shld)", 
       intake_item: "G1030", 
       input_location: "1570", 
       output_location: "1570", 
       production_order_series: `P${String(2).padStart(2, '0')}`,
-      process_loss: 0.03 // 3% loss
+      process_loss: 0.00 // 3% loss
   },
   4: { 
       process_code: 3, 
@@ -49,7 +51,7 @@ const processLookup = {
       input_location: "1570", 
       output_location: "1570", 
       production_order_series: `P${String(4).padStart(2, '0')}`,
-      process_loss: 0.02 // 2% loss
+      process_loss: 0.00 // 2% loss
   },
   6: { 
       process_code: 5, 
@@ -59,7 +61,7 @@ const processLookup = {
       input_location: "1570", 
       output_location: "1570", 
       production_order_series: `P${String(5).padStart(2, '0')}`,
-      process_loss: 0.03 // 3% loss
+      process_loss: 0.00 // 3% loss
   },
   7: { 
       process_code: 6, 
@@ -69,7 +71,7 @@ const processLookup = {
       input_location: "1570", 
       output_location: "2570", 
       production_order_series: `P${String(6).padStart(2, '0')}`,
-      process_loss: 0.04 // 4% loss
+      process_loss: 0.00 // 4% loss
   },
   8: { 
       process_code: 7, 
@@ -81,6 +83,17 @@ const processLookup = {
       production_order_series: `P${String(7).padStart(2, '0')}`,
       process_loss: 0.05 // 5% loss
   },
+  9: { 
+    process_code: 8, 
+    shortcode: "SL", 
+    process_name: "Slicing parts for slices, portions", 
+    intake_item: "G1168", 
+    output_item: "G1211",
+    input_location: "1570", 
+    output_location: "1570", 
+    production_order_series: `P${String(8).padStart(2, '0')}`,
+    process_loss: 0.00 // 5% loss
+},
   11: { 
       process_code: 10, 
       shortcode: "FS", 
@@ -121,6 +134,8 @@ const processLookup = {
       production_order_series: `P${String(101).padStart(2, '0')}`,
       process_loss: 0.05 // 5% loss
   }
+  
+
 };
 
   

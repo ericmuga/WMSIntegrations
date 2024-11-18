@@ -1,16 +1,16 @@
 import { getRabbitMQConnection } from '../../config/default.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
-import { transformData } from '../Transformers/transformer.js';
+import { transformData } from '../Transformers/transformSlicing.js';
 
-export const consumeBreakingData = async () => {
-    const queueName = 'production_data_order_breaking.bc'
+export const consumeDeboningData = async () => {
+    const queueName = 'production_data_order_deboning.bc'
     const exchange = 'fcl.exchange.direct';
-    const routingKey = 'production_data_order_breaking.bc';
+    const routingKey = 'production_data_order_deboning.bc';
     const queueOptions = {
         durable: true,
         arguments: {
             'x-dead-letter-exchange': 'fcl.exchange.dlx',
-            'x-dead-letter-routing-key': 'production_data_order_breaking.bc'
+            'x-dead-letter-routing-key': 'production_data_order_deboning.bc'
         }
     };
 
@@ -29,11 +29,11 @@ export const consumeBreakingData = async () => {
             channel.consume(queueName, (msg) => {
                 if (msg !== null) {
                     try {
-                        const breakingData = JSON.parse(msg.content.toString());
-                        logger.info(`Received breaking data: ${JSON.stringify(breakingData)}`);
+                        const deboningData = JSON.parse(msg.content.toString());
+                        logger.info(`Received deboning data: ${JSON.stringify(deboningData)}`);
                         channel.ack(msg);
-                        // console.log(transformData(breakingData));
-                        resolve(transformData(breakingData));
+                        // console.log(transformData(deboningData));
+                        resolve(transformData(deboningData));
                         
                     } catch (parseError) {
                         logger.error(`Failed to parse message content: ${parseError.message}`);
@@ -51,8 +51,8 @@ export const consumeBreakingData = async () => {
         // await connection.close();
         return message;
     } catch (error) {
-        logger.error('Error consuming breaking data from RabbitMQ: ' + error.message);
+        logger.error('Error consuming deboning data from RabbitMQ: ' + error.message);
         throw error;
     }
 };
-// consumeBreakingData()
+consumeDeboningData();
