@@ -4,3 +4,8 @@ app.log
 todo.txt
 /pdf
 /printed
+/.idea/.gitignore
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml
+/.idea/WMSIntegrations.iml
