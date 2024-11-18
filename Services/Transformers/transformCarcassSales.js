@@ -12,6 +12,7 @@ export function transformData(input) {
             Quantity: parseFloat(input.receiver_total_weight),
             ItemNo: input.product_code,
             uom: "KG",
+
             LocationCode: input.transfer_from_location.toString(),
             BIN: "",
             user: "77",
@@ -104,4 +105,6 @@ export function transformData(input) {
             ]
         }
     ];
+
 }
+

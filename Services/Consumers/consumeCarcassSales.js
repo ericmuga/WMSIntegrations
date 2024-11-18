@@ -3,7 +3,6 @@ import logger from '../../logger.js'; // Assuming you have a logger module set u
 import { transformData } from '../Transformers/transformCarcassSales.js';
 import fs from 'fs';
 
-
 // export const consumeCarcassSalesData = async () => {
 //     const queueName = 'production_data_order_beheading.bc';
 //     const exchange = 'fcl.exchange.direct';

@@ -16,8 +16,8 @@ const generateTransferOrder = (maxItemsPerOrder = 5) => {
   const transfer_order_no = `TO${orderCounter++}`;
   
   // Set origin and destination codes
-  const transfer_from_code = "3535";
-  const transfer_to_code = "3600";
+  const transfer_from_code = "1570";
+  const transfer_to_code = "2055";
 
   // Set issuer and receiver
   const issuer = "EMUGA";

@@ -2,17 +2,20 @@ import { getProcessDetails, getProcessByProcessName } from './lookup.js';
 import logger from '../../logger.js';
 
 export const transformData = (responseData) => {
-  const dateTime = new Date().toISOString(); // Get current timestamp for date_time
+  // const dateTime = new Date().toISOString(); // Get current timestamp for date_time
+  const dateTime = new Date(responseData.timestamp).toISOString()|| new Date().toISOString(); // Get current timestamp for date_time
 
   // Check if responseData is an array, otherwise wrap it in an array
   const items = Array.isArray(responseData) ? responseData : [responseData];
+
   // logger.info(responseData);
   return [
     {
       
       production_order_no: getProcessByProcessName(items[0].process_name).production_order_series+'_'+responseData.id,
+
       ItemNo: responseData.item_code,
-      Quantity: responseData.net_weight,
+      Quantity: parseFloat(responseData.net_weight), // Convert string to number for Quantity
       uom: 'KG', // Default to "KG" if not provided
       LocationCode: getProcessByProcessName(responseData.process_name).output_location,
       BIN: "", // Default to empty if not provided
@@ -41,7 +44,7 @@ export const transformData = (responseData) => {
           },
           {
             ItemNo: processDetails.intake_item,
-            Quantity: parseFloat(item.net_weight), // Convert string to number for Quantity
+            Quantity:Math.round((parseFloat(item.net_weight) / (1 - parseFloat(processDetails.process_loss))) * 100) / 100, // Convert string to number for Quantity
             uom: item.uom || "KG", // Assume default "KG" if not provided
             LocationCode: processDetails.input_location,
             BIN: item.bin || "",

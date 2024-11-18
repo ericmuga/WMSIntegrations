@@ -1,0 +1,54 @@
+
+{
+    "order_no": "12345",
+    "ended_by": "user123",
+    "customer_no": "cust001",
+    "customer_name": "Customer A",
+    "shp_code": "SHP01",
+    "shp_name": "Shipping Location A",
+    "route_code": "NOT ROUTED",
+    "sp_code": "SP01",
+    "sp_name": "Salesperson Name",
+    "shp_date": "2023-10-25",
+    "assembler": "",
+    "checker": "",
+    "status": "Execute",
+    "pda":false,
+    "ending_time": "10:30",
+    "ending_date": "2023-10-25",
+    "ext_doc_no": "EXT123",
+    "company_flag": "FCL",
+    "lines": [
+      {
+        "line_no": 1,
+        "item_no": "ITM001",
+        "item_description": "Item Description A",
+        "customer_spec": "Spec A",
+        "posting_group": "Group A",
+        "part": "A",
+        "order_qty": 10,
+        "ass_qty": 0,
+        "exec_qty": 0,
+        "assembler": "",
+        "checker": "",
+        "barcode": "BC001",
+        "qty_base": 10
+      },
+      {
+        "line_no": 2,
+        "item_no": "ITM002",
+        "item_description": "Item Description A",
+        "customer_spec": "Spec A",
+        "posting_group": "Group A",
+        "part": "B",
+        "order_qty": 10,
+        "ass_qty": 0,
+        "exec_qty": 0,
+        "assembler": "",
+        "checker": "",
+        "barcode": "BC001",
+        "qty_base": 10
+      }
+    ]
+  }
+

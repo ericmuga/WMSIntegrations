@@ -11,6 +11,7 @@ import { generateTransferOrders } from './Services/transferOrderGenerator.js';
 // import { generateReceiptNo } from './Services/postReceipts.js'; 
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
+
 // import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
 import { consumeBeheadingData } from './Services/Consumers/consumeBeheadingQueue.js';
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
@@ -33,6 +34,7 @@ app.get('/fetch-beheading-data', async (req, res) => {
 });
 
 function mergeProductionOrders(arr1, arr2) {
+
   // Create a Map for quick lookup by production_order_no
   const mergedMap = new Map();
 
@@ -54,6 +56,7 @@ function mergeProductionOrders(arr1, arr2) {
   // Convert the Map back to an array
   return Array.from(mergedMap.values());
 }
+
 
 
 
@@ -87,12 +90,12 @@ app.get('/fetch-production-orders', async (req, res) => {
         .every(filterFn => filterFn(order))
     );
 
+
     res.json(productionOrders.flat());
   } catch (error) {
     console.error('Error fetching production orders:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-});
 
 
 app.get('/fetch-portal-orders', (req, res) => res.json(generateOrders(3, 5)));

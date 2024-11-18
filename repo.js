@@ -68,20 +68,20 @@ export const customers = [
   ];
   
   export const items = [
-    { item_code: "J31010101", description: "Pork Chipolatas 200gms", unit_of_measure: "PC" },
-    { item_code: "J31010102", description: "Pork Chipolatas 1kg", unit_of_measure: "PC" },
-    { item_code: "J31015501", description: "Beef Sausage Catering 1Kg", unit_of_measure: "PC" },
-    { item_code: "J31031702", description: "Beef Smokies Labless 1Kg", unit_of_measure: "PC" },
+    // { item_code: "G1030", description: "Pig Carcass (Two Sides)", unit_of_measure: "PC" },
+    // { item_code: "G1229", description: "Lean Pork", unit_of_measure: "PC" },
+    // { item_code: "J31015501", description: "Beef Sausage Catering 1Kg", unit_of_measure: "PC" },
+    // { item_code: "J31031702", description: "Beef Smokies Labless 1Kg", unit_of_measure: "PC" },
     { item_code: "J31031706", description: "Beef Smokies, 400gms Ex long", unit_of_measure: "PC" }
   ];
   
   export const locations = [
     {
-      code: "3535",
+      code: "1570",
       bins: []
     },
     {
-      code: "3600",
+      code: "2055",
       bins: []
     }];
 
