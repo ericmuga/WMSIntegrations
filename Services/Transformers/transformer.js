@@ -1,14 +1,16 @@
 import { getProcessDetails, getProcessByProcessName } from './lookup.js';
+import logger from '../../logger.js';
 
 export const transformData = (responseData) => {
   const dateTime = new Date().toISOString(); // Get current timestamp for date_time
 
   // Check if responseData is an array, otherwise wrap it in an array
   const items = Array.isArray(responseData) ? responseData : [responseData];
-
+  // logger.info(responseData);
   return [
     {
-      production_order_no: getProcessByProcessName(items[0].process_name).production_order_series+"-01",
+      
+      production_order_no: getProcessByProcessName(items[0].process_name).production_order_series+'_'+responseData.id,
       ItemNo: responseData.item_code,
       Quantity: responseData.net_weight,
       uom: 'KG', // Default to "KG" if not provided
@@ -44,7 +46,7 @@ export const transformData = (responseData) => {
             LocationCode: processDetails.input_location,
             BIN: item.bin || "",
             line_no: 2000, // Increment line_no by 1000 for each line
-            type: "intake",
+            type: "consumption",
             date_time: dateTime,
             user: item.user_id
           }

@@ -12,10 +12,11 @@ import { generateTransferOrders } from './Services/transferOrderGenerator.js';
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
 // import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
-import { consumeBeheadingData,respondWithMockData } from './Services/Consumers/consumeBeheadingQueue.js';
+import { consumeBeheadingData } from './Services/Consumers/consumeBeheadingQueue.js';
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
 import { printInit } from './Services/printerService.js'
 import { consumeCarcassSalesData } from './Services/Consumers/consumeCarcassSales.js';
+import { consumeBreakingData } from './Services/Consumers/consumeBreakingQueue.js';
 
 
 const app = express();
@@ -32,59 +33,67 @@ app.get('/fetch-beheading-data', async (req, res) => {
 });
 
 function mergeProductionOrders(arr1, arr2) {
-  const merged = [...arr1]; // Start with a copy of the first array
+  // Create a Map for quick lookup by production_order_no
+  const mergedMap = new Map();
 
-  arr2.forEach(order2 => {
-      const existingOrder = merged.find(order1 => order1.production_order_no === order2.production_order_no);
-      
-      if (existingOrder) {
-          // If production_order_no exists, merge ProductionJournalLines
-          existingOrder.ProductionJournalLines.push(...order2.ProductionJournalLines);
-      } else {
-          // If not, add the entire order2 to merged array
-          merged.push(order2);
-      }
+  // Add all orders from arr1 to the Map
+  arr1.forEach(order => {
+    mergedMap.set(order.production_order_no, { ...order });
   });
 
-  return merged;
+  // Merge orders from arr2 into the Map
+  arr2.forEach(order2 => {
+    if (mergedMap.has(order2.production_order_no)) {
+      const existingOrder = mergedMap.get(order2.production_order_no);
+      existingOrder.ProductionJournalLines.push(...order2.ProductionJournalLines);
+    } else {
+      mergedMap.set(order2.production_order_no, { ...order2 });
+    }
+  });
+
+  // Convert the Map back to an array
+  return Array.from(mergedMap.values());
 }
 
 
 
 
 app.get('/fetch-production-orders', async (req, res) => {
+  try {
+    const { date, item, production_order_no } = req.query;
 
-  const { date, item, production_order_no } = req.query;
-  // let productionOrders = respondWithMockData()
-  // let productionOrders = await consumeBeheadingData();
-     let beheadingData= await consumeBeheadingData(); 
-     let carcassSales= await consumeCarcassSalesData();
-     let trottersFromSow= respondWithMockData();
+    // Fetch all required datasets
+    const [breakingData, beheadingData, carcassSales] = await Promise.all([
+      consumeBreakingData(),
+      consumeBeheadingData(),
+      consumeCarcassSalesData(),
+    ]);
 
-  let productionOrders = mergeProductionOrders(beheadingData, trottersFromSow);
-  productionOrders = mergeProductionOrders(productionOrders, carcassSales);  
+    //Merge all datasets
+    let productionOrders = mergeProductionOrders(beheadingData, carcassSales);
+    productionOrders = mergeProductionOrders(productionOrders, breakingData);
+    // let productionOrders =consumeBeheadingData();
 
+    // Filter production orders based on query parameters
+    const filters = {
+      date: date && ((order) => order.date_time.startsWith(date)),
+      item: item && ((order) => order.ItemNo === item),
+      production_order_no: production_order_no && ((order) => order.production_order_no === production_order_no),
+    };
 
-  if (date) {
     productionOrders = productionOrders.filter(order =>
-      order.date_time.startsWith(date)
+      Object.values(filters)
+        .filter(Boolean) // Remove undefined filters
+        .every(filterFn => filterFn(order))
     );
-  }
 
-  if (item) {
-    productionOrders = productionOrders.filter(order =>
-      order.ItemNo === item
-    );
+    res.json(productionOrders.flat());
+  } catch (error) {
+    console.error('Error fetching production orders:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
-
-  if (production_order_no) {
-    productionOrders = productionOrders.filter(order =>
-      order.production_order_no === production_order_no
-    );
-  }
-
-  res.json(productionOrders.flat());
 });
+
 
 app.get('/fetch-portal-orders', (req, res) => res.json(generateOrders(3, 5)));
 app.get('/fetch-portal-invoices', (req, res) => res.json(generateInvoices(3, 5)));

@@ -22,7 +22,7 @@ const processLookup = {
     3: { 
       process_code: 2, 
       shortcode: "PB", 
-      process_name: "Breaking Pig (Leg, Mdl, Shld)", 
+      process_name: "Breaking Pig, (Leg, Mdl, Shld)", 
       intake_item: "G1030", 
       input_location: "1570", 
       output_location: "1570", 
