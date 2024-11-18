@@ -16,6 +16,7 @@ import { consumeBeheadingData,respondWithMockData } from './Services/Consumers/c
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
 import { printInit } from './Services/printerService.js'
 import { consumeCarcassSalesData } from './Services/Consumers/consumeCarcassSales.js';
+import { consumeBreakingData } from './Services/Consumers/consumeBreakingQueue.js';
 
 
 const app = express();
@@ -60,9 +61,11 @@ app.get('/fetch-production-orders', async (req, res) => {
      let beheadingData= await consumeBeheadingData(); 
      let carcassSales= await consumeCarcassSalesData();
      let trottersFromSow= respondWithMockData();
+     let breakingData= consumeBreakingData();
 
   let productionOrders = mergeProductionOrders(beheadingData, trottersFromSow);
   productionOrders = mergeProductionOrders(productionOrders, carcassSales);  
+  productionOrders = mergeProductionOrders(productionOrders, breakingData);
 
 
   if (date) {
