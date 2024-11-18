@@ -96,7 +96,7 @@ app.get('/fetch-production-orders', async (req, res) => {
     console.error('Error fetching production orders:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
-
+})
 
 app.get('/fetch-portal-orders', (req, res) => res.json(generateOrders(3, 5)));
 app.get('/fetch-portal-invoices', (req, res) => res.json(generateInvoices(3, 5)));
