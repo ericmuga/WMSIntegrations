@@ -8,10 +8,8 @@ import 'jspdf-autotable';
 import pkg from 'pdf-to-printer';
 import logger from '../logger.js';
 const { getPrinters, print: sendToPrinter } = pkg;
-import { defaultPrinter } from '../config/default.js';
-
-
-
+//import { defaultPrinter } from '../config/default.js';
+export const defaultPrinter = 'Microsoft Print to PDF (redirected 2)';
 
 const listPrinters = async () => {
     try {
@@ -97,68 +95,64 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
 doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' }) // TODO
 
     // ----------------Line----------------
-    doc.text('Order Date:', 10, 40)
-    doc.text(data.shp_date, 50, 40)
+    doc.text('Order Date:', 10, 38)
+    doc.text(data.shp_date, 50, 38)
 
-    doc.text('Sell To Address:', 120, 40)
-    doc.text(data.shp_name, 160, 40)
-
-    // ----------------Line----------------
-    doc.text('Order No.:', 10, 50)
-    doc.text(data.order_no, 50, 50)
-
-    doc.text('Load To Code:', 120, 50)
-    doc.text(data.sp_code, 160, 50)
+    doc.text('Sell To Address:', 120, 38)
+    doc.text(data.shp_name, 160, 38)
 
     // ----------------Line----------------
-    doc.text('Customer No.:', 10, 60)
-    doc.text(data.customer_no, 50, 60)
+    doc.text('Order No.:', 10, 46)
+    doc.text(data.order_no, 50, 46)
 
-    doc.text('', 120, 60)
-    doc.text(data.sp_name, 160, 60)
-
-    // ----------------Line----------------
-    doc.text('Customer Name:', 10, 70)
-    doc.text(data.customer_name, 50, 70)
-
-    doc.text('Delivery Date:', 120, 70)
-    doc.text(data.shp_date, 160, 70)
+    doc.text('Load To Code:', 120, 46)
+    doc.text(data.sp_code, 160, 46)
 
     // ----------------Line----------------
-    doc.text('External DocNo:', 10, 80)
-    doc.text(data.ext_doc_no, 50, 80)
+    doc.text('Customer No.:', 10, 54)
+    doc.text(data.customer_no, 50, 54)
 
-    doc.text('Ship To Name:', 120, 80)
-    doc.text(data.shp_name, 160, 80)
-
-    // ----------------Line----------------
-    doc.text('PDA Order:', 10, 90)
-    doc.text(data.pda ? 'Yes' : 'No', 50, 90)
-
-    doc.text('Cust Ref. No:', 120, 90)
-    doc.text('N/A', 160, 90)
+    doc.text('', 120, 54)
+    doc.text(data.sp_name, 160, 54)
 
     // ----------------Line----------------
-    doc.text('Order Receiver:', 10, 100)
-    doc.text(data.ended_by, 50, 100)
+    doc.text('Customer Name:', 10, 62)
+    doc.text(data.customer_name, 50, 62)
+
+    doc.text('Delivery Date:', 120, 62)
+    doc.text(data.shp_date, 160, 62)
 
     // ----------------Line----------------
-    doc.text('Your Ref:', 10, 110)
-    doc.text('N/A', 50, 110) 
+    doc.text('External DocNo:', 10, 70)
+    doc.text(data.ext_doc_no, 50, 70)
 
-    doc.text('Route:', 120, 110)
-    doc.text(data.route_code, 160, 110) 
+    doc.text('Ship To Name:', 120, 70)
+    doc.text(data.shp_name, 160, 70)
 
     // ----------------Line----------------
-    // doc.text('Location:', 10, 120)
-    // doc.text('3535', 50, 120) // TODO
+    doc.text('PDA Order:', 10, 78)
+    doc.text(data.pda ? 'Yes' : 'No', 50, 78)
+
+    doc.text('Cust Ref. No:', 120, 78)
+    doc.text('N/A', 160, 78)
+
+    // ----------------Line----------------
+    doc.text('Order Receiver:', 10, 86)
+    doc.text(data.ended_by, 50, 86)
+
+    // ----------------Line----------------
+    doc.text('Your Ref:', 10, 94)
+    doc.text('N/A', 50, 94)
+
+    doc.text('Route:', 120, 94)
+    doc.text(data.route_code, 160, 94)
 
     doc.setFontSize(8);
-    doc.text('Time Stamp:', 162, 130)
-    doc.text(Date.now().toString(), 200, 130, { align: 'right' })
+    doc.text('Time Stamp:', 162, 102)
+    doc.text(Date.now().toString(), 200, 102, { align: 'right' })
 
-    // doc.text('Serial No:', 175, 135)
-    // doc.text('1032279', 200, 135, { align: 'right' }) // TODO
+    // doc.text('Serial No:', 175, 107)
+    // doc.text('1032279', 200, 107, { align: 'right' }) // TODO
 
     doc.setFontSize(10);
 
@@ -181,7 +175,7 @@ doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
     doc.autoTable({
         head: [tableColumnNames],
         body: tableData,
-        startY: 140,
+        startY: 115,
         margin: { left: 5, top: 30, bottom: 80 },
         columnStyles: {
             0: { cellWidth: 20, fillColor: null, halign: 'center' },
