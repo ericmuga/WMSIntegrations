@@ -8,7 +8,7 @@ import 'jspdf-autotable';
 import pkg from 'pdf-to-printer';
 import logger from '../logger.js';
 const { getPrinters, print: sendToPrinter } = pkg;
-//import { defaultPrinter } from '../config/default.js';
+import { companyParameter } from '../config/default.js';
 export const defaultPrinter = 'Microsoft Print to PDF (redirected 2)';
 
 const listPrinters = async () => {
@@ -58,7 +58,7 @@ export const printInit = (data) => {
         createPDF(data, pdfDirPath, itemNo, part, lines);
     });
 
-    printFromFolder(pdfDirPath, printedDirPath,defaultPrinter)
+    printFromFolder(pdfDirPath, printedDirPath, defaultPrinter)
 }
 
 const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
@@ -85,14 +85,15 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     const availableParts = [...new Set(data.lines.map(line => line.part))];
     const partsText = availableParts.join('|');
 
+    const config = getCompanyConfig(data.company_flag.toLowerCase())
+
     doc.setFontSize(14);
     doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
     doc.setFontSize(12);
 
-    // const prefix = companyParameter.fcl // TODO
-    doc.text('DSP+0000563937', 25, 30) /* Prefix per company */
+    doc.text(`${config.parkingListPrefix}${data.order_no}`, 25, 30)
 
-doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' }) // TODO
+    doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' }) // TODO
 
     // ----------------Line----------------
     doc.text('Order Date:', 10, 38)
@@ -103,7 +104,7 @@ doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
 
     // ----------------Line----------------
     doc.text('Order No.:', 10, 46)
-    doc.text(data.order_no, 50, 46)
+    doc.text(`${config.orderPrefix}${data.order_no}`, 50, 46)
 
     doc.text('Load To Code:', 120, 46)
     doc.text(data.sp_code, 160, 46)
@@ -179,8 +180,8 @@ doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
         margin: { left: 5, top: 30, bottom: 80 },
         columnStyles: {
             0: { cellWidth: 20, fillColor: null, halign: 'center' },
-            1: { cellWidth: 50, fillColor: null, halign: 'center'  },
-            2: { cellWidth: 20, fillColor: null, halign: 'center'  },
+            1: { cellWidth: 50, fillColor: null, halign: 'center' },
+            2: { cellWidth: 20, fillColor: null, halign: 'center' },
             3: { cellWidth: 20, fillColor: null, halign: 'center' },
             4: { cellWidth: 20, fillColor: null, halign: 'center' },
             5: { cellWidth: 20, fillColor: null, halign: 'center' },
@@ -238,6 +239,15 @@ doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
     doc.save(filePath);
 };
 
+const getCompanyConfig = (flag) => {
+    let config
+    if (!flag)
+        companyParameter['fcl'];
+
+    config = companyParameter[flag];
+
+    return config;
+}
 
 
 export const printFromFolder = async (pdfDirPath, printedDirPath, printerName) => {
