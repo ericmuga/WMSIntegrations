@@ -1,12 +1,33 @@
 import amqp from 'amqplib';
 
+let connection = null;
+let channel = null;
+
+const getChannel = async () => {
+    if (!connection) {
+        connection = await amqp.connect('amqp://localhost');
+    }
+    if (!channel) {
+        channel = await connection.createChannel();
+    }
+    return channel;
+};
+
 export const getSerialNumber = async (queueName) => {
     try {
-        const connection = await amqp.connect('amqp://localhost');
-        const channel = await connection.createChannel();
+        const channel = await getChannel();
 
+        // Ensure the queue exists
         await channel.assertQueue(queueName, { durable: true });
 
+        // Check if the queue is empty and initialize if needed
+        const queueStatus = await channel.checkQueue(queueName);
+        if (queueStatus.messageCount === 0) {
+            console.log('Queue is empty. Initializing counter.');
+            await channel.sendToQueue(queueName, Buffer.from('1'), { persistent: true });
+        }
+
+        // Get the current counter from the queue
         const message = await channel.get(queueName, { noAck: false });
 
         if (message) {
@@ -24,17 +45,14 @@ export const getSerialNumber = async (queueName) => {
             channel.ack(message);
 
             console.log(`Generated Serial Number: ${serialNumber}`);
-            await channel.close();
-            await connection.close();
 
             return serialNumber;
         } else {
-            console.error('Queue is empty. Cannot generate serial number.');
-            await channel.close();
-            await connection.close();
+            console.error('Queue is empty even after initialization. Cannot generate serial number.');
             return null;
         }
     } catch (error) {
         console.error('Error generating serial number:', error.message);
+        throw error; // Re-throw error for better error handling in calling code
     }
 };
