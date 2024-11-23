@@ -86,6 +86,10 @@ export const transformData = (responseData) => {
         const netWeight = parseFloat(item.net_weight); // Ensure net weight is a number
         const adjustedQuantity = Math.round((netWeight / (1 - processDetails.process_loss)) * 100) / 100;
 
+        // Handle splitting intake items for the "Fat Stripping Rinds" process
+        const intakeItems = processDetails.intake_item.split(',');
+        const intakeQuantityPerItem = Math.round((adjustedQuantity / intakeItems.length) * 100) / 100;
+
         return [
           {
             ItemNo: item.item_code,
@@ -98,17 +102,17 @@ export const transformData = (responseData) => {
             date_time: dateTime,
             user: item.user_id || "EMUGA",
           },
-          {
-            ItemNo: processDetails.intake_item,
-            Quantity: adjustedQuantity, // Adjust for process loss
+          ...intakeItems.map((intakeItem, intakeIndex) => ({
+            ItemNo: intakeItem,
+            Quantity: intakeQuantityPerItem, // Divide quantity among intake items
             uom: "KG",
             LocationCode: processDetails.input_location,
             BIN: item.bin || "",
-            line_no: 2000 + index * 1000, // Increment line_no by 1000 for each line
+            line_no: 2000 + intakeIndex * 1000, // Increment line_no by 1000 for each intake line
             type: "consumption",
             date_time: dateTime,
             user: item.user_id || "EMUGA",
-          },
+          })),
         ];
       }),
     },

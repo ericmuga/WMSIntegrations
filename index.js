@@ -2,96 +2,92 @@
 
 import express from 'express';
 import logger from './logger.js';
-import { getRabbitMQConnection, rabbitmqConfig } from './config/default.js';
-import { generateProductionOrderData } from './Services/fetchProductionOrders.js';
 import { generateOrders } from './Services/fetchPortalOrders.js';
+
 import { groupOrdersByExtDocNo } from './Services/fetchBOTOrders.js';
 import { generateTransferOrders } from './Services/transferOrderGenerator.js';
-import { generateSlaughterData } from './Services/fetchSlaughterLines.js';
-import { generateReceiptNo } from './Services/postReceipts.js'; 
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
-import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
-import { consumeBeheadingData,respondWithMockData } from './Services/Consumers/consumeBeheadingQueue.js';
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
-import { printInit } from './Services/printerService.js'
-import { consumeCarcassSalesData } from './Services/Consumers/consumeCarcassSales.js';
+import { consumeBeheadingData} from './Services/Consumers/consumeBeheadingQueue.js';
+import { consumeCarcassSales } from './Services/Consumers/consumeCarcassSales.js';
 import { consumeBreakingData } from './Services/Consumers/consumeBreakingQueue.js';
 import { consumeDeboningData } from './Services/Consumers/consumeDeboningQueue.js';
-
+import { printInit } from './Services/printerService.js'
+import { generateReturnOrders } from './Services/fetchReturnOrders.js';
+import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 
 const app = express();
-app.use(express.json());
 
-app.get('/fetch-beheading-data', async (req, res) => {
-  const beheadingData = await consumeBeheadingData();
-  // const beheadingData = 
-  if (beheadingData) {
-      res.json(beheadingData);
-  } else {
-      res.status(404).json({ error: 'No butchery data available.' });
+
+app.get('/fetch-executed-lines', async (req, res) => {
+  const { order_no } = req.query; // Extract optional order_no parameter
+
+  try {
+    const salesLines = await fetchOrderLines(order_no); // Call the reusable function
+    res.json(salesLines);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
-function mergeProductionOrders(arr1, arr2) {
-  const merged = [...arr1]; // Start with a copy of the first array
-
-  arr2.forEach(order2 => {
-      const existingOrder = merged.find(order1 => order1.production_order_no === order2.production_order_no);
-      
-      if (existingOrder) {
-          // If production_order_no exists, merge ProductionJournalLines
-          existingOrder.ProductionJournalLines.push(...order2.ProductionJournalLines);
-      } else {
-          // If not, add the entire order2 to merged array
-          merged.push(order2);
-      }
-  });
-
-  return merged;
-}
 
 
+app.post('/post-shipment', (req, res) => {
+
+  logger.info(`Received shipment data: ${JSON.stringify(req.body)}`);
+  return res.status(201).json({ message: 'success' });
+});
+
+app.get('/fetch-return-orders', (req, res) => {
+  const numOrders = parseInt(req.query.numOrders) || 3;
+  const maxItemsPerOrder = parseInt(req.query.maxItemsPerOrder) || 5;
+
+  // Directly extract query parameters without validation
+  const filters = {
+    customer: req.query.customer, // Customer filter
+    shipment_date: req.query.shipment_date, // Shipment date filter
+    salesperson: req.query.salesperson, // Salesperson filter
+    load_to_code: req.query.load_to_code, // Ship-to code filter
+    status: req.query.status || "Pending", // Default status
+    rf_no_prefix: req.query.rf_no_prefix || "RF", // RF prefix
+  };
+
+  // Generate orders with filters
+  const returnOrders = generateReturnOrders(numOrders, maxItemsPerOrder, filters);
+  res.json(returnOrders);
+
+});
 
 
 app.get('/fetch-production-orders', async (req, res) => {
-
-  const { date, item, production_order_no } = req.query;
-  // let productionOrders = respondWithMockData()
-  // let productionOrders = await consumeBeheadingData();
-     let beheadingData= await consumeBeheadingData(); 
-     let carcassSales= await consumeCarcassSalesData();
-     let trottersFromSow= respondWithMockData();
+  
+     const mergeProductionOrders = (...arrays) => arrays.flat();
+     const { date, item, production_order_no } = req.query;
+     let beheadingData= await consumeBeheadingData();
+     let carcassSales=await consumeCarcassSales(); 
      let breakingData= await consumeBreakingData();
-     let DeboningData= await consumeDeboningData();
-    // logger.info(JSON.stringify(breakingData))
+     let deboningData= await consumeDeboningData();
+     let productionOrders = mergeProductionOrders(beheadingData,carcassSales,breakingData,deboningData);
+     if (date) {
+        productionOrders = productionOrders.filter(order =>
+          order.date_time.startsWith(date)
+        );
+      }
+    
+      if (item) {
+        productionOrders = productionOrders.filter(order =>
+          order.ItemNo === item
+        );
+      }
+    
+      if (production_order_no) {
+        productionOrders = productionOrders.filter(order =>
+          order.production_order_no === production_order_no
+        );
+      }
 
-  let productionOrders = mergeProductionOrders(beheadingData, breakingData);
-  // productionOrders = mergeProductionOrders(productionOrders, carcassSales);  
-  productionOrders = mergeProductionOrders(productionOrders, DeboningData);  
-  // let productionOrders =[ breakingData];
-  // productionOrders = breakingData;
-
-
-  if (date) {
-    productionOrders = productionOrders.filter(order =>
-      order.date_time.startsWith(date)
-    );
-  }
-
-  if (item) {
-    productionOrders = productionOrders.filter(order =>
-      order.ItemNo === item
-    );
-  }
-
-  if (production_order_no) {
-    productionOrders = productionOrders.filter(order =>
-      order.production_order_no === production_order_no
-    );
-  }
-
-  res.json(productionOrders.flat());
+      res.json(productionOrders.flat());
 });
 
 app.get('/fetch-portal-orders', (req, res) => res.json(generateOrders(3, 5)));
@@ -133,6 +129,11 @@ app.post('/print-order', (req, res) => {
   
   printInit(req.body)
   
+  return res.status(201).json({ message: 'success' });
+});
+
+app.post('/order-status', (req, res) => {
+  logger.info(`Received order status update: ${JSON.stringify(req.body)}`);
   return res.status(201).json({ message: 'success' });
 });
 

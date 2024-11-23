@@ -72,6 +72,9 @@ export function generateOrders(numOrders = 3, maxItemsPerOrder = 5) {
   return orders;
 }
 
+
+
+
 // Example usage
 // const generatedOrders = generateOrders(3, 5);
 // console.log(JSON.stringify(generatedOrders, null, 2));

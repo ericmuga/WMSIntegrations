@@ -69,7 +69,7 @@ export const processLookup = {
       process_name: "Debone Pork Shoulder", 
       intake_item: "G1101", 
       input_location: "1570", 
-      output_location: "2570", 
+      output_location: "1570", 
       production_order_series: `P${String(6).padStart(2, '0')}`,
       process_loss: 0.00 // 4% loss
   },
@@ -98,19 +98,19 @@ export const processLookup = {
       process_code: 10, 
       shortcode: "FS", 
       process_name: "Fat Stripping Rinds", 
-      intake_item: "Pork Fat Rinds", 
-      input_location: "LOC011", 
-      output_location: "LOC021", 
+      intake_item: "G1101,G1102,G1100", 
+      input_location: "1570", 
+      output_location: "1570", 
       production_order_series: `P${String(10).padStart(2, '0')}`,
-      process_loss: 0.07 // 7% loss
+      process_loss: 0.00 // 7% loss
   },
   10005: { 
       process_code: 17, 
       shortcode: "DSM", 
       process_name: "Debone Sow Middle", 
       intake_item: "G1110", 
-      input_location: "LOC018", 
-      output_location: "LOC028", 
+      input_location: "1570", 
+      output_location: "1570", 
       production_order_series: `P${String(9).padStart(2, '0')}`,
       process_loss: 0.04 // 4% loss
   },
@@ -119,8 +119,8 @@ export const processLookup = {
       shortcode: "DSS", 
       process_name: "Debone Sow Shoulder", 
       intake_item: "G1109", 
-      input_location: "LOC019", 
-      output_location: "LOC029", 
+      input_location: "1570", 
+      output_location: "1570", 
       production_order_series: `P${String(8).padStart(2, '0')}`,
       process_loss: 0.03 // 3% loss
   },
@@ -129,8 +129,8 @@ export const processLookup = {
       shortcode: "D/B", 
       process_name: "Deboning Beef", 
       intake_item: "Deboned Beef", 
-      input_location: "LOC020", 
-      output_location: "LOC030", 
+      input_location: "1570", 
+      output_location: "1570", 
       production_order_series: `P${String(101).padStart(2, '0')}`,
       process_loss: 0.05 // 5% loss
   }
