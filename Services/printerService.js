@@ -9,6 +9,8 @@ import pkg from 'pdf-to-printer';
 import logger from '../logger.js';
 const { getPrinters, print: sendToPrinter } = pkg;
 import { companyParameter } from '../config/default.js';
+import { getSerialNumber } from './serialNumberCounter.js';
+
 export const defaultPrinter = 'Microsoft Print to PDF (redirected 2)';
 
 const listPrinters = async () => {
@@ -61,7 +63,7 @@ export const printInit = (data) => {
     printFromFolder(pdfDirPath, printedDirPath, defaultPrinter)
 }
 
-const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
+const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const fileName = `${itemNo}_${part}.pdf`;
     const filePath = path.join(pdfDirPath, fileName);
 
@@ -93,7 +95,7 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
 
     doc.text(`${config.parkingListPrefix}${data.order_no}`, 25, 30)
 
-    doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' }) // TODO
+    doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
 
     // ----------------Line----------------
     doc.text('Order Date:', 10, 38)
@@ -152,8 +154,17 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     doc.text('Time Stamp:', 162, 102)
     doc.text(Date.now().toString(), 200, 102, { align: 'right' })
 
-    // doc.text('Serial No:', 175, 107)
-    // doc.text('1032279', 200, 107, { align: 'right' }) // TODO
+    const serial = await getSerialNumber('serial_number_counter')
+        .catch((error) => {
+            console.error('Error fetching serial number:', error.message);
+
+            return 'DOC-00000000'; // Fallback value
+        });
+        
+    console.log(serial)
+
+    doc.text('Serial No:', 165, 107)
+    doc.text(`${serial}`, 200, 107, { align: 'right' })
 
     doc.setFontSize(10);
 
