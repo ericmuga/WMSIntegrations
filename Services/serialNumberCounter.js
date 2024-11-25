@@ -1,5 +1,5 @@
 import { Mutex } from 'async-mutex';
-import amqp from 'amqplib';
+import { getRabbitMQConnection } from '../config/default.js';
 
 let connection = null;
 let channel = null;
@@ -8,7 +8,7 @@ const mutex = new Mutex();
 
 const getChannel = async () => {
     if (!connection) {
-        connection = await amqp.connect('amqp://localhost');
+        connection = await getRabbitMQConnection();
     }
     if (!channel) {
         channel = await connection.createChannel();

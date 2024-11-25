@@ -15,7 +15,7 @@ import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService
 // import { isValidDate,isPositiveNumber,isNonEmptyString,validateOrder,validateLine } from './Services/helper.js';
 import { consumeBeheadingData } from './Services/Consumers/consumeBeheadingQueue.js';
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
-import { printInit } from './Services/printerService.js'
+import { initPrinting } from './Services/printerService.js'
 import { consumeCarcassSalesData } from './Services/Consumers/consumeCarcassSales.js';
 import { consumeBreakingData } from './Services/Consumers/consumeBreakingQueue.js';
 
@@ -56,10 +56,6 @@ function mergeProductionOrders(arr1, arr2) {
   // Convert the Map back to an array
   return Array.from(mergedMap.values());
 }
-
-
-
-
 
 app.get('/fetch-production-orders', async (req, res) => {
   try {
@@ -133,9 +129,7 @@ app.get('/fetch-slaughter-data', async (req, res) => {
 });
 
 app.post('/print-order', (req, res) => {
-  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
-  
-  printInit(req.body)
+  initPrinting(req.body)
   
   return res.status(201).json({ message: 'success' });
 });
