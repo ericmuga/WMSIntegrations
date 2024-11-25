@@ -155,12 +155,12 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     doc.text(Date.now().toString(), 200, 102, { align: 'right' })
 
     const serial = await getSerialNumber('serial_number_counter')
-        .catch((error) => {
+        .catch(error => {
             console.error('Error fetching serial number:', error.message);
 
             return 'DOC-00000000'; // Fallback value
         });
-        
+
     console.log(serial)
 
     doc.text('Serial No:', 165, 107)
