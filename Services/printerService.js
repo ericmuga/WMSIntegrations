@@ -27,6 +27,8 @@ const listPrinters = async () => {
 
 export const printInit = (data) => {
     // Resolve __dirname in ES module
+    // console.log('data',data)
+logger.info('Printing Initiated',data)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 

@@ -18,6 +18,7 @@ import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 
 const app = express();
+app.use(express.json());
 
 
 app.get('/fetch-executed-lines', async (req, res) => {
@@ -124,13 +125,15 @@ app.get('/fetch-slaughter-data', async (req, res) => {
   }
 });
 
-app.post('/print-order', (req, res) => {
+
+app.post('/print-order', (req,res) => {
+  //console.log(req)
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
-  
-  printInit(req.body)
-  
+  printInit(req.body);
   return res.status(201).json({ message: 'success' });
+
 });
+
 
 app.post('/order-status', (req, res) => {
   logger.info(`Received order status update: ${JSON.stringify(req.body)}`);
