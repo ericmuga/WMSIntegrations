@@ -190,14 +190,14 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
         startY: 115,
         margin: { left: 5, top: 30, bottom: 80 },
         columnStyles: {
-            0: { cellWidth: 20, fillColor: null, halign: 'center' },
-            1: { cellWidth: 50, fillColor: null, halign: 'center' },
+            0: { cellWidth: 40, fillColor: null, halign: 'center' },
+            1: { cellWidth: 30, fillColor: null, halign: 'center' },
             2: { cellWidth: 20, fillColor: null, halign: 'center' },
             3: { cellWidth: 20, fillColor: null, halign: 'center' },
             4: { cellWidth: 20, fillColor: null, halign: 'center' },
             5: { cellWidth: 20, fillColor: null, halign: 'center' },
             6: { cellWidth: 20, fillColor: null, halign: 'center' },
-            7: { cellWidth: 30, fillColor: null, halign: 'left' },
+            7: { cellWidth: 25, fillColor: null, halign: 'left' },
         },
         headStyles: {
             fillColor: null,
