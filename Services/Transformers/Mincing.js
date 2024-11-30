@@ -4,7 +4,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2001",
     "output_description": "Minced Bck/Sft/Ckg/Bef/Fla Fat",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1232",
       "G1234",
@@ -16,7 +16,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2002",
     "output_description": "Minced Bacon Pieces",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1287",
       "G1539"
@@ -27,7 +27,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2002",
     "output_description": "Minced Bacon Pieces",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G4408",
       "G4451"
@@ -38,7 +38,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2004",
     "output_description": "Minced Blood Meat",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1227",
       "G1470"
@@ -49,7 +49,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2005",
     "output_description": "Minced Lean Pork ",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1291",
       "G1121",
@@ -61,7 +61,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2007",
     "output_description": "Minced Rinds",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1269",
       "G1270",
@@ -74,7 +74,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2008",
     "output_description": "Minced Semi Lean",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1230"
     ]
@@ -84,7 +84,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2009",
     "output_description": "Minced Staff Meat (Beef Cuts)",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1440",
       "G1442",
@@ -114,7 +114,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2014",
     "output_description": "Minced Semi Lean [Imported]",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1296"
     ]
@@ -124,7 +124,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2019",
     "output_description": "Minced Pork Heart",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1237"
     ]
@@ -134,7 +134,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2021",
     "output_description": "Minced Pork Liver",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1239"
     ]
@@ -144,7 +144,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2022",
     "output_description": "Minced Pork Kidney & Hearts",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1238"
     ]
@@ -154,7 +154,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2025",
     "output_description": "Minced Ox-head Meat",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1570"
     ]
@@ -164,7 +164,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2038",
     "output_description": "Minced Mutton",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1933"
     ]
@@ -174,7 +174,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2041",
     "output_description": "Minced Ox Heart",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1572"
     ]
@@ -184,7 +184,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2042",
     "output_description": "Minced Ref Lamb Meat",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1938",
       "G1980"
@@ -195,7 +195,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2044",
     "output_description": "Minced Imp Lean Pork 4 Smokies",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G1338"
     ]
@@ -205,7 +205,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2054",
     "output_description": "Minced Beef For Java",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G5506",
       "G5512",
@@ -219,7 +219,7 @@ export const mincLookup=[
     "to": 2005,
     "output_item": "G2055",
     "output_description": "Minced Krainer Meat Base",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G2011",
       "G8901"
@@ -230,7 +230,7 @@ export const mincLookup=[
     "to": 2005,
     "output_item": "G2055",
     "output_description": "Minced Krainer Meat Base",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "H231024",
       "H231026",
@@ -242,7 +242,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2295",
     "output_description": "Minced Beef Square Café Mix",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "G2001",
       "G2009"
@@ -253,7 +253,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2295",
     "output_description": "Minced Beef Square Café Mix",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "H221016"
     ]
@@ -263,7 +263,7 @@ export const mincLookup=[
     "to": 2055,
     "output_item": "G2295",
     "output_description": "Minced Beef Square Café Mix",
-    "process_loss": null,
+    "process_loss": 0.05,
     "intake_items": [
       "H231002"
     ]
