@@ -18,6 +18,7 @@ import { printInit } from './Services/printerService.js'
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateMtn,generateResponse } from './Services/QRCode.js';
+import { consumeButcheryToSausageTransfers } from './Services/Consumers/consumeTransfersButcheryToSausage.js';
 
 const app = express();
 app.use(express.json());
