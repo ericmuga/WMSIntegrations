@@ -53,7 +53,7 @@ export const consumeDeboningData = async () => {
                         const deboningData = JSON.parse(msg.content.toString());
                         logger.info(`Received deboning data: ${JSON.stringify(deboningData)}`);
                         messages.push(transformData(deboningData)); // Transform and add message data
-                        // channel.ack(msg);
+                        channel.ack(msg);
 
                         // If batch size is reached, resolve the promise
                         if (messages.length >= batchSize) {
@@ -92,11 +92,11 @@ export const consumeDeboningData = async () => {
     }
 };
 
-(async () => {
-    try {
-        const data = await consumeDeboningData();
-        console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-    } catch (error) {
-        console.error('Error processing deboning data:', error.message);
-    }
-})();
+// (async () => {
+//     try {
+//         const data = await consumeDeboningData();
+//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error processing deboning data:', error.message);
+//     }
+// })();
