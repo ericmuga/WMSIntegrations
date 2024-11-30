@@ -24,7 +24,7 @@ export const transformData = (responseData) => {
   const orderNo = responseData.id ? responseData.id.toString() : "no_order_no";
 
   // List of item codes that trigger an additional production order
-  const specialItemCodes = ["G1126", "G1164", "G1189", "G1229"];
+  const specialItemCodes = ["G1126", "G1164", "G1189", "G1229","G1319"];
 
   return items.flatMap((item, index) => {
     let processDetails = DebeoningLookup(item.process_name);

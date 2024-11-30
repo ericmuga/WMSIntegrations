@@ -40,8 +40,11 @@ export const consumeAndRepublishData = async () => {
                         } = messageData;
 
                         // Interpret special cases
-                        if (transfer_from_location === null) {
+                        if (transfer_from_location === null || transfer_from_location.startsWith('B')) {
                             transfer_from_location = 'CM';
+                        }
+                        if (transfer_to_location === null || transfer_to_location.startsWith('B')) {
+                            transfer_to_location = 'CM';
                         }
                         if (transfer_from_location === '' && transfer_to_location === '') {
                             transfer_from_location = '2055';
