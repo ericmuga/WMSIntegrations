@@ -13,12 +13,18 @@ import { consumeBeheadingData} from './Services/Consumers/consumeBeheadingQueue.
 import { consumeCarcassSales } from './Services/Consumers/consumeCarcassSales.js';
 import { consumeBreakingData } from './Services/Consumers/consumeBreakingQueue.js';
 import { consumeDeboningData } from './Services/Consumers/consumeDeboningQueue.js';
+import { consumechoppingData } from './Services/Consumers/consumeChoppingData.js';
 import { printInit } from './Services/printerService.js'
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
+import { generateMtn,generateResponse } from './Services/QRCode.js';
 
 const app = express();
 app.use(express.json());
+
+app.get('/generate-mtn',async(req,res)=>{
+  res.json(generateResponse());
+});
 
 
 app.get('/fetch-executed-lines', async (req, res) => {
@@ -69,7 +75,10 @@ app.get('/fetch-production-orders', async (req, res) => {
      let carcassSales=await consumeCarcassSales(); 
      let breakingData= await consumeBreakingData();
      let deboningData= await consumeDeboningData();
+    //  let choppingData=await consumechoppingData();
      let productionOrders = mergeProductionOrders(beheadingData,carcassSales,breakingData,deboningData);
+    //  let productionOrders = breakingData;
+     
      if (date) {
         productionOrders = productionOrders.filter(order =>
           order.date_time.startsWith(date)
@@ -171,6 +180,9 @@ app.post('/production-order-error', async (req, res) => {
     res.status(500).send('Failed to send production order error.');
   }
 });
+
+
+
 
 
 

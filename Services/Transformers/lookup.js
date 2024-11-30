@@ -20,7 +20,6 @@ export const processLookup = {
       input_location: "1020", 
       output_location: "1570", 
       production_order_series: `P${String(1).padStart(2, '0')}`,
-      // process_loss: 0.04 // 4% loss
       process_loss: 0.04 // 4% loss
   },
   3: { 
@@ -140,7 +139,8 @@ export const processLookup = {
 
   
   export const getProcessDetails = (processId) => {
-    return processLookup[processId] || null;
+    return Object.values(processLookup).find((process) => process.process_code === processId) || null;
+    // return processLookup[processId] || null;
   };
   
   export const getProcessByShortCode = (shortCode) => {

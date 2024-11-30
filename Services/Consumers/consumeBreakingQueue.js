@@ -1,21 +1,27 @@
 import { getRabbitMQConnection } from '../../config/default.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
-import { transformData } from '../Transformers/transformer.js';
+import { transformData } from '../Transformers/breakingTransformer.js';
 
 export const consumeBreakingData = async () => {
-    const queueName = 'production_data_order_breaking.bc.dl';
-    const exchange = 'fcl.exchange.dlx';
+    const queueName = 'production_data_order_breaking.bc';
+    const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_breaking.bc';
     const batchSize = 10; // Set batch size here
     const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
+    
     const queueOptions = {
         durable: true,
+        arguments: {
+            'x-dead-letter-exchange': 'fcl.exchange.dlx',
+            'x-dead-letter-routing-key': 'production_data_order_breaking.bc',
+        },
     };
 
     try {
         const connection = await getRabbitMQConnection();
         const channel = await connection.createChannel();
 
+        // await channel.assertExchange(exchange, 'direct', { durable: true });
         await channel.assertExchange(exchange, 'direct', { durable: true });
         await channel.assertQueue(queueName, queueOptions);
         await channel.bindQueue(queueName, exchange, routingKey);
@@ -80,3 +86,6 @@ export const consumeBreakingData = async () => {
         throw error;
     }
 };
+
+
+
