@@ -1,4 +1,4 @@
-export const mincLookup=[
+export const minceLookup=[
   {
     "from": 1570,
     "to": 2055,
@@ -86,6 +86,8 @@ export const mincLookup=[
     "output_description": "Minced Staff Meat (Beef Cuts)",
     "process_loss": 0.05,
     "intake_items": [
+      "G1468",
+      "G1230",
       "G1440",
       "G1442",
       "G1443",

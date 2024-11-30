@@ -1,62 +1,67 @@
 import { minceLookup } from './Mincing.js';
 
-const PROCESS_PREFIX = "mn"; // Constant for the process prefix
+const PROCESS_PREFIX = "MC"; // Constant for the process prefix
 
 export const transformData = (responseData) => {
-  const dateTime = new Date(responseData.production_date || Date.now()).toISOString(); // Use provided production_date or current timestamp
+  // Ensure the input is an array
+  const dataArray = Array.isArray(responseData) ? responseData : [responseData];
 
-  // Find the matching lookup entry
-  const lookupEntry = minceLookup.find(
-    (entry) =>
-      entry.from.toString() === responseData.transfer_from_location &&
-      entry.to.toString() === responseData.transfer_to_location &&
-      entry.intake_items.includes(responseData.product_code)
-  );
+  return dataArray.map((data) => {
+    const dateTime = new Date(data.production_date || Date.now()).toISOString(); // Use provided production_date or current timestamp
 
-  if (!lookupEntry) {
-    throw new Error(`No matching entry found in minceLookup for product_code: ${responseData.product_code}`);
-  }
+    const lookupEntry = minceLookup.find((entry) => {
+      const matchesFrom = parseInt(entry.from) === parseInt(data.transfer_from_location);
+      const matchesTo = parseInt(entry.to) === parseInt(data.transfer_to_location);
+      const matchesProduct = entry.intake_items.includes(data.product_code.trim());
 
-  const intakeQuantity = parseFloat(responseData.receiver_total_weight); // Convert string weight to number
-  const outputQuantity = Math.round((1 - lookupEntry.process_loss) * intakeQuantity * 100) / 100; // Calculate and round output quantity
+      return matchesFrom && matchesTo && matchesProduct;
+    });
 
-  const orderId = responseData.id ? responseData.id.toString() : "no_id"; // Use provided id or fallback
-
-  return [
-    {
-      production_order_no: `${PROCESS_PREFIX}_${orderId}`, // Construct production order number
-      Quantity: outputQuantity, // Output quantity
-      uom: 'KG', // Default to "KG"
-      LocationCode: responseData.transfer_to_location, // Output location
-      BIN: '', // Default BIN to empty
-      user: responseData.received_by || "DEFAULT", // Use received_by or default
-      line_no: 1000, // Default line number
-      routing: "production_order.bc", // Default routing
-      date_time: dateTime,
-      ProductionJournalLines: [
-        {
-          ItemNo: responseData.product_code, // Intake item from data
-          Quantity: intakeQuantity, // Intake quantity
-          uom: 'KG', // Default to "KG"
-          LocationCode: responseData.transfer_from_location, // Intake location
-          BIN: '', // Default BIN to empty
-          line_no: 1000, // Line number for intake
-          type: "consumption",
-          date_time: dateTime,
-          user: responseData.received_by || "DEFAULT"
-        },
-        {
-          ItemNo: lookupEntry.output_item, // Output item from lookup
-          Quantity: outputQuantity, // Output quantity
-          uom: 'KG', // Default to "KG"
-          LocationCode: responseData.transfer_to_location, // Output location
-          BIN: '', // Default BIN to empty
-          line_no: 2000, // Line number for output
-          type: "output",
-          date_time: dateTime,
-          user: responseData.received_by || "DEFAULT"
-        }
-      ]
+    if (!lookupEntry) {
+      console.warn(`No matching entry found in minceLookup for product_code: ${data.product_code}`);
+      return null; // Skip this item if no match is found
     }
-  ];
+
+    const intakeQuantity = parseFloat(data.receiver_total_weight); // Convert string weight to number
+    const outputQuantity = Math.round((1 - lookupEntry.process_loss) * intakeQuantity * 100) / 100; // Calculate and round output quantity
+    const orderId = data.id ? data.id.toString() : Date.now().toString(); // Use provided id or fallback
+
+    return {
+        production_order_no: `${PROCESS_PREFIX}_${orderId}`,
+        Quantity: outputQuantity,
+        uom: 'KG',
+        ItemNo: lookupEntry.output_item,
+        LocationCode: data.transfer_to_location,
+        BIN: '',
+        user: data.received_by || "DEFAULT",
+        line_no: 1000,
+        routing: "production_order.bc",
+        date_time: dateTime,
+        ProductionJournalLines: [
+          {
+            ItemNo: data.product_code.trim(),
+            Quantity: intakeQuantity,
+            uom: 'KG',
+            LocationCode: data.transfer_from_location,
+            BIN: '',
+            line_no: 1000,
+            type: "consumption",
+            date_time: dateTime,
+            user: data.received_by || "DEFAULT"
+          },
+          {
+            ItemNo: lookupEntry.output_item,
+            Quantity: outputQuantity,
+            uom: 'KG',
+            LocationCode: data.transfer_to_location,
+            BIN: '',
+            line_no: 2000,
+            type: "output",
+            date_time: dateTime,
+            user: data.received_by || "DEFAULT"
+          }
+        ]
+      };
+      
+  }).filter((result) => result !== null); // Remove null entries
 };

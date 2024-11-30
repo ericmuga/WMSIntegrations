@@ -1,15 +1,14 @@
 import { getRabbitMQConnection } from '../../config/default.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
-import { transformData } from '../Transformers/breakingTransformer.js';
-import { minceLookup } from '../Transformers/Mincing.js';
+import { transformData } from '../Transformers/mincingTransformer.js';
 
 export const consumeButcheryToSausageTransfers = async () => {
     const queueName = 'transfer_from_1570_to_2055';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'transfer_from_1570_to_2055';
-    const batchSize = 2; // Set batch size here
+    const batchSize = 10; // Set batch size here
     const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
-    
+
     const queueOptions = {
         durable: true,
         arguments: {
@@ -22,7 +21,6 @@ export const consumeButcheryToSausageTransfers = async () => {
         const connection = await getRabbitMQConnection();
         const channel = await connection.createChannel();
 
-        // await channel.assertExchange(exchange, 'direct', { durable: true });
         await channel.assertExchange(exchange, 'direct', { durable: true });
         await channel.assertQueue(queueName, queueOptions);
         await channel.bindQueue(queueName, exchange, routingKey);
@@ -41,11 +39,11 @@ export const consumeButcheryToSausageTransfers = async () => {
             batchResolve = resolve;
         });
 
-        // Set a timeout to resolve with an empty array if no messages are received
+        // Set a timeout to resolve with the collected messages
         batchTimeout = setTimeout(() => {
-            if (messages.length === 0) {
-                logger.info('No messages received within the timeout period');
-                batchResolve([]);
+            if (messages.length > 0) {
+                logger.info('Timeout reached, resolving with partial batch');
+                batchResolve(messages);
             }
         }, timeout);
 
@@ -58,44 +56,25 @@ export const consumeButcheryToSausageTransfers = async () => {
                         const transferData = JSON.parse(msg.content.toString());
                         logger.info(`Received transfer data: ${JSON.stringify(transferData)}`);
 
-                        //if items in the transfer push and ack else do nothing
+                        const transformedData = transformData(transferData);
 
-                        const lookupEntry = minceLookup.find(
-                            (entry) =>
-                                entry.from === transferData.from &&
-                                entry.to === transferData.to &&
-                                transferData.intake_items.every((item) =>
-                                    entry.intake_items.includes(item)
-                                )
-                          );
-                
-                        if (lookupEntry) {
-                            // Transform and add valid message data
-                            messages.push(transformData(transferData));
-                            //channel.ack(msg);
-                
-                            // If batch size is reached, resolve the promise
-                            if (messages.length >= batchSize) {
-                                clearTimeout(batchTimeout); // Clear timeout if batch is filled
-                                batchResolve(messages);
-                            }
+                        if (transformedData && transformedData.length > 0) {
+                            messages.push(...transformedData); // Spread to add all transformed results
+                            channel.ack(msg); // Acknowledge the message
                         } else {
-                            logger.warn(
-                                `Message did not match lookup: ${JSON.stringify(transferData)}`
-                            );
-                            // Reject message without requeuing (sends to DLX)
-                            //channel.nack(msg, false, false);
+                            logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
+                            channel.nack(msg, false, false); // Move to dead-letter queue
+                        }
 
-                        // If batch size is reached, resolve the promise
+
+                        // Resolve batch if filled
                         if (messages.length >= batchSize) {
                             clearTimeout(batchTimeout); // Clear timeout if batch is filled
                             batchResolve(messages);
                         }
-                    }
-                
-                } catch (parseError) {
+                    } catch (parseError) {
                         logger.error(`Failed to parse message content: ${parseError.message}`);
-                        channel.nack(msg, false, false); // Move to dead-letter queue
+                        // channel.nack(msg, false, false); // Move to dead-letter queue
                     }
                 } else {
                     logger.warn('Received null message');
@@ -109,19 +88,15 @@ export const consumeButcheryToSausageTransfers = async () => {
 
         // Cleanup and close the channel
         await channel.close();
-        return batch;
+        return batch; // Return the flat array of messages
     } catch (error) {
         logger.error('Error consuming transfer data from RabbitMQ: ' + error.message);
         throw error;
     }
 };
 
-
-const data =await consumeButcheryToSausageTransfers();
-console.log(JSON.stringify(data));
-
-
-
-
-
-
+// Example usage
+(async () => {
+    const data = await consumeButcheryToSausageTransfers();
+    console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+})();
