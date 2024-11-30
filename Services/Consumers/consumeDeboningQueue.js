@@ -6,7 +6,7 @@ export const consumeDeboningData = async () => {
     const queueName = 'production_data_order_deboning.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_deboning.bc';
-    const batchSize = 10; // Set the desired batch size
+    const batchSize = 15; // Set the desired batch size
     const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
     const queueOptions = {
         durable: true,
@@ -53,7 +53,7 @@ export const consumeDeboningData = async () => {
                         const deboningData = JSON.parse(msg.content.toString());
                         logger.info(`Received deboning data: ${JSON.stringify(deboningData)}`);
                         messages.push(transformData(deboningData)); // Transform and add message data
-                        channel.ack(msg);
+                        // channel.ack(msg);
 
                         // If batch size is reached, resolve the promise
                         if (messages.length >= batchSize) {
@@ -74,11 +74,29 @@ export const consumeDeboningData = async () => {
         // Wait for the batch to be filled or timeout
         const batch = await batchPromise;
 
+        // Flatten nested arrays of production orders
+        const flattenProductionOrders = (nestedOrders) => {
+            return nestedOrders.flat();
+        };
+
+        const flattenedData = flattenProductionOrders(batch);
+
         // Cleanup and close the channel
         await channel.close();
-        return batch;
+
+        // Return the flattened data
+        return flattenedData;
     } catch (error) {
         logger.error('Error consuming deboning data from RabbitMQ: ' + error.message);
         throw error;
     }
 };
+
+(async () => {
+    try {
+        const data = await consumeDeboningData();
+        console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+    } catch (error) {
+        console.error('Error processing deboning data:', error.message);
+    }
+})();

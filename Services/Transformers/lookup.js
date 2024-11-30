@@ -82,17 +82,17 @@ export const processLookup = {
       production_order_series: `P${String(7).padStart(2, '0')}`,
       process_loss: 0.05 // 5% loss
   },
-  9: { 
-    process_code: 8, 
-    shortcode: "SL", 
-    process_name: "Slicing parts for slices, portions", 
-    intake_item: "G1168", 
-    output_item: "G1211",
-    input_location: "1570", 
-    output_location: "1570", 
-    production_order_series: `P${String(8).padStart(2, '0')}`,
-    process_loss: 0.00 // 5% loss
-},
+//   9: { 
+//     process_code: 8, 
+//     shortcode: "SL", 
+//     process_name: "Slicing parts for slices, portions", 
+//     intake_item: "G1168", 
+//     output_item: "G1211",
+//     input_location: "1570", 
+//     output_location: "1570", 
+//     production_order_series: `P${String(8).padStart(2, '0')}`,
+//     process_loss: 0.00 // 5% loss
+// },
   11: { 
       process_code: 10, 
       shortcode: "FS", 
