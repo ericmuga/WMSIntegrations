@@ -5,7 +5,7 @@ export const consumechoppingData = async () => {
     const queueName = 'production_data_order_chopping.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_chopping.bc';
-    const batchSize = 1;
+    const batchSize =2;
     const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
     const queueOptions = {
         durable: true,
@@ -71,16 +71,30 @@ export const consumechoppingData = async () => {
         );
 
         // Wait for the batch to be filled or timeout
+        // Wait for the batch to be filled or timeout
         const batch = await batchPromise;
 
+        // Flatten nested arrays of production orders
+        const flattenProductionOrders = (nestedOrders) => {
+            return nestedOrders.flat();
+        };
+
+        const flattenedData = flattenProductionOrders(batch);
         // Cleanup and close the channel
         await channel.close();
 
-        return batch;
+        return flattenedData;
     } catch (error) {
         logger.error('Error consuming chopping data from RabbitMQ: ' + error.message);
         throw error;
     }
 };
 
-// consumechoppingData();
+// (async () => {
+//     try {
+//         const data = await consumechoppingData();
+//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error processing chopping data:', error.message);
+//     }
+// })();

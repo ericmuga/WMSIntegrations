@@ -1,8 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-const lookup={
-    process_key:'P20'
-}
+
+const lookup = {
+    // process_key: 'P20',
+    process_key: 'CP'
+};
 
 // Load the JSON file generated from the Excel
 const lookupFilePath = path.resolve('./Services/Transformers/choppingLocations.json');
@@ -23,18 +25,31 @@ export const transformData = (responseData) => {
         throw new Error("No output entry found in the data");
     }
 
-    // Lookup process details from your JSON-based lookup table
-    const outputLocation = lookupTable[outputItem.item_code]||'2055';
-    if (!outputLocation) {
-        throw new Error(`Location for ItemNo ${outputItem.item_code} not found in lookup`);
+    // Helper function to find item details in the lookup
+    const findItemDetails = (itemCode) => {
+        for (const location in lookupTable) {
+            const itemDetails = lookupTable[location].find(item => item.item_no === itemCode);
+            if (itemDetails) {
+                return { location, uom: itemDetails.uom };
+            }
+        }
+        return null; // Return null if item details are not found
+    };
+
+    // Resolve output item details
+    const outputDetails = findItemDetails(outputItem.item_code);
+    if (!outputDetails) {
+        throw new Error(`Details for ItemNo ${outputItem.item_code} not found in lookup`);
     }
+
+    const { location: outputLocation, uom: outputUom } = outputDetails;
 
     // Generate the production order
     return {
-        production_order_no: `${lookup.process_key}_${outputItem.chopping_id}`,
+        production_order_no: `${outputItem.chopping_id}_${outputItem.id}`,
         ItemNo: outputItem.item_code,
         Quantity: parseFloat(outputItem.weight), // Output quantity
-        uom: 'KG', // Default to "KG" if not provided
+        uom: outputUom, // Use lookup to resolve UOM
         LocationCode: outputLocation, // Use lookup to get location
         BIN: "", // Default batch number or empty
         user: "DefaultUser", // Default user ID
@@ -46,7 +61,7 @@ export const transformData = (responseData) => {
             {
                 ItemNo: outputItem.item_code,
                 Quantity: parseFloat(outputItem.weight),
-                uom: 'KG', // Default to "KG"
+                uom: outputUom, // Use lookup to resolve UOM
                 LocationCode: outputLocation, // Use lookup to get location
                 BIN: "",
                 line_no: 1000, // Line number for output
@@ -56,14 +71,16 @@ export const transformData = (responseData) => {
             },
             // Consumption lines
             ...consumptionItems.map((item, index) => {
-                const consumptionLocation = lookupTable[item.item_code]||'2055'; // Lookup location for each consumption item
-                if (!consumptionLocation) {
-                    throw new Error(`Location for ItemNo ${item.item_code} not found in lookup`);
+                const consumptionDetails = findItemDetails(item.item_code);
+                if (!consumptionDetails) {
+                    throw new Error(`Details for ItemNo ${item.item_code} not found in lookup`);
                 }
+                const { location: consumptionLocation, uom: consumptionUom } = consumptionDetails;
+
                 return {
                     ItemNo: item.item_code,
                     Quantity: parseFloat(item.weight),
-                    uom: 'KG', // Default to "KG"
+                    uom: consumptionUom, // Use lookup to resolve UOM
                     LocationCode: consumptionLocation, // Use lookup to get location
                     BIN: item.batch_no || "",
                     line_no: 2000 + index * 1000, // Increment line_no for each consumption

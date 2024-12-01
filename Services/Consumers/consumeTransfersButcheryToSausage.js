@@ -96,7 +96,7 @@ export const consumeButcheryToSausageTransfers = async () => {
 };
 
 // Example usage
-(async () => {
-    const data = await consumeButcheryToSausageTransfers();
-    console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-})();
+// (async () => {
+//     const data = await consumeButcheryToSausageTransfers();
+//     console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+// })();
