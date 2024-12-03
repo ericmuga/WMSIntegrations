@@ -64,7 +64,7 @@ export const consume1570_2055 = async () => {
                         if (transformedData && transformedData.length > 0) {
 
 
-                            
+
                             messages.push(...transformedData); // Spread to add all transformed results
                             channel.ack(msg); // Acknowledge the message
                         } else {
@@ -101,7 +101,7 @@ export const consume1570_2055 = async () => {
 };
 
 // Example usage
-(async () => {
-    const data = await consume1570_2055();
-    console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-})();
+// (async () => {
+//     const data = await consume1570_2055();
+//     console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+// })();
