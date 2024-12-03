@@ -3,13 +3,38 @@ import path from 'path';
 
 const lookup = {
     // process_key: 'P20',
-    process_key: 'CP'
+    process_key: ''
 };
+
+
+
 
 
 // Load the JSON file generated from the Excel
 const lookupFilePath = path.resolve('./Services/Transformers/choppingLocations.json');
 const lookupTable = JSON.parse(fs.readFileSync(lookupFilePath, 'utf-8'));
+
+const resolveLocationCode = (itemCode, lookupTable) => {
+    for (const locationCode in lookupTable) {
+        const items = lookupTable[locationCode];
+        if (items.some(item => item.item_no === itemCode)) {
+            return locationCode; // Return the location code if item is found
+        }
+    }
+    return "DefaultLocation"; // Default location if item not found
+};
+
+
+const resolveUnitOfMeasure = (itemCode, lookupTable) => {
+    for (const locationCode in lookupTable) {
+        const item = lookupTable[locationCode].find(item => item.item_no === itemCode);
+        if (item) {
+            return item.uom; // Return the UOM if item is found
+        }
+    }
+    return "PCS"; // Default UOM if item not found
+};
+
 
 export const transformData = (responseData) => {
     const itemsArray = Array.isArray(responseData) ? responseData : [responseData];
@@ -47,17 +72,17 @@ export const transformData = (responseData) => {
             const specialConsumptionItem = consumptionItems.find(item => item.item_code === specialItemCode);
             if (specialConsumptionItem) {
                 const specialDetails = findItemDetails(specialItemCode) || {};
-                const { location: specialLocation = "DefaultLocation", uom: specialUom = "PCS" } = specialDetails;
+                const { location: specialLocation = "2055", uom: specialUom = "KG" } = specialDetails;
 
-                const specialOrderNumber = `WP_${Date.now()}_${Math.random()}`;
+                const specialOrderNumber = `WP_${Date.now()}`;
                 const specialProductionOrder = {
                     production_order_no: specialOrderNumber,
                     ItemNo: specialConsumptionItem.item_code,
                     Quantity: parseFloat(specialConsumptionItem.weight),
-                    uom: specialUom,
-                    LocationCode: specialLocation,
+                    uom: resolveUnitOfMeasure(specialConsumptionItem.item_code, lookupTable),
+                    LocationCode: resolveLocationCode(specialConsumptionItem.item_code, lookupTable),
                     BIN: "",
-                    user: "DefaultUser",
+                    user: "USER",
                     line_no: 1000,
                     routing: "production_data_chopping_beheading.bc",
                     date_time: dateTime,
@@ -65,8 +90,8 @@ export const transformData = (responseData) => {
                         {
                             ItemNo: specialConsumptionItem.item_code,
                             Quantity: parseFloat(specialConsumptionItem.weight),
-                            uom: specialUom,
-                            LocationCode: specialLocation,
+                            uom: resolveUnitOfMeasure(specialConsumptionItem.item_code, lookupTable),
+                            LocationCode: resolveLocationCode(specialConsumptionItem.item_code, lookupTable),
                             BIN: "",
                             line_no: 1000,
                             type: "output",
@@ -83,8 +108,8 @@ export const transformData = (responseData) => {
                 specialConsumptionLines.push({
                     item_code: specialConsumptionItem.item_code,
                     weight: specialConsumptionItem.weight,
-                    uom: specialUom,
-                    LocationCode: specialLocation,
+                    uom: resolveUnitOfMeasure(specialConsumptionItem.item_code, lookupTable),
+                    LocationCode: resolveLocationCode(specialConsumptionItem.item_code, lookupTable),
                     BIN: "",
                     type: "consumption",
                     date_time: dateTime,
@@ -103,8 +128,8 @@ export const transformData = (responseData) => {
             production_order_no: `${outputItem.chopping_id}_${outputItem.id}`,
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: outputUom,
-            LocationCode: outputLocation,
+            uom: resolveUnitOfMeasure(outputItem.item_code, lookupTable),
+            LocationCode: resolveLocationCode(outputItem.item_code, lookupTable),
             BIN: "",
             user: "DefaultUser",
             line_no: 1000,
@@ -120,8 +145,8 @@ export const transformData = (responseData) => {
         mainProductionOrder.ProductionJournalLines.push({
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: outputUom,
-            LocationCode: outputLocation,
+            uom: resolveUnitOfMeasure(outputItem.item_code, lookupTable),
+            LocationCode: resolveLocationCode(outputItem.item_code, lookupTable),
             BIN: "",
             line_no: 1000,
             type: "output",
@@ -138,8 +163,8 @@ export const transformData = (responseData) => {
                 mainProductionOrder.ProductionJournalLines.push({
                     ItemNo: item.item_code,
                     Quantity: parseFloat(item.weight),
-                    uom: item.uom || "PCS",
-                    LocationCode: item.LocationCode || "DefaultLocation",
+                    uom: resolveUnitOfMeasure(item.item_code, lookupTable) ,
+                    LocationCode: resolveLocationCode(item.item_code, lookupTable) ,
                     BIN: item.BIN || "",
                     line_no: lineNumber,
                     type: item.type || "consumption",
