@@ -1,90 +1,86 @@
 import { getRabbitMQConnection } from '../../config/default.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
 import { transformData } from '../Transformers/transformCarcassSales.js';
-import fs from 'fs';
 
-// export const consumeCarcassSalesData = async () => {
-//     const queueName = 'production_data_order_beheading.bc';
-//     const exchange = 'fcl.exchange.direct';
-//     const routingKey = 'production_data_order_beheading.bc';
-//     const batchSize =1;
-//     const queueOptions = {
-//         durable: true,
-//         arguments: {
-//             'x-dead-letter-exchange': 'fcl.exchange.dlx',
-//             'x-dead-letter-routing-key': 'production_data_order_beheading.bc'
-//         }
-//     };
+export const consumeCarcassSales = async () => {
+    const queueName = 'production_sales_transfers.bc';
+    const exchange = 'fcl.exchange.direct';
+    const routingKey = 'production_sales_transfers.bc';
+    const batchSize = 10; // Set the desired batch size
+    const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
 
-//     try {
-//         const connection = await getRabbitMQConnection();
-//         const channel = await connection.createChannel();
+    const queueOptions = {
+        durable: true,
+        arguments: {
+            'x-dead-letter-exchange': 'fcl.exchange.dlx',
+            'x-dead-letter-routing-key': 'production_sales_transfers.bc',
+        },
+    };
 
-//         await channel.assertExchange(exchange, 'direct', { durable: true });
-//         await channel.assertQueue(queueName, queueOptions);
-//         await channel.bindQueue(queueName, exchange, routingKey);
-//         channel.prefetch(1);
+    try {
+        const connection = await getRabbitMQConnection();
+        const channel = await connection.createChannel();
 
-//         logger.info(`Waiting for up to ${batchSize} messages in queue: ${queueName}`);
+        await channel.assertExchange(exchange, 'direct', { durable: true });
+        await channel.assertQueue(queueName, queueOptions);
+        await channel.bindQueue(queueName, exchange, routingKey);
 
-//         const messages = [];
-//         let batchResolve;
+        // Set prefetch to limit the number of unacknowledged messages delivered
+        channel.prefetch(batchSize);
 
-//         // Batch promise to return the messages array
-//         const batchPromise = new Promise((resolve) => {
-//             batchResolve = resolve;
-//         });
+        const messages = [];
+        let batchResolve;
+        let batchTimeout;
 
-//         // Start consuming messages
-//         channel.consume(queueName, (msg) => {
-//             if (msg !== null) {
-//                 try {
-//                     const beheadingData = JSON.parse(msg.content.toString());
-//                     logger.info(`Received beheading data: ${JSON.stringify(beheadingData)}`);
-//                     messages.push(transformData(beheadingData));  // Transform each message data
-//                     channel.ack(msg);
+        logger.info(`Waiting for up to ${batchSize} messages in queue: ${queueName}`);
 
-//                     // Once we have 150 messages, resolve the promise
-                   
+        // Batch promise to return the messages array
+        const batchPromise = new Promise((resolve) => {
+            batchResolve = resolve;
+        });
 
-//                     if (messages.length >= batchSize) {
-//                         // sslogger.info('Final data: ');
-//                         const finalData = messages.flat().flat(); // Skip the first element
-                       
-//                         batchResolve(finalData);
-//                     }
-//                 } catch (parseError) {
-//                     logger.error(`Failed to parse message content: ${parseError.message}`);
-//                     channel.nack(msg, false, false); // Move to dead-letter queue
-//                 }
-//             } else {
-//                 logger.warn("Received null message");
-//             }
-//         }, { noAck: false });
+        // Set a timeout to resolve with an empty array if no messages are received
+        batchTimeout = setTimeout(() => {
+            if (messages.length === 0) {
+                logger.info('No messages received within the timeout period');
+                batchResolve([]);
+            }
+        }, timeout);
 
-//         // Wait for the batch to be filled
-//         await batchPromise;
+        // Start consuming messages
+        channel.consume(
+            queueName,
+            (msg) => {
+                if (msg !== null) {
+                    try {
+                        const salesData = JSON.parse(msg.content.toString());
+                        messages.push(transformData(salesData)); // Transform and add message data
+                        channel.ack(msg);
 
-//         // Cleanup and close the channel
-//         await channel.close();
-//         // await connection.close();
+                        if (messages.length >= batchSize) {
+                            clearTimeout(batchTimeout); // Clear the timeout if the batch is filled
+                            batchResolve(messages);
+                        }
+                    } catch (parseError) {
+                        logger.error(`Failed to parse message content: ${parseError.message}`);
+                        channel.nack(msg, false, false); // Move to dead-letter queue
+                    }
+                } else {
+                    logger.warn("Received null message");
+                }
+            },
+            { noAck: false }
+        );
 
-//         return messages;
-//     } catch (error) {
-//         logger.error('Error consuming beheading data from RabbitMQ: ' + error.message);
-//         throw error;
-//     }
-// };
+        // Wait for the batch to be filled or timeout
+        const result = await batchPromise;
 
-export const consumeCarcassSalesData = async() => transformData(mockData);
+        // Cleanup and close the channel
+        await channel.close();
 
-const mockData = {
-                        "product_code": "G1033",
-                        "transfer_from_location": 1020,
-                        "transfer_to_location": 3535,
-                        "receiver_total_pieces": "1",
-                        "receiver_total_weight": "10",
-                        "production_date": "2024-11-13T21:00:00.000000Z",
-                        "with_variance": 0,
-                        "timestamp": "2024-11-14 11:59:23"
-                  }
+        return result;
+    } catch (error) {
+        logger.error('Error consuming sales data from RabbitMQ: ' + error.message);
+        throw error;
+    }
+};

@@ -8,11 +8,8 @@ import 'jspdf-autotable';
 import pkg from 'pdf-to-printer';
 import logger from '../logger.js';
 const { getPrinters, print: sendToPrinter } = pkg;
-import { companyParameter } from '../config/default.js';
-import { getSerialNumber } from './serialNumberCounter.js';
 
-export const defaultPrinter = 'Microsoft Print to PDF (redirected 2)';
-
+import { defaultPrinter } from '../config/default.js';
 const listPrinters = async () => {
     try {
         const printers = await getPrinters();
@@ -27,6 +24,8 @@ const listPrinters = async () => {
 
 export const initPrinting = (data) => {
     // Resolve __dirname in ES module
+    // console.log('data',data)
+logger.info('Printing Initiated',data)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
@@ -60,7 +59,9 @@ export const initPrinting = (data) => {
         createPDF(data, pdfDirPath, itemNo, part, lines);
     });
 
-    printFromFolder(pdfDirPath, printedDirPath, defaultPrinter)
+
+    printFromFolder(pdfDirPath, printedDirPath,defaultPrinter)
+
 }
 
 const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
@@ -250,6 +251,7 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     doc.save(filePath);
 };
 
+
 const getCompanyConfig = (flag) => {
     let config
     if (!flag)
@@ -259,6 +261,7 @@ const getCompanyConfig = (flag) => {
 
     return config;
 }
+
 
 
 export const printFromFolder = async (pdfDirPath, printedDirPath, printerName) => {
@@ -344,4 +347,6 @@ export const printSingleFile = async (pdfFilePath, printedFolder, printerName) =
         logger.error(`Error: ${err.message}`);
     }
 };
+
+// listPrinters()
 

@@ -22,7 +22,10 @@
     "jspdf": "^2.5.2",
     "jspdf-autotable": "^3.8.4",
     "pdf-to-printer": "^5.6.0",
-    "winston": "^3.15.0"
+
+    "winston": "^3.15.0",
+    "xlsx": "^0.18.5"
+
   },
   "devDependencies": {
     "nodemon": "^3.1.7"
