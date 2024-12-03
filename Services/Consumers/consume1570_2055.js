@@ -3,18 +3,19 @@ import logger from '../../logger.js'; // Assuming you have a logger module set u
 import { transformData } from '../Transformers/Transform_1570_to2055.js';
 
 export const consume1570_2055 = async () => {
-    const queueName = 'transfer_from_1570_to_2055';
-    const exchange = 'fcl.exchange.direct';
+    const queueName = 'transfer_from_1570_to_2055.dl';
+    // const exchange = 'fcl.exchange.direct';
+    const exchange = 'fcl.exchange.dlx';
     const routingKey = 'transfer_from_1570_to_2055';
-    const batchSize = 1; // Set batch size here
-    const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
+    const batchSize = 5; // Set batch size here
+    const timeout = 2000; // Timeout in milliseconds (e.g., 5 seconds)
 
     const queueOptions = {
         durable: true,
-        arguments: {
-            'x-dead-letter-exchange': 'fcl.exchange.dlx',
-            'x-dead-letter-routing-key': 'transfer_from_1570_to_2055',
-        },
+        // arguments: {
+        //     'x-dead-letter-exchange': 'fcl.exchange.dlx',
+        //     'x-dead-letter-routing-key': 'transfer_from_1570_to_2055',
+        // },
     };
 
     try {
@@ -41,10 +42,12 @@ export const consume1570_2055 = async () => {
 
         // Set a timeout to resolve with the collected messages
         batchTimeout = setTimeout(() => {
-            if (messages.length > 0) {
+            if (messages.length === 0) {
+                logger.info('Timeout reached and no messages found, resolving with empty array');
+            } else {
                 logger.info('Timeout reached, resolving with partial batch');
-                batchResolve(messages);
             }
+            batchResolve(messages);
         }, timeout);
 
         // Start consuming messages
@@ -59,13 +62,15 @@ export const consume1570_2055 = async () => {
                         const transformedData = transformData(transferData);
 
                         if (transformedData && transformedData.length > 0) {
+
+
+                            
                             messages.push(...transformedData); // Spread to add all transformed results
                             channel.ack(msg); // Acknowledge the message
                         } else {
                             logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
                             channel.nack(msg, false, false); // Move to dead-letter queue
                         }
-
 
                         // Resolve batch if filled
                         if (messages.length >= batchSize) {
@@ -74,7 +79,7 @@ export const consume1570_2055 = async () => {
                         }
                     } catch (parseError) {
                         logger.error(`Failed to parse message content: ${parseError.message}`);
-                        // channel.nack(msg, false, false); // Move to dead-letter queue
+                        channel.nack(msg, false, false); // Move to dead-letter queue
                     }
                 } else {
                     logger.warn('Received null message');
@@ -95,8 +100,8 @@ export const consume1570_2055 = async () => {
     }
 };
 
-// // Example usage
-// (async () => {
-//     const data = await consume1570_2055();
-//     console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-// })();
+// Example usage
+(async () => {
+    const data = await consume1570_2055();
+    console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+})();

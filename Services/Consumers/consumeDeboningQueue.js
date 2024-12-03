@@ -7,7 +7,7 @@ export const consumeDeboningData = async () => {
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_deboning.bc';
     const batchSize = 1; // Set the desired batch size
-    const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
+    const timeout = 3000; // Timeout in milliseconds (e.g., 5 seconds)
     const queueOptions = {
         durable: true,
         arguments: {

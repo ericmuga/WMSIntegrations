@@ -80,22 +80,22 @@ app.get('/fetch-production-orders', async (req, res) => {
      const mergeProductionOrders = (...arrays) => arrays.flat();
      const { date, item, production_order_no } = req.query;
      let beheadingData= await consumeBeheadingData();
-     let carcassSales=await consumeCarcassSales(); 
+    //  let carcassSales=await consumeCarcassSales(); 
      let breakingData= await consumeBreakingData();
      let deboningData= await consumeDeboningData();
-    //  let mincingFromButchery= await consume1570_2055();
+     let mincingFromButchery= await consume1570_2055();
     //  let choppingData=await consumechoppingData();
     
-    let localSausageTransfers =await consume2055_3535();
-    let exportSausageTransfers =await consume2055_3600();
+    // let localSausageTransfers =await consume2055_3535();
+    // let exportSausageTransfers =await consume2055_3600();
 
      let productionOrders = mergeProductionOrders(
 
                                                     beheadingData,
-                                                    carcassSales,
+                                                    // carcassSales,
                                                     breakingData,
                                                     deboningData,
-                                                    // mincingFromButchery
+                                                    mincingFromButchery
                                                     // choppingData,
                                                     // localSausageTransfers,
                                                     // exportSausageTransfers

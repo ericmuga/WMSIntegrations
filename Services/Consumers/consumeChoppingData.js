@@ -2,17 +2,17 @@ import { getRabbitMQConnection } from '../../config/default.js';
 import { transformData } from '../Transformers/choppingTransformer.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
 export const consumechoppingData = async () => {
-    const queueName = 'production_data_order_chopping.bc.dl';
-    const exchange = 'fcl.exchange.dlx';
+    const queueName = 'production_data_order_chopping.bc';
+    const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_chopping.bc';
     const batchSize =1;
-    const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
+    const timeout = 2000; // Timeout in milliseconds (e.g., 5 seconds)
     const queueOptions = {
         durable: true,
-        // arguments: {
-        //     'x-dead-letter-exchange': 'fcl.exchange.dlx',
-        //     'x-dead-letter-routing-key': 'production_data_order_chopping.bc',
-        // },
+        arguments: {
+            'x-dead-letter-exchange': 'fcl.exchange.dlx',
+            'x-dead-letter-routing-key': 'production_data_order_chopping.bc',
+        },
     };
 
     try {
@@ -90,11 +90,11 @@ export const consumechoppingData = async () => {
     }
 };
 
-// (async () => {
-//     try {
-//         const data = await consumechoppingData();
-//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-//     } catch (error) {
-//         console.error('Error processing chopping data:', error.message);
-//     }
-// })();
+(async () => {
+    try {
+        const data = await consumechoppingData();
+        console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+    } catch (error) {
+        console.error('Error processing chopping data:', error.message);
+    }
+})();
