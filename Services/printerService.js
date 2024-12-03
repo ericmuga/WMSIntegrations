@@ -93,7 +93,7 @@ const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     doc.setFontSize(12);
 
     // const prefix = companyParameter.fcl // TODO
-    doc.text('DSP+0000563937', 25, 30) /* Prefix per company */
+    doc.text(`${data.order_no}`, 25, 30) /* Prefix per company */
 
 doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' }) // TODO
 
@@ -147,8 +147,8 @@ doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
     doc.text('Your Ref:', 10, 110)
     doc.text('N/A', 50, 110) 
 
-    doc.text('Route:', 120, 110)
-    doc.text(data.route_code, 160, 110) 
+    // doc.text('Route:', 120, 110)
+    // doc.text(data.route_code, 160, 110) 
 
     // ----------------Line----------------
     // doc.text('Location:', 10, 120)
