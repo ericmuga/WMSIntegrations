@@ -1,16 +1,34 @@
 // printerService.js
-
-
 import fs from 'fs';
 import { exec } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-// import { companyParameter } from '../config/default';
+import pkg from 'pdf-to-printer';
+import logger from '../logger.js';
+const { getPrinters, print: sendToPrinter } = pkg;
+import { defaultPrinter } from '../config/default.js';
+
+
+
+
+const listPrinters = async () => {
+    try {
+        const printers = await getPrinters();
+        console.log("Available Printers:");
+        printers.forEach((printer, index) => {
+            console.log(`${index + 1}: ${printer.name}`);
+        });
+    } catch (err) {
+        console.error("Failed to retrieve printers:", err);
+    }
+};
 
 export const printInit = (data) => {
     // Resolve __dirname in ES module
+    // console.log('data',data)
+logger.info('Printing Initiated',data)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
@@ -44,7 +62,7 @@ export const printInit = (data) => {
         createPDF(data, pdfDirPath, itemNo, part, lines);
     });
 
-    print(pdfDirPath, printedDirPath)
+    printFromFolder(pdfDirPath, printedDirPath,defaultPrinter)
 }
 
 const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
@@ -228,41 +246,90 @@ doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
     doc.save(filePath);
 };
 
-const print = (pdfDirPath, printedDirPath) => {
-    // Read files in the folder
-    fs.readdir(pdfDirPath, (err, files) => {
-        if (err) {
-            console.error(`Error reading folder: ${err.message}`);
+
+
+export const printFromFolder = async (pdfDirPath, printedDirPath, printerName) => {
+    try {
+        // Validate the printer name
+        const printers = await getPrinters();
+        const selectedPrinter = printers.find((printer) => printer.name === printerName);
+
+        if (!selectedPrinter) {
+            logger.error(`Printer "${printerName}" not found.`);
             return;
         }
 
-        // Loop through each file
-        files.forEach((file) => {
+        // Read files in the folder
+        const files = await fs.promises.readdir(pdfDirPath);
+
+        for (const file of files) {
             const filePath = path.join(pdfDirPath, file);
             const printedFilePath = path.join(printedDirPath, file);
 
             // Check if it's a file (not a directory)
-            if (fs.statSync(filePath).isFile()) {
-                // Use print command to send the file to the default printer
-                exec(`print /D:"HP LaserJet Pro M404-M405 PCL-6 (V4)" "${filePath}"`, (error, stdout, stderr) => {
-                    if (error) {
-                        console.error(`Error printing ${file}: ${error.message}`);
-                    } else if (stderr) {
-                        console.error(`Error printing ${file}: ${stderr}`);
-                    } else {
-                        console.log(`Print job for ${file} sent successfully.`);
+            const fileStat = await fs.promises.stat(filePath);
+            if (fileStat.isFile() && file.endsWith('.pdf')) {
+                try {
+                    // Send the PDF to the selected printer
+                    await sendToPrinter(filePath, { printer: printerName });
+                    logger.info(`Print job for ${file} sent successfully to printer "${printerName}".`);
 
-                        // Move the file to the "printed" folder after printing
-                        fs.rename(filePath, printedFilePath, (moveErr) => {
-                            if (moveErr) {
-                                console.error(`Error moving ${file} to printed folder: ${moveErr.message}`);
-                            } else {
-                                console.log(`${file} has been moved to the printed folder.`);
-                            }
-                        });
-                    }
-                });
+                    // Move the file to the "printed" folder after printing
+                    await fs.promises.rename(filePath, printedFilePath);
+                    logger.info(`${file} has been moved to the printed folder.`);
+                } catch (printErr) {
+                    logger.error(`Error printing ${file}: ${printErr.message}`);
+                }
             }
-        });
-    });
-}
+        }
+    } catch (err) {
+        logger.error(`Error: ${err.message}`);
+    }
+};
+
+
+/**
+ * Prints a single PDF file to the specified printer and optionally moves it to a printed folder.
+ * 
+ * @param {string} pdfFilePath - The full path of the PDF file to be printed.
+ * @param {string} printedFolder - The folder to move the printed file to. If blank, the file is not moved.
+ * @param {string} printerName - The name of the printer to send the job to.
+ */
+export const printSingleFile = async (pdfFilePath, printedFolder, printerName) => {
+    try {
+        // Validate the printer name
+        const printers = await getPrinters();
+        const selectedPrinter = printers.find((printer) => printer.name === printerName);
+
+        if (!selectedPrinter) {
+            logger.error(`Printer "${printerName}" not found.`);
+            return;
+        }
+
+        // Validate the PDF file
+        const fileStat = await fs.promises.stat(pdfFilePath);
+        if (!fileStat.isFile() || !pdfFilePath.endsWith('.pdf')) {
+            logger.error(`Invalid PDF file: ${pdfFilePath}`);
+            return;
+        }
+
+        try {
+            // Send the PDF to the selected printer
+            await sendToPrinter(pdfFilePath, { printer: printerName });
+            logger.info(`Print job for ${path.basename(pdfFilePath)} sent successfully to printer "${printerName}".`);
+
+            // Move the file to the printed folder if specified
+            if (printedFolder) {
+                const printedFilePath = path.join(printedFolder, path.basename(pdfFilePath));
+                await fs.promises.rename(pdfFilePath, printedFilePath);
+                logger.info(`${path.basename(pdfFilePath)} has been moved to the printed folder.`);
+            }
+        } catch (printErr) {
+            logger.error(`Error printing ${path.basename(pdfFilePath)}: ${printErr.message}`);
+        }
+    } catch (err) {
+        logger.error(`Error: ${err.message}`);
+    }
+};
+
+// listPrinters()

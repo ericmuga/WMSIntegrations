@@ -1,24 +1,25 @@
 import { getRabbitMQConnection } from '../../config/default.js';
-import logger from '../../logger.js';
-import { transformData } from '../Transformers/transformer.js';
+import logger from '../../logger.js'; // Assuming you have a logger module set up
+import { transformData } from '../Transformers/transformSlicing.js';
 
-export const consumeSlaughterData = async () => {
-    const queueName = 'slaughter_line.bc';
+export const consumeDeboningData = async () => {
+    const queueName = 'production_data_order_deboning.bc';
     const exchange = 'fcl.exchange.direct';
-    const routingKey = 'slaughter_line.bc';
-    const batchSize = 10;
+    const routingKey = 'production_data_order_deboning.bc';
+    const batchSize = 15; // Set the desired batch size
     const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
     const queueOptions = {
         durable: true,
         arguments: {
             'x-dead-letter-exchange': 'fcl.exchange.dlx',
-            'x-dead-letter-routing-key': 'slaughter_line.bc',
+            'x-dead-letter-routing-key': 'production_data_order_deboning.bc',
         },
     };
 
     try {
         const connection = await getRabbitMQConnection();
         const channel = await connection.createChannel();
+
         await channel.assertExchange(exchange, 'direct', { durable: true });
         await channel.assertQueue(queueName, queueOptions);
         await channel.bindQueue(queueName, exchange, routingKey);
@@ -43,17 +44,18 @@ export const consumeSlaughterData = async () => {
             }
         }, timeout);
 
+        // Start consuming messages
         channel.consume(
             queueName,
             (msg) => {
                 if (msg !== null) {
                     try {
-                        const slaughterData = JSON.parse(msg.content.toString());
-                        logger.info(`Received slaughter data: ${JSON.stringify(slaughterData)}`);
-                        messages.push(transformData(slaughterData)); // Transform the data
+                        const deboningData = JSON.parse(msg.content.toString());
+                        logger.info(`Received deboning data: ${JSON.stringify(deboningData)}`);
+                        messages.push(transformData(deboningData)); // Transform and add message data
                         channel.ack(msg);
 
-                        // Resolve the promise if the batch size is reached
+                        // If batch size is reached, resolve the promise
                         if (messages.length >= batchSize) {
                             clearTimeout(batchTimeout); // Clear timeout if batch is filled
                             batchResolve(messages);
@@ -72,12 +74,29 @@ export const consumeSlaughterData = async () => {
         // Wait for the batch to be filled or timeout
         const batch = await batchPromise;
 
+        // Flatten nested arrays of production orders
+        const flattenProductionOrders = (nestedOrders) => {
+            return nestedOrders.flat();
+        };
+
+        const flattenedData = flattenProductionOrders(batch);
+
         // Cleanup and close the channel
         await channel.close();
 
-        return batch;
+        // Return the flattened data
+        return flattenedData;
     } catch (error) {
-        logger.error(`Error consuming slaughter data from RabbitMQ: ${error.message}`);
+        logger.error('Error consuming deboning data from RabbitMQ: ' + error.message);
         throw error;
     }
 };
+
+// (async () => {
+//     try {
+//         const data = await consumeDeboningData();
+//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error processing deboning data:', error.message);
+//     }
+// })();
