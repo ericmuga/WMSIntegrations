@@ -2,7 +2,7 @@ import { getRabbitMQConnection } from '../../config/default.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
 import { transformData } from '../Transformers/packingSausageTransformer.js';
 
-export const consumeSausageToDispatchTransfers = async () => {
+export const consume2055_3535 = async () => {
     const queueName = 'transfer_from_2055_to_3535';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'transfer_from_2055_to_3535';
@@ -60,7 +60,7 @@ export const consumeSausageToDispatchTransfers = async () => {
 
                         if (transformedData && transformedData.length > 0) {
                             messages.push(...transformedData); // Spread to add all transformed results
-                            // channel.ack(msg); // Acknowledge the message
+                            channel.ack(msg); // Acknowledge the message
                         } else {
                             logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
                             channel.nack(msg, false, false); // Move to dead-letter queue
@@ -96,7 +96,7 @@ export const consumeSausageToDispatchTransfers = async () => {
 };
 
 // Example usage
-(async () => {
-    const data = await consumeSausageToDispatchTransfers();
-    console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-})();
+// (async () => {
+//     const data = await consumeSausageToDispatchTransfers();
+//     console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+// })();

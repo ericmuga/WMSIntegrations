@@ -1,8 +1,8 @@
 import { getRabbitMQConnection } from '../../config/default.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
-import { transformData } from '../Transformers/mincingTransformer.js';
+import { transformData } from '../Transformers/Transform_1570_to2055.js';
 
-export const consumeButcheryToSausageTransfers = async () => {
+export const consume1570_2055 = async () => {
     const queueName = 'transfer_from_1570_to_2055';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'transfer_from_1570_to_2055';
@@ -95,8 +95,8 @@ export const consumeButcheryToSausageTransfers = async () => {
     }
 };
 
-// Example usage
+// // Example usage
 // (async () => {
-//     const data = await consumeButcheryToSausageTransfers();
+//     const data = await consume1570_2055();
 //     console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
 // })();

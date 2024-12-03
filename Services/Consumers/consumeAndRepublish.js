@@ -39,6 +39,14 @@ export const consumeAndRepublishData = async () => {
                             transfer_to_location,
                         } = messageData;
 
+                        if (typeof transfer_from_location !== 'string') {
+                            transfer_from_location = transfer_from_location === null ? 'CM' : String(transfer_from_location);
+                        }
+                        
+                        if (typeof transfer_to_location !== 'string') {
+                            transfer_to_location = transfer_to_location === null ? 'CM' : String(transfer_to_location);
+                        }
+
                         // Interpret special cases
                         if (transfer_from_location === null || transfer_from_location.startsWith('B')) {
                             transfer_from_location = 'CM';

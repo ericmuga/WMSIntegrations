@@ -18,7 +18,9 @@ import { printInit } from './Services/printerService.js'
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateMtn,generateResponse } from './Services/QRCode.js';
-import { consumeButcheryToSausageTransfers } from './Services/Consumers/consumeTransfersButcheryToSausage.js';
+import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
+import { consume2055_3535 } from './Services/Consumers/consume2055_3535.js';
+import { consume2055_3600 } from './Services/Consumers/consume2055_3600.js';
 
 const app = express();
 app.use(express.json());
@@ -72,21 +74,28 @@ app.get('/fetch-production-orders', async (req, res) => {
   
      const mergeProductionOrders = (...arrays) => arrays.flat();
      const { date, item, production_order_no } = req.query;
-    //  let beheadingData= await consumeBeheadingData();
-    //  let carcassSales=await consumeCarcassSales(); 
-    //  let breakingData= await consumeBreakingData();
+     let beheadingData= await consumeBeheadingData();
+     let carcassSales=await consumeCarcassSales(); 
+     let breakingData= await consumeBreakingData();
      let deboningData= await consumeDeboningData();
-     let choppingData=await consumechoppingData();
-    let mincingFromButchery= await consumeButcheryToSausageTransfers();
+     let mincingFromButchery= await consume1570_2055();
+    //  let choppingData=await consumechoppingData();
+    
+    let localSausageTransfers =await consume2055_3535();
+    let exportSausageTransfers =await consume2055_3600();
 
      let productionOrders = mergeProductionOrders(
-      // beheadingData,
-      // carcassSales,breakingData,deboningData
-      deboningData,
-      mincingFromButchery,
-      choppingData
 
-    );
+                                                    beheadingData,
+                                                    carcassSales,
+                                                    breakingData,
+                                                    deboningData,
+                                                    mincingFromButchery
+                                                    // choppingData,
+                                                    // localSausageTransfers,
+                                                    // exportSausageTransfers
+
+                                                  );
     //  let productionOrders = breakingData;
      
      if (date) {
@@ -109,6 +118,10 @@ app.get('/fetch-production-orders', async (req, res) => {
 
       res.json(productionOrders.flat());
 });
+
+app.get('/fetch-item-journals',async(req,res)=>{
+
+})
 
 app.get('/fetch-portal-orders', (req, res) => res.json(generateOrders(3, 5)));
 app.get('/fetch-portal-invoices', (req, res) => res.json(generateInvoices(3, 5)));

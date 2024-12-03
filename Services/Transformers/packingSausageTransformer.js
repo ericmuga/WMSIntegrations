@@ -38,29 +38,29 @@ export const transformData = (transferData) => {
     const user = 'DefaultUser';
 
     // Filter BOM data for packing
-    const packingBOM = bomData.filter(row => row.Process === 'Packing' && row['Output Item Code'] === product_code);
+    const packingBOM = bomData.filter(row => row.Process === 'Packing' && row['output_item'] === product_code);
     if (!packingBOM.length) {
-        throw new Error(`No packing BOM data found for Output Item Code: ${product_code}`);
+        throw new Error(`No packing BOM data found for output_item: ${product_code}`);
     }
 
     // Determine the main intake item for packing (starts with "G")
     const mainStuffingItem = packingBOM.find(row => row['Input Item'] && row['Input Item'].startsWith('G'));
     if (!mainStuffingItem) {
-        throw new Error(`No main intake item starting with "G" found in the packing BOM for Output Item Code: ${product_code}`);
+        throw new Error(`No main intake item starting with "G" found in the packing BOM for output_item: ${product_code}`);
     }
 
     const stuffingOutputItem = mainStuffingItem['Input Item'];
 
     // Filter BOM data for stuffing
-    const stuffingBOM = bomData.filter(row => row.Process === 'Stuffing' && row['Output Item Code'] === stuffingOutputItem);
+    const stuffingBOM = bomData.filter(row => row.Process === 'Stuffing' && row['output_item'] === stuffingOutputItem);
     if (!stuffingBOM.length) {
-        throw new Error(`No stuffing BOM data found for Output Item Code: ${stuffingOutputItem}`);
+        throw new Error(`No stuffing BOM data found for output_item: ${stuffingOutputItem}`);
     }
 
     // Determine the standard batch size from BOM
-    const standardBatchSize = parseFloat(packingBOM[0]['New BC Output']);
+    const standardBatchSize = parseFloat(packingBOM[0]['output_batch_size']);
     if (!standardBatchSize) {
-        throw new Error(`No standard batch size (New BC Output) found in the BOM for Output Item Code: ${product_code}`);
+        throw new Error(`No standard batch size (output_batch_size) found in the BOM for output_item: ${product_code}`);
     }
 
     // Calculate the batch multiplier
@@ -79,7 +79,7 @@ export const transformData = (transferData) => {
         production_order_no: `PK_${timestamp}`,
         ItemNo: product_code,
         Quantity: roundTo4DP(receiver_total_weight),
-        uom: packingBOM[0]['Unit of Measure'], // UOM from the BOM
+        uom: packingBOM[0]['output_uom'], // UOM from the BOM
         LocationCode: transfer_to_location,
         BIN: '',
         user,
@@ -90,7 +90,7 @@ export const transformData = (transferData) => {
             {
                 ItemNo: product_code,
                 Quantity: roundTo4DP(receiver_total_weight),
-                uom: packingBOM[0]['Unit of Measure'],
+                uom: packingBOM[0]['output_uom'],
                 LocationCode: transfer_to_location,
                 BIN: '',
                 line_no: 1000,
@@ -101,7 +101,7 @@ export const transformData = (transferData) => {
             ...packingBOM.map((row, index) => ({
                 ItemNo: row['Input Item'],
                 Quantity: roundTo4DP(batchMultiplier * parseFloat(row['Usage per batch'])),
-                uom: row['Unit of Measure'],
+                uom: row['intake_uom'],
                 LocationCode: row['Input Location code'],
                 BIN: '',
                 line_no: 2000 + index * 1000,
@@ -120,7 +120,7 @@ export const transformData = (transferData) => {
         production_order_no: `ST_${timestamp}`,
         ItemNo: stuffingOutputItem, // The main intake item from packing BOM
         Quantity: roundTo4DP(stuffingOutputQuantity),
-        uom: mainStuffingItem['Unit of Measure'], // UOM for the stuffing output
+        uom: mainStuffingItem['output_uom'], // UOM for the stuffing output
         LocationCode: transfer_from_location,
         BIN: '',
         user,
@@ -131,7 +131,7 @@ export const transformData = (transferData) => {
             {
                 ItemNo: stuffingOutputItem,
                 Quantity: roundTo4DP(stuffingOutputQuantity),
-                uom: mainStuffingItem['Unit of Measure'],
+                uom: mainStuffingItem['output_uom'],
                 LocationCode: transfer_from_location,
                 BIN: '',
                 line_no: 1000,
@@ -142,7 +142,7 @@ export const transformData = (transferData) => {
             ...uniqueStuffingBOM.map((row, index) => ({
                 ItemNo: row['Input Item'],
                 Quantity: roundTo4DP(stuffingBatchMultiplier * parseFloat(row['Usage per batch'])),
-                uom: row['Unit of Measure'],
+                uom: row['intake_uom'],
                 LocationCode: row['Input Location code'],
                 BIN: '',
                 line_no: 2000 + index * 1000,
