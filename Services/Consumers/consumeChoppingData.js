@@ -5,7 +5,7 @@ export const consumechoppingData = async () => {
     const queueName = 'production_data_order_chopping.bc.dl';
     const exchange = 'fcl.exchange.dlx';
     const routingKey = 'production_data_order_chopping.bc';
-    const batchSize =3;
+    const batchSize =1;
     const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
     const queueOptions = {
         durable: true,
@@ -53,7 +53,7 @@ export const consumechoppingData = async () => {
                         logger.info(`Received chopping data: ${JSON.stringify(choppingData)}`);
                         messages.push(transformData(choppingData)); // Transform each message data
                         logger.info(`${JSON.stringify(messages)}`)
-                        // channel.ack(msg);
+                        channel.ack(msg);
 
                         if (messages.length >= batchSize) {
                             clearTimeout(batchTimeout); // Clear timeout if batch is filled
@@ -61,7 +61,7 @@ export const consumechoppingData = async () => {
                         }
                     } catch (parseError) {
                         logger.error(`Failed to parse message content: ${parseError.message}`);
-                        // channel.nack(msg, false, false); // Move to dead-letter queue
+                        channel.nack(msg, false, false); // Move to dead-letter queue
                     }
                 } else {
                     logger.warn('Received null message');
@@ -90,11 +90,11 @@ export const consumechoppingData = async () => {
     }
 };
 
-(async () => {
-    try {
-        const data = await consumechoppingData();
-        console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-    } catch (error) {
-        console.error('Error processing chopping data:', error.message);
-    }
-})();
+// (async () => {
+//     try {
+//         const data = await consumechoppingData();
+//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error processing chopping data:', error.message);
+//     }
+// })();

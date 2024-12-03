@@ -6,7 +6,7 @@ export const consume1570_2055 = async () => {
     const queueName = 'transfer_from_1570_to_2055';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'transfer_from_1570_to_2055';
-    const batchSize = 10; // Set batch size here
+    const batchSize = 1; // Set batch size here
     const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
 
     const queueOptions = {

@@ -22,10 +22,10 @@ const listPrinters = async () => {
     }
 };
 
-export const initPrinting = (data) => {
+export const initPrinting = async(data) => {
     // Resolve __dirname in ES module
-    // console.log('data',data)
-logger.info('Printing Initiated',data)
+    console.log('here')
+logger.info(`To print ${JSON.stringify(data)}`)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
@@ -88,7 +88,8 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const availableParts = [...new Set(data.lines.map(line => line.part))];
     const partsText = availableParts.join('|');
 
-    const config = getCompanyConfig(data.company_flag.toLowerCase())
+    const config = 'FCL'
+    // const config = getCompanyConfig(data.company_flag.toLowerCase())
 
     doc.setFontSize(14);
     doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
@@ -155,14 +156,15 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     doc.text('Time Stamp:', 162, 102)
     doc.text(Date.now().toString(), 200, 102, { align: 'right' })
 
-    const serial = await getSerialNumber('serial_number_counter')
-        .catch(error => {
-            console.error('Error fetching serial number:', error.message);
+    // const serial = await getSerialNumber('serial_number_counter')
+    //     .catch(error => {
+    //         console.error('Error fetching serial number:', error.message);
 
-            return 'DOC-00000000'; // Fallback value
-        });
+    //         return 'DOC-00000000'; // Fallback value
+    //     });
 
-    console.log(serial)
+    // console.log(serial)
+    const serial = Date.now();
 
     doc.text('Serial No:', 165, 107)
     doc.text(`${serial}`, 200, 107, { align: 'right' })
@@ -252,15 +254,15 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 };
 
 
-const getCompanyConfig = (flag) => {
-    let config
-    if (!flag)
-        companyParameter['fcl'];
+// const getCompanyConfig = (flag) => {
+//     let config
+//     if (!flag)
+//         companyParameter['fcl'];
 
-    config = companyParameter[flag];
+//     config = companyParameter[flag];
 
-    return config;
-}
+//     return config;
+// }
 
 
 
