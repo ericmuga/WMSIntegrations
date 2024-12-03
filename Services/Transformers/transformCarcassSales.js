@@ -60,11 +60,13 @@ export const transformData = (responseData) => {
 
     return [
         {
+
             production_order_no: lookup.production_order_series + "_" + order_no + "-wip",
             Quantity: parseFloat(responseData.receiver_total_weight),
             ItemNo: lookup.wip_output_item,
             uom: lookup.wip_uom,
             LocationCode: lookup.wip_output_location,
+
             BIN: "",
             user: lookup.user,
             line_no: 1000,
@@ -133,4 +135,6 @@ export const transformData = (responseData) => {
             ],
         },
     ];
+
 };
+

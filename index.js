@@ -2,10 +2,13 @@
 
 import express from 'express';
 import logger from './logger.js';
+
+
 import { generateOrders } from './Services/fetchPortalOrders.js';
 
 import { groupOrdersByExtDocNo } from './Services/fetchBOTOrders.js';
 import { generateTransferOrders } from './Services/transferOrderGenerator.js';
+
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
@@ -22,12 +25,14 @@ import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
 import { consume2055_3535 } from './Services/Consumers/consume2055_3535.js';
 import { consume2055_3600 } from './Services/Consumers/consume2055_3600.js';
 
+
 const app = express();
 app.use(express.json());
 
 app.get('/generate-mtn',async(req,res)=>{
   res.json(generateResponse());
 });
+
 
 
 app.get('/fetch-executed-lines', async (req, res) => {
@@ -119,6 +124,7 @@ app.get('/fetch-production-orders', async (req, res) => {
       res.json(productionOrders.flat());
 });
 
+
 app.get('/fetch-item-journals',async(req,res)=>{
 
 })
@@ -169,6 +175,7 @@ app.post('/print-order', (req,res) => {
 
 app.post('/order-status', (req, res) => {
   logger.info(`Received order status update: ${JSON.stringify(req.body)}`);
+
   return res.status(201).json({ message: 'success' });
 });
 

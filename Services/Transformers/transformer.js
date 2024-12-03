@@ -1,4 +1,5 @@
 import { getProcessDetails, getProcessByProcessName } from './lookup.js';
+import logger from '../../logger.js';
 
 export const transformData = (responseData) => {
   // const dateTime = new Date().toISOString(); // Get current timestamp for date_time
@@ -7,11 +8,12 @@ export const transformData = (responseData) => {
   // Check if responseData is an array, otherwise wrap it in an array
   const items = Array.isArray(responseData) ? responseData : [responseData];
 
-  const order_no = responseData.id ? responseData.id.toString() : "no_order_no";
-
+  // logger.info(responseData);
   return [
     {
-      production_order_no: getProcessByProcessName(items[0].process_name).production_order_series+'_'+order_no,
+      
+      production_order_no: getProcessByProcessName(items[0].process_name).production_order_series+'_'+responseData.id,
+
       ItemNo: responseData.item_code,
       Quantity: parseFloat(responseData.net_weight), // Convert string to number for Quantity
       uom: 'KG', // Default to "KG" if not provided
