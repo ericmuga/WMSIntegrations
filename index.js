@@ -17,8 +17,7 @@ import { consumeCarcassSales } from './Services/Consumers/consumeCarcassSales.js
 import { consumeBreakingData } from './Services/Consumers/consumeBreakingQueue.js';
 import { consumeDeboningData } from './Services/Consumers/consumeDeboningQueue.js';
 import { consumechoppingData } from './Services/Consumers/consumeChoppingData.js';
-import { initPrinting as  printInit  } from './Services/printerService.js'
-
+import { printInit } from './Services/printerService.js'
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateMtn,generateResponse } from './Services/QRCode.js';
@@ -84,21 +83,21 @@ app.get('/fetch-production-orders', async (req, res) => {
      let carcassSales=await consumeCarcassSales(); 
      let breakingData= await consumeBreakingData();
      let deboningData= await consumeDeboningData();
-     let mincingFromButchery= await consume1570_2055();
-     let choppingData=await consumechoppingData();
+    //  let mincingFromButchery= await consume1570_2055();
+    //  let choppingData=await consumechoppingData();
     
     let localSausageTransfers =await consume2055_3535();
     let exportSausageTransfers =await consume2055_3600();
 
      let productionOrders = mergeProductionOrders(
 
-                                                    // beheadingData,
-                                                    // carcassSales,
-                                                    // breakingData,
-                                                    // deboningData,
-                                                    // mincingFromButchery,
-                                                    choppingData,
-                                                    localSausageTransfers,
+                                                    beheadingData,
+                                                    carcassSales,
+                                                    breakingData,
+                                                    deboningData,
+                                                    // mincingFromButchery
+                                                    // choppingData,
+                                                    // localSausageTransfers,
                                                     // exportSausageTransfers
 
                                                   );
@@ -165,10 +164,10 @@ app.get('/fetch-slaughter-data', async (req, res) => {
 });
 
 
-app.post('/print-order', async(req,res) => {
+app.post('/print-order', (req,res) => {
   //console.log(req)
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
-  await printInit(req.body);
+  printInit(req.body);
   return res.status(201).json({ message: 'success' });
 
 });

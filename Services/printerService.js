@@ -8,8 +8,11 @@ import 'jspdf-autotable';
 import pkg from 'pdf-to-printer';
 import logger from '../logger.js';
 const { getPrinters, print: sendToPrinter } = pkg;
-
 import { defaultPrinter } from '../config/default.js';
+
+
+
+
 const listPrinters = async () => {
     try {
         const printers = await getPrinters();
@@ -22,10 +25,9 @@ const listPrinters = async () => {
     }
 };
 
-export const initPrinting = async(data) => {
-    // Resolve __dirname in ES module
-    console.log('here')
-logger.info(`To print ${JSON.stringify(data)}`)
+export const printInit = (data) => {
+    
+logger.info('Printing Initiated',data)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
@@ -59,12 +61,10 @@ logger.info(`To print ${JSON.stringify(data)}`)
         createPDF(data, pdfDirPath, itemNo, part, lines);
     });
 
-
     printFromFolder(pdfDirPath, printedDirPath,defaultPrinter)
-
 }
 
-const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
+const createPDF = (data, pdfDirPath, itemNo, part, lines) => {
     const fileName = `${itemNo}_${part}.pdf`;
     const filePath = path.join(pdfDirPath, fileName);
 
@@ -88,86 +88,78 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const availableParts = [...new Set(data.lines.map(line => line.part))];
     const partsText = availableParts.join('|');
 
-    const config = 'FCL'
-    // const config = getCompanyConfig(data.company_flag.toLowerCase())
-
     doc.setFontSize(14);
     doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
     doc.setFontSize(12);
 
-    doc.text(`${config.parkingListPrefix}${data.order_no}`, 25, 30)
+    // const prefix = companyParameter.fcl // TODO
+    doc.text('DSP+0000563937', 25, 30) /* Prefix per company */
 
-    doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
-
-    // ----------------Line----------------
-    doc.text('Order Date:', 10, 38)
-    doc.text(data.shp_date, 50, 38)
-
-    doc.text('Sell To Address:', 120, 38)
-    doc.text(data.shp_name, 160, 38)
+doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' }) // TODO
 
     // ----------------Line----------------
-    doc.text('Order No.:', 10, 46)
-    doc.text(`${config.orderPrefix}${data.order_no}`, 50, 46)
+    doc.text('Order Date:', 10, 40)
+    doc.text(data.shp_date, 50, 40)
 
-    doc.text('Load To Code:', 120, 46)
-    doc.text(data.sp_code, 160, 46)
-
-    // ----------------Line----------------
-    doc.text('Customer No.:', 10, 54)
-    doc.text(data.customer_no, 50, 54)
-
-    doc.text('', 120, 54)
-    doc.text(data.sp_name, 160, 54)
+    doc.text('Sell To Address:', 120, 40)
+    doc.text(data.shp_name, 160, 40)
 
     // ----------------Line----------------
-    doc.text('Customer Name:', 10, 62)
-    doc.text(data.customer_name, 50, 62)
+    doc.text('Order No.:', 10, 50)
+    doc.text(data.order_no, 50, 50)
 
-    doc.text('Delivery Date:', 120, 62)
-    doc.text(data.shp_date, 160, 62)
-
-    // ----------------Line----------------
-    doc.text('External DocNo:', 10, 70)
-    doc.text(data.ext_doc_no, 50, 70)
-
-    doc.text('Ship To Name:', 120, 70)
-    doc.text(data.shp_name, 160, 70)
+    doc.text('Load To Code:', 120, 50)
+    doc.text(data.sp_code, 160, 50)
 
     // ----------------Line----------------
-    doc.text('PDA Order:', 10, 78)
-    doc.text(data.pda ? 'Yes' : 'No', 50, 78)
+    doc.text('Customer No.:', 10, 60)
+    doc.text(data.customer_no, 50, 60)
 
-    doc.text('Cust Ref. No:', 120, 78)
-    doc.text('N/A', 160, 78)
-
-    // ----------------Line----------------
-    doc.text('Order Receiver:', 10, 86)
-    doc.text(data.ended_by, 50, 86)
+    doc.text('', 120, 60)
+    doc.text(data.sp_name, 160, 60)
 
     // ----------------Line----------------
-    doc.text('Your Ref:', 10, 94)
-    doc.text('N/A', 50, 94)
+    doc.text('Customer Name:', 10, 70)
+    doc.text(data.customer_name, 50, 70)
 
-    doc.text('Route:', 120, 94)
-    doc.text(data.route_code, 160, 94)
+    doc.text('Delivery Date:', 120, 70)
+    doc.text(data.shp_date, 160, 70)
+
+    // ----------------Line----------------
+    doc.text('External DocNo:', 10, 80)
+    doc.text(data.ext_doc_no, 50, 80)
+
+    doc.text('Ship To Name:', 120, 80)
+    doc.text(data.shp_name, 160, 80)
+
+    // ----------------Line----------------
+    doc.text('PDA Order:', 10, 90)
+    doc.text(data.pda ? 'Yes' : 'No', 50, 90)
+
+    doc.text('Cust Ref. No:', 120, 90)
+    doc.text('N/A', 160, 90)
+
+    // ----------------Line----------------
+    doc.text('Order Receiver:', 10, 100)
+    doc.text(data.ended_by, 50, 100)
+
+    // ----------------Line----------------
+    doc.text('Your Ref:', 10, 110)
+    doc.text('N/A', 50, 110) 
+
+    doc.text('Route:', 120, 110)
+    doc.text(data.route_code, 160, 110) 
+
+    // ----------------Line----------------
+    // doc.text('Location:', 10, 120)
+    // doc.text('3535', 50, 120) // TODO
 
     doc.setFontSize(8);
-    doc.text('Time Stamp:', 162, 102)
-    doc.text(Date.now().toString(), 200, 102, { align: 'right' })
+    doc.text('Time Stamp:', 162, 130)
+    doc.text(Date.now().toString(), 200, 130, { align: 'right' })
 
-    // const serial = await getSerialNumber('serial_number_counter')
-    //     .catch(error => {
-    //         console.error('Error fetching serial number:', error.message);
-
-    //         return 'DOC-00000000'; // Fallback value
-    //     });
-
-    // console.log(serial)
-    const serial = Date.now();
-
-    doc.text('Serial No:', 165, 107)
-    doc.text(`${serial}`, 200, 107, { align: 'right' })
+    // doc.text('Serial No:', 175, 135)
+    // doc.text('1032279', 200, 135, { align: 'right' }) // TODO
 
     doc.setFontSize(10);
 
@@ -190,17 +182,17 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     doc.autoTable({
         head: [tableColumnNames],
         body: tableData,
-        startY: 115,
+        startY: 140,
         margin: { left: 5, top: 30, bottom: 80 },
         columnStyles: {
-            0: { cellWidth: 40, fillColor: null, halign: 'center' },
-            1: { cellWidth: 30, fillColor: null, halign: 'center' },
-            2: { cellWidth: 20, fillColor: null, halign: 'center' },
+            0: { cellWidth: 20, fillColor: null, halign: 'center' },
+            1: { cellWidth: 50, fillColor: null, halign: 'center'  },
+            2: { cellWidth: 20, fillColor: null, halign: 'center'  },
             3: { cellWidth: 20, fillColor: null, halign: 'center' },
             4: { cellWidth: 20, fillColor: null, halign: 'center' },
             5: { cellWidth: 20, fillColor: null, halign: 'center' },
             6: { cellWidth: 20, fillColor: null, halign: 'center' },
-            7: { cellWidth: 25, fillColor: null, halign: 'left' },
+            7: { cellWidth: 30, fillColor: null, halign: 'left' },
         },
         headStyles: {
             fillColor: null,
@@ -252,17 +244,6 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     // Save the PDF
     doc.save(filePath);
 };
-
-
-// const getCompanyConfig = (flag) => {
-//     let config
-//     if (!flag)
-//         companyParameter['fcl'];
-
-//     config = companyParameter[flag];
-
-//     return config;
-// }
 
 
 
@@ -351,4 +332,3 @@ export const printSingleFile = async (pdfFilePath, printedFolder, printerName) =
 };
 
 // listPrinters()
-
