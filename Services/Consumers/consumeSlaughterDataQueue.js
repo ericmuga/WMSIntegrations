@@ -6,8 +6,8 @@ export const consumeSlaughterData = async () => {
     const queueName = 'slaughter_line.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'slaughter_line.bc';
-    const batchSize = 1;
-    const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
+    const batchSize = 10;
+    const timeout = 2000; // Timeout in milliseconds (e.g., 5 seconds)
     const queueOptions = {
         durable: true,
         arguments: {

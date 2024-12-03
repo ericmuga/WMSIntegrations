@@ -95,7 +95,7 @@ export const consumeCarcassSales = async () => {
 };
 
 // Example usage
-(async () => {
-    const data = await consumeCarcassSales();
-    console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-})();
+// (async () => {
+//     const data = await consumeCarcassSales();
+//     console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+// })();

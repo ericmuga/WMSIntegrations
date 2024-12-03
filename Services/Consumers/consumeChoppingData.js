@@ -90,11 +90,11 @@ export const consumechoppingData = async () => {
     }
 };
 
-(async () => {
-    try {
-        const data = await consumechoppingData();
-        console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-    } catch (error) {
-        console.error('Error processing chopping data:', error.message);
-    }
-})();
+// (async () => {
+//     try {
+//         const data = await consumechoppingData();
+//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error processing chopping data:', error.message);
+//     }
+// })();
