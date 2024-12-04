@@ -1,29 +1,55 @@
 import fs from 'fs';
 import path from 'path';
-
+import xlsx from 'xlsx';
 // Load the JSON file generated from the Excel
 const lookupFilePath = path.resolve('./Services/Transformers/choppingLocations.json');
 const lookupTable = JSON.parse(fs.readFileSync(lookupFilePath, 'utf-8'));
 
-const resolveLocationCode = (itemCode, lookupTable) => {
-    for (const locationCode in lookupTable) {
-        const items = lookupTable[locationCode];
-        if (items.some(item => item.item_no === itemCode)) {
-            return locationCode; // Return the location code if item is found
+
+
+const resolveLocationCode = (itemCode, process, sheetData) => {
+    for (const row of sheetData) {
+        if (row.Process === process) {
+            if (row["Input Item"] === itemCode) {
+                return row["Input Location code"]; // Resolve for input item
+            }
+            if (row["Output Item Code"] === itemCode) {
+                return row["Output Location code"]; // Resolve for output item
+            }
         }
     }
     return "DefaultLocation"; // Default location if item not found
 };
 
-const resolveUnitOfMeasure = (itemCode, lookupTable) => {
-    for (const locationCode in lookupTable) {
-        const item = lookupTable[locationCode].find(item => item.item_no === itemCode);
-        if (item) {
-            return item.uom; // Return the UOM if item is found
+const resolveUnitOfMeasure = (itemCode, process, sheetData) => {
+    for (const row of sheetData) {
+        if (row.Process === process) {
+            if (row["Input Item"] === itemCode) {
+                return row["input_uom"]; // Resolve for input item
+            }
+            if (row["Output Item Code"] === itemCode) {
+                return row["output_uom"]; // Resolve for output item
+            }
         }
     }
     return "PCS"; // Default UOM if item not found
 };
+
+// Function to read and parse the Excel file
+const readExcelFile = (filePath) => {
+    const workbook = xlsx.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    return xlsx.utils.sheet_to_json(sheet);
+};
+
+// Example usage
+const filePath = "ChoppingOnly.xlsx";
+const sheetData = readExcelFile(filePath);
+
+const process = "Chopping";
+
+
 
 export const transformData = (responseData) => {
     // Convert the input object to an array of items
@@ -123,8 +149,8 @@ export const transformData = (responseData) => {
             production_order_no: `${outputItem.chopping_id}_${outputItem.id}`,
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: outputUom,
-            LocationCode: outputLocation,
+            uom: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
+            LocationCode: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
             BIN: "",
             user: "DefaultUser",
             line_no: 1000,
@@ -140,8 +166,8 @@ export const transformData = (responseData) => {
         mainProductionOrder.ProductionJournalLines.push({
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: outputUom,
-            LocationCode: outputLocation,
+            uom: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
+            LocationCode: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
             BIN: "",
             line_no: 1000,
             type: "output",
@@ -158,8 +184,8 @@ export const transformData = (responseData) => {
                 mainProductionOrder.ProductionJournalLines.push({
                     ItemNo: item.item_code,
                     Quantity: parseFloat(item.weight),
-                    uom: resolveUnitOfMeasure(item.item_code, lookupTable),
-                    LocationCode: resolveLocationCode(item.item_code, lookupTable),
+                    uom: resolveUnitOfMeasure(item.item_code,"Chopping", sheetData),
+                    LocationCode: resolveLocationCode(item.item_code, "Chopping", sheetData),
                     BIN: item.BIN || "",
                     line_no: lineNumber,
                     type: item.type || "consumption",
