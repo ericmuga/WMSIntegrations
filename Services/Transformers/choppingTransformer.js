@@ -32,7 +32,7 @@ const resolveUnitOfMeasure = (itemCode, process, sheetData) => {
             }
         }
     }
-    return "PCS"; // Default UOM if item not found
+    return "KG"; // Default UOM if item not found
 };
 
 // Function to read and parse the Excel file
