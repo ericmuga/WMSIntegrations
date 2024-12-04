@@ -149,7 +149,7 @@ export const transformData = (responseData) => {
             production_order_no: `${outputItem.chopping_id}_${outputItem.id}`,
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
+            uom: resolveUnitOfMeasure(outputItem.item_code, "Chopping", sheetData),
             LocationCode: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
             BIN: "",
             user: "DefaultUser",
@@ -166,7 +166,7 @@ export const transformData = (responseData) => {
         mainProductionOrder.ProductionJournalLines.push({
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
+            uom: resolveUnitOfMeasure(outputItem.item_code, "Chopping", sheetData),
             LocationCode: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
             BIN: "",
             line_no: 1000,
