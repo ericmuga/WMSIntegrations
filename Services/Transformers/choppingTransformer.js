@@ -18,7 +18,7 @@ const resolveLocationCode = (itemCode, process, sheetData) => {
             }
         }
     }
-    return "DefaultLocation"; // Default location if item not found
+    return "2055"; // Default location if item not found
 };
 
 const resolveUnitOfMeasure = (itemCode, process, sheetData) => {
