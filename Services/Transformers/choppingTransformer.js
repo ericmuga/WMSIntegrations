@@ -1,12 +1,35 @@
 import fs from 'fs';
 import path from 'path';
 import xlsx from 'xlsx';
-// Load the JSON file generated from the Excel
-const lookupFilePath = path.resolve('./Services/Transformers/choppingLocations.json');
-const lookupTable = JSON.parse(fs.readFileSync(lookupFilePath, 'utf-8'));
+
+// Function to load and parse the Excel file
+const readExcelFile = (filePath) => {
+    try {
+        const workbook = xlsx.readFile(filePath); // Read the Excel file
+        const sheetName = workbook.SheetNames[0]; // Use the first sheet
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = xlsx.utils.sheet_to_json(sheet); // Convert sheet to JSON
+
+        if (!Array.isArray(jsonData)) {
+            throw new Error("Parsed sheet data is not an array");
+        }
+        return jsonData;
+    } catch (error) {
+        console.error("Error reading Excel file:", error.message);
+        return []; // Return an empty array to avoid crashes
+    }
+};
+
+// Example Usage
+const filePath = 'ChoppingOnly.xlsx';
+const sheetData = readExcelFile(filePath);
 
 
+// Load the JSON lookup table
+// const lookupFilePath = path.resolve('./Services/Transformers/choppingLocations.json');
+// const lookupTable = JSON.parse(fs.readFileSync(lookupFilePath, 'utf-8'));
 
+// Functions to resolve LocationCode and UOM
 const resolveLocationCode = (itemCode, process, sheetData) => {
     for (const row of sheetData) {
         if (row.Process === process) {
@@ -35,23 +58,16 @@ const resolveUnitOfMeasure = (itemCode, process, sheetData) => {
     return "KG"; // Default UOM if item not found
 };
 
-// Function to read and parse the Excel file
-const readExcelFile = (filePath) => {
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    return xlsx.utils.sheet_to_json(sheet);
-};
-
-// Example usage
-const filePath = "ChoppingOnly.xlsx";
-const sheetData = readExcelFile(filePath);
-
-const process = "Chopping";
-
-
-
+// Transform function
 export const transformData = (responseData) => {
+    const filePath = 'ChoppingOnly.xlsx';
+    const sheetData = readExcelFile(filePath);
+
+    // Validate sheetData
+    if (!Array.isArray(sheetData) || sheetData.length === 0) {
+        throw new Error("Invalid or empty sheetData provided.");
+    }
+
     // Convert the input object to an array of items
     const itemsArray = Object.values(responseData).filter(
         item => item && item.id && item.chopping_id && item.item_code
@@ -77,31 +93,29 @@ export const transformData = (responseData) => {
             throw new Error("No output entry found in the data");
         }
 
-        const findItemDetails = (itemCode) => {
-            for (const location in lookupTable) {
-                const itemDetails = lookupTable[location].find(item => item.item_no === itemCode);
-                if (itemDetails) return { location, uom: itemDetails.uom };
-            }
-            return null;
+        const resolveItemDetails = (itemCode) => {
+            return {
+                location: resolveLocationCode(itemCode, "Chopping", sheetData),
+                uom: resolveUnitOfMeasure(itemCode, "Chopping", sheetData)
+            };
         };
 
-        // Handle special items (G8900, G8901)
+        // Handle special items (e.g., G8900, G8901)
         const specialItems = ['G8900', 'G8901'];
-        const specialConsumptionLines = []; // To track consumption lines for the main order
+        const specialConsumptionLines = [];
 
         specialItems.forEach(specialItemCode => {
             const specialConsumptionItem = consumptionItems.find(item => item.item_code === specialItemCode);
             if (specialConsumptionItem) {
-                const specialDetails = findItemDetails(specialItemCode) || {};
-                const { location: specialLocation = "2055", uom: specialUom = "KG" } = specialDetails;
+                const specialDetails = resolveItemDetails(specialItemCode);
 
                 const specialOrderNumber = `WP_${Date.now()}`;
                 const specialProductionOrder = {
                     production_order_no: specialOrderNumber,
                     ItemNo: specialConsumptionItem.item_code,
                     Quantity: parseFloat(specialConsumptionItem.weight),
-                    uom: specialUom,
-                    LocationCode: specialLocation,
+                    uom: specialDetails.uom,
+                    LocationCode: specialDetails.location,
                     BIN: "",
                     user: "DefaultUser",
                     line_no: 1000,
@@ -111,8 +125,8 @@ export const transformData = (responseData) => {
                         {
                             ItemNo: specialConsumptionItem.item_code,
                             Quantity: parseFloat(specialConsumptionItem.weight),
-                            uom: specialUom,
-                            LocationCode: specialLocation,
+                            uom: specialDetails.uom,
+                            LocationCode: specialDetails.location,
                             BIN: "",
                             line_no: 1000,
                             type: "output",
@@ -129,8 +143,8 @@ export const transformData = (responseData) => {
                 specialConsumptionLines.push({
                     item_code: specialConsumptionItem.item_code,
                     weight: specialConsumptionItem.weight,
-                    uom: specialUom,
-                    LocationCode: specialLocation,
+                    uom: specialDetails.uom,
+                    LocationCode: specialDetails.location,
                     BIN: "",
                     type: "consumption",
                     date_time: dateTime,
@@ -139,20 +153,19 @@ export const transformData = (responseData) => {
             }
         });
 
-        const outputDetails = findItemDetails(outputItem.item_code) || {};
-        const { location: outputLocation = "2055", uom: outputUom = "KG" } = outputDetails;
+        const outputDetails = resolveItemDetails(outputItem.item_code);
 
         // Build the main production order
         const mainProductionOrder = {
             production_order_no: `${outputItem.chopping_id}_${outputItem.id}`,
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: outputUom || resolveUnitOfMeasure(outputItem.item_code, "Chopping", sheetData),
-            LocationCode: outputLocation || resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
+            uom: outputDetails.uom,
+            LocationCode: outputDetails.location,
             BIN: "",
             user: "DefaultUser",
             line_no: 1000,
-            routing: "production_data_chopping_beheading.bc",
+            routing: "production_data_chopping.bc",
             date_time: dateTime,
             ProductionJournalLines: []
         };
@@ -164,8 +177,8 @@ export const transformData = (responseData) => {
         mainProductionOrder.ProductionJournalLines.push({
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: outputUom || resolveUnitOfMeasure(outputItem.item_code, "Chopping", sheetData),
-            LocationCode: outputLocation || resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
+            uom: outputDetails.uom,
+            LocationCode: outputDetails.location,
             BIN: "",
             line_no: 1000,
             type: "output",
@@ -175,21 +188,18 @@ export const transformData = (responseData) => {
         seenItems.add(outputItem.item_code);
         seenLineNumbers.add(1000);
 
-        // Add consumption lines with validation
+        // Add consumption lines
         [...consumptionItems, ...specialConsumptionLines].forEach((item, index) => {
             const lineNumber = 2000 + index * 1000;
 
-            // Ensure uom and LocationCode have fallback defaults
-            const itemDetails = findItemDetails(item.item_code) || {};
-            const resolvedUOM = item.uom || itemDetails.uom || resolveUnitOfMeasure(item.item_code, "Chopping", sheetData) || "KG";
-            const resolvedLocationCode = item.LocationCode || itemDetails.location || resolveLocationCode(item.item_code, "Chopping", sheetData) || "2055";
+            const itemDetails = resolveItemDetails(item.item_code);
 
             if (!seenItems.has(item.item_code) && !seenLineNumbers.has(lineNumber)) {
                 mainProductionOrder.ProductionJournalLines.push({
                     ItemNo: item.item_code,
                     Quantity: parseFloat(item.weight),
-                    uom: resolvedUOM,
-                    LocationCode: resolvedLocationCode,
+                    uom: itemDetails.uom,
+                    LocationCode: itemDetails.location,
                     BIN: item.BIN || "",
                     line_no: lineNumber,
                     type: item.type || "consumption",
@@ -206,6 +216,10 @@ export const transformData = (responseData) => {
 
     return productionOrders;
 };
+
+
+
+
 
 
 
