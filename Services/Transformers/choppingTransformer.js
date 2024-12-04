@@ -79,7 +79,7 @@ export const transformData = (responseData) => {
                     BIN: "",
                     user: "DefaultUser",
                     line_no: 1000,
-                    routing: "production_data_chopping_beheading.bc",
+                    routing: "production_data_order_chopping.bc",
                     date_time: dateTime,
                     ProductionJournalLines: [
                         {
