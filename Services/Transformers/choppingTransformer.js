@@ -139,18 +139,16 @@ export const transformData = (responseData) => {
             }
         });
 
-        const outputDetails = findItemDetails(outputItem.item_code);
-        if (!outputDetails) throw new Error(`Details for ItemNo ${outputItem.item_code} not found in lookup`);
-
-        const { location: outputLocation, uom: outputUom } = outputDetails;
+        const outputDetails = findItemDetails(outputItem.item_code) || {};
+        const { location: outputLocation = "2055", uom: outputUom = "KG" } = outputDetails;
 
         // Build the main production order
         const mainProductionOrder = {
             production_order_no: `${outputItem.chopping_id}_${outputItem.id}`,
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: resolveUnitOfMeasure(outputItem.item_code, "Chopping", sheetData),
-            LocationCode: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
+            uom: outputUom || resolveUnitOfMeasure(outputItem.item_code, "Chopping", sheetData),
+            LocationCode: outputLocation || resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
             BIN: "",
             user: "DefaultUser",
             line_no: 1000,
@@ -166,8 +164,8 @@ export const transformData = (responseData) => {
         mainProductionOrder.ProductionJournalLines.push({
             ItemNo: outputItem.item_code,
             Quantity: parseFloat(outputItem.weight),
-            uom: resolveUnitOfMeasure(outputItem.item_code, "Chopping", sheetData),
-            LocationCode: resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
+            uom: outputUom || resolveUnitOfMeasure(outputItem.item_code, "Chopping", sheetData),
+            LocationCode: outputLocation || resolveLocationCode(outputItem.item_code, "Chopping", sheetData),
             BIN: "",
             line_no: 1000,
             type: "output",
@@ -180,12 +178,18 @@ export const transformData = (responseData) => {
         // Add consumption lines with validation
         [...consumptionItems, ...specialConsumptionLines].forEach((item, index) => {
             const lineNumber = 2000 + index * 1000;
+
+            // Ensure uom and LocationCode have fallback defaults
+            const itemDetails = findItemDetails(item.item_code) || {};
+            const resolvedUOM = item.uom || itemDetails.uom || resolveUnitOfMeasure(item.item_code, "Chopping", sheetData) || "KG";
+            const resolvedLocationCode = item.LocationCode || itemDetails.location || resolveLocationCode(item.item_code, "Chopping", sheetData) || "2055";
+
             if (!seenItems.has(item.item_code) && !seenLineNumbers.has(lineNumber)) {
                 mainProductionOrder.ProductionJournalLines.push({
                     ItemNo: item.item_code,
                     Quantity: parseFloat(item.weight),
-                    uom: resolveUnitOfMeasure(item.item_code,"Chopping", sheetData),
-                    LocationCode: resolveLocationCode(item.item_code, "Chopping", sheetData),
+                    uom: resolvedUOM,
+                    LocationCode: resolvedLocationCode,
                     BIN: item.BIN || "",
                     line_no: lineNumber,
                     type: item.type || "consumption",
@@ -202,6 +206,7 @@ export const transformData = (responseData) => {
 
     return productionOrders;
 };
+
 
 
 // Example usage
