@@ -60,9 +60,9 @@ const resolveUnitOfMeasure = (itemCode, process, sheetData) => {
 
 // Transform function
 export const transformData = (responseData) => {
-    const filePath = 'ChoppingOnly.xlsx';
-    const sheetData = readExcelFile(filePath);
 
+    const filePath = 'ChoppingOnly.xlsx';
+const sheetData = readExcelFile(filePath);
     // Validate sheetData
     if (!Array.isArray(sheetData) || sheetData.length === 0) {
         throw new Error("Invalid or empty sheetData provided.");
@@ -96,7 +96,7 @@ export const transformData = (responseData) => {
         const resolveItemDetails = (itemCode) => {
             return {
                 location: resolveLocationCode(itemCode, "Chopping", sheetData),
-                uom: resolveUnitOfMeasure(itemCode, "Chopping", sheetData)
+                uom: resolveUnitOfMeasure(itemCode, "Chopping", sheetData) || "KG" // Ensure default UOM
             };
         };
 
@@ -165,7 +165,7 @@ export const transformData = (responseData) => {
             BIN: "",
             user: "DefaultUser",
             line_no: 1000,
-            routing: "production_data_chopping.bc",
+            routing: "production_data_chopping_beheading.bc",
             date_time: dateTime,
             ProductionJournalLines: []
         };
@@ -198,8 +198,8 @@ export const transformData = (responseData) => {
                 mainProductionOrder.ProductionJournalLines.push({
                     ItemNo: item.item_code,
                     Quantity: parseFloat(item.weight),
-                    uom: itemDetails.uom,
-                    LocationCode: itemDetails.location,
+                    uom: itemDetails.uom || "KG", // Ensure UOM is always set
+                    LocationCode: itemDetails.location || "2055", // Default location if missing
                     BIN: item.BIN || "",
                     line_no: lineNumber,
                     type: item.type || "consumption",
