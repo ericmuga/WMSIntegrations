@@ -1,14 +1,13 @@
 import fs from 'fs';
-import path from 'path';
 import xlsx from 'xlsx';
 
 // Function to load and parse the Excel file
 const readExcelFile = (filePath) => {
     try {
-        const workbook = xlsx.readFile(filePath); // Read the Excel file
-        const sheetName = workbook.SheetNames[0]; // Use the first sheet
+        const workbook = xlsx.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const jsonData = xlsx.utils.sheet_to_json(sheet); // Convert sheet to JSON
+        const jsonData = xlsx.utils.sheet_to_json(sheet);
 
         if (!Array.isArray(jsonData)) {
             throw new Error("Parsed sheet data is not an array");
@@ -16,51 +15,10 @@ const readExcelFile = (filePath) => {
         return jsonData;
     } catch (error) {
         console.error("Error reading Excel file:", error.message);
-        return []; // Return an empty array to avoid crashes
+        return [];
     }
 };
 
-const resolveLocationCode = (itemCode, process, sheetData) => {
-    for (const row of sheetData) {
-        if (row.Process === process) {
-            if (row["Input Item"] === itemCode) {
-                return row["Input Location code"]; // Resolve for input item
-            }
-            if (row["Output Item Code"] === itemCode) {
-                return row["Output Location code"]; // Resolve for output item
-            }
-        }
-    }
-    return "2055"; // Default location if item not found
-};
-
-const resolveUnitOfMeasure = (itemCode, process, sheetData) => {
-    for (const row of sheetData) {
-        if (row.Process === process) {
-            if (row["Input Item"] === itemCode) {
-                return row["input_uom"]; // Resolve for input item
-            }
-            if (row["Output Item Code"] === itemCode) {
-                return row["output_uom"]; // Resolve for output item
-            }
-        }
-    }
-    return "KG"; // Default UOM if item not found
-};
-
-const resolveSpicePremixConsumption = (outputQty, spicePremixRow) => {
-    return {
-        ItemNo: spicePremixRow["input_item_code"],
-        Quantity: (outputQty / spicePremixRow["output_batch_size"]) * spicePremixRow["input_qty_pe"],
-        uom: spicePremixRow["input_uom"],
-        LocationCode: spicePremixRow["input_location_code"],
-        BIN: "",
-        line_no: null,
-        type: "consumption", // Ensure type is consumption for ingredients
-        date_time: new Date().toISOString(),
-        user: "DefaultUser"
-    };
-};
 const roundTo4Decimals = (value) => {
     if (isNaN(value) || value === null || value === undefined) {
         throw new Error(`Invalid number: ${value}`);
@@ -68,10 +26,23 @@ const roundTo4Decimals = (value) => {
     return parseFloat(Number(value).toFixed(4));
 };
 
+// Replacement mapping
+const replaceItems = {
+    "G2011": "G2009",
+    "G2016": "G2009",
+    "G2045": "G2044",
+    "G2161": "G2159",
+    "G2013": "G2005",
+    "G2155":"G2007"
+};
 
-const createSpecialProductionOrder = (specialItem, dateTime) => {
+// Replace item if needed
+const replaceItemIfNeeded = (itemNo) => replaceItems[itemNo] || itemNo;
+
+// Create a special production order
+const createSpecialProductionOrder = (specialItem, dateTime, context) => {
     return {
-        production_order_no: `WP_${specialItem.ItemNo}_${Date.now()}`,
+        production_order_no: `WP_${specialItem.ItemNo}_${context}_${Date.now()}`,
         ItemNo: specialItem.ItemNo,
         Quantity: roundTo4Decimals(specialItem.Quantity),
         uom: specialItem.uom,
@@ -116,7 +87,7 @@ export const transformData = (responseData) => {
     }, {});
 
     const productionOrders = [];
-    const specialItems = ["G8900", "G8901"]; // Define special items here
+    const specialItems = ["G8900", "G8901"];
 
     for (const groupKey in groupedItems) {
         const items = groupedItems[groupKey];
@@ -130,8 +101,8 @@ export const transformData = (responseData) => {
 
         const resolveItemDetails = (itemCode) => {
             return {
-                location: resolveLocationCode(itemCode, "Chopping", sheetData),
-                uom: resolveUnitOfMeasure(itemCode, "Chopping", sheetData) || "KG"
+                location: "2055", // Default location (for simplicity)
+                uom: "KG" // Default UOM
             };
         };
 
@@ -139,7 +110,7 @@ export const transformData = (responseData) => {
 
         const mainProductionOrder = {
             production_order_no: `${outputItem.chopping_id}_${outputItem.id}`,
-            ItemNo: outputItem.item_code,
+            ItemNo: replaceItemIfNeeded(outputItem.item_code),
             Quantity: roundTo4Decimals(outputItem.weight),
             uom: outputDetails.uom,
             LocationCode: outputDetails.location,
@@ -151,11 +122,9 @@ export const transformData = (responseData) => {
             ProductionJournalLines: []
         };
 
-        const addedItems = new Set();
-
         // Add output line
         mainProductionOrder.ProductionJournalLines.push({
-            ItemNo: outputItem.item_code,
+            ItemNo: replaceItemIfNeeded(outputItem.item_code),
             Quantity: roundTo4Decimals(outputItem.weight),
             uom: outputDetails.uom,
             LocationCode: outputDetails.location,
@@ -165,48 +134,44 @@ export const transformData = (responseData) => {
             date_time: dateTime,
             user: "DefaultUser"
         });
-        addedItems.add(outputItem.item_code);
 
         // Add consumption lines
         consumptionItems.forEach((item, index) => {
-            if (!addedItems.has(item.item_code)) {
-                const lineNumber = 2000 + index * 1000;
-                const itemDetails = resolveItemDetails(item.item_code);
+            const replacedItemCode = replaceItemIfNeeded(item.item_code);
+            const lineNumber = 2000 + index * 1000;
+            const itemDetails = resolveItemDetails(replacedItemCode);
 
-                mainProductionOrder.ProductionJournalLines.push({
-                    ItemNo: item.item_code,
-                    Quantity: roundTo4Decimals(item.weight),
-                    uom: itemDetails.uom || "KG",
-                    LocationCode: itemDetails.location || "2055",
-                    BIN: item.BIN || "",
-                    line_no: lineNumber,
-                    type: "consumption",
-                    date_time: item.date_time || dateTime,
-                    user: item.user || "DefaultUser"
-                });
-                addedItems.add(item.item_code);
+            mainProductionOrder.ProductionJournalLines.push({
+                ItemNo: replacedItemCode,
+                Quantity: roundTo4Decimals(item.weight),
+                uom: itemDetails.uom,
+                LocationCode: itemDetails.location,
+                BIN: "",
+                line_no: lineNumber,
+                type: "consumption",
+                date_time: item.date_time || dateTime,
+                user: item.user || "DefaultUser"
+            });
+
+            // Create special order for G8900
+            if (specialItems.includes(replacedItemCode)) {
+                const specialOrder = createSpecialProductionOrder(
+                    { ItemNo: replacedItemCode, Quantity: item.weight, uom: itemDetails.uom, LocationCode: itemDetails.location },
+                    dateTime,
+                    replaceItemIfNeeded(outputItem.item_code)
+                );
+                productionOrders.push(specialOrder);
             }
         });
 
         productionOrders.push(mainProductionOrder);
 
-        // Check for special items in the main production order
-        const specialMainItems = mainProductionOrder.ProductionJournalLines.filter(line =>
-            specialItems.includes(line.ItemNo)
-        );
-
-        specialMainItems.forEach(specialItem => {
-            const specialOrder = createSpecialProductionOrder(specialItem, dateTime);
-            productionOrders.push(specialOrder);
-        });
-
-        // Check each consumption line in the main production order for spice premix requirements
+        // Handle spice premix orders
         mainProductionOrder.ProductionJournalLines.forEach((line) => {
             const spicePremixOutput = spicePremixData.find(row => row["output_item"] === line.ItemNo);
 
             if (spicePremixOutput) {
                 const spiceOutputQty = roundTo4Decimals(line.Quantity);
-
                 const spicePremixOrder = {
                     production_order_no: `SP_${line.ItemNo}_${Date.now()}`,
                     ItemNo: spicePremixOutput["output_item"],
@@ -221,13 +186,25 @@ export const transformData = (responseData) => {
                     ProductionJournalLines: []
                 };
 
-                const uniqueSpiceItems = new Set();
+                // Add spice premix output line
+                spicePremixOrder.ProductionJournalLines.push({
+                    ItemNo: spicePremixOutput["output_item"],
+                    Quantity: spiceOutputQty,
+                    uom: spicePremixOutput["output_uom"],
+                    LocationCode: spicePremixOutput["output_location_code"],
+                    BIN: "",
+                    line_no: 1000,
+                    type: "output",
+                    date_time: dateTime,
+                    user: "DefaultUser"
+                });
 
+                // Add consumption lines
                 spicePremixData
                     .filter(row => row["output_item"] === spicePremixOutput["output_item"])
                     .forEach((spiceRow, index) => {
                         const consumptionLine = {
-                            ItemNo: spiceRow["input_item_code"],
+                            ItemNo: replaceItemIfNeeded(spiceRow["input_item_code"]),
                             Quantity: roundTo4Decimals(
                                 (spiceOutputQty / spiceRow["output_batch_size"]) * spiceRow["input_qty_pe"]
                             ),
@@ -240,56 +217,42 @@ export const transformData = (responseData) => {
                             user: "DefaultUser"
                         };
 
-                        if (!uniqueSpiceItems.has(consumptionLine.ItemNo)) {
-                            spicePremixOrder.ProductionJournalLines.push(consumptionLine);
-                            uniqueSpiceItems.add(consumptionLine.ItemNo);
+                        spicePremixOrder.ProductionJournalLines.push(consumptionLine);
+
+                        // Create special order for G8900 in spice premix
+                        if (specialItems.includes(consumptionLine.ItemNo)) {
+                            const specialOrder = createSpecialProductionOrder(
+                                { ItemNo: consumptionLine.ItemNo, Quantity: consumptionLine.Quantity, uom: consumptionLine.uom, LocationCode: consumptionLine.LocationCode },
+                                dateTime,
+                                spicePremixOutput["output_item"]
+                            );
+                            productionOrders.push(specialOrder);
                         }
                     });
 
                 productionOrders.push(spicePremixOrder);
-
-                // Check for special items in the spice premix production order
-                const specialSpiceItems = spicePremixOrder.ProductionJournalLines.filter(spiceLine =>
-                    specialItems.includes(spiceLine.ItemNo)
-                );
-
-                specialSpiceItems.forEach(specialItem => {
-                    const specialOrder = createSpecialProductionOrder(specialItem, dateTime);
-                    productionOrders.push(specialOrder);
-                });
             }
         });
     }
 
-    // Reorder productionOrders: Special orders come first
-// Reorder productionOrders: Special orders come first, then spice orders, then main orders
-productionOrders.sort((a, b) => {
-    const isSpecialA = a.production_order_no.startsWith("WP_") ? 0 : 2;
-    const isSpiceA = a.production_order_no.startsWith("SP_") ? 1 : 2;
-    const isSpecialB = b.production_order_no.startsWith("WP_") ? 0 : 2;
-    const isSpiceB = b.production_order_no.startsWith("SP_") ? 1 : 2;
+    productionOrders.sort((a, b) => {
+        const isSpecialA = a.production_order_no.startsWith("WP_") ? 0 : 2;
+        const isSpiceA = a.production_order_no.startsWith("SP_") ? 1 : 2;
+        const isSpecialB = b.production_order_no.startsWith("WP_") ? 0 : 2;
+        const isSpiceB = b.production_order_no.startsWith("SP_") ? 1 : 2;
 
-    // Prioritize based on type: SPECIAL_ (0), SP_ (1), others (2)
-    const priorityA = Math.min(isSpecialA, isSpiceA);
-    const priorityB = Math.min(isSpecialB, isSpiceB);
+        const priorityA = Math.min(isSpecialA, isSpiceA);
+        const priorityB = Math.min(isSpecialB, isSpiceB);
 
-    // Sort by priority
-    if (priorityA !== priorityB) {
-        return priorityA - priorityB;
-    }
+        if (priorityA !== priorityB) {
+            return priorityA - priorityB;
+        }
 
-    // Maintain original order within the same priority level
-    return 0;
-});
-
-
+        return 0;
+    });
 
     return productionOrders;
 };
-
-
-
-
 
 
 // Example usage
