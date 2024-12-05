@@ -20,16 +20,6 @@ const readExcelFile = (filePath) => {
     }
 };
 
-// Example Usage
-const filePath = 'ChoppingOnly.xlsx';
-const sheetData = readExcelFile(filePath);
-
-
-// Load the JSON lookup table
-// const lookupFilePath = path.resolve('./Services/Transformers/choppingLocations.json');
-// const lookupTable = JSON.parse(fs.readFileSync(lookupFilePath, 'utf-8'));
-
-// Functions to resolve LocationCode and UOM
 const resolveLocationCode = (itemCode, process, sheetData) => {
     for (const row of sheetData) {
         if (row.Process === process) {
@@ -58,17 +48,62 @@ const resolveUnitOfMeasure = (itemCode, process, sheetData) => {
     return "KG"; // Default UOM if item not found
 };
 
-// Transform function
-export const transformData = (responseData) => {
-
-    const filePath = 'ChoppingOnly.xlsx';
-const sheetData = readExcelFile(filePath);
-    // Validate sheetData
-    if (!Array.isArray(sheetData) || sheetData.length === 0) {
-        throw new Error("Invalid or empty sheetData provided.");
+const resolveSpicePremixConsumption = (outputQty, spicePremixRow) => {
+    return {
+        ItemNo: spicePremixRow["input_item_code"],
+        Quantity: (outputQty / spicePremixRow["output_batch_size"]) * spicePremixRow["input_qty_pe"],
+        uom: spicePremixRow["input_uom"],
+        LocationCode: spicePremixRow["input_location_code"],
+        BIN: "",
+        line_no: null,
+        type: "consumption", // Ensure type is consumption for ingredients
+        date_time: new Date().toISOString(),
+        user: "DefaultUser"
+    };
+};
+const roundTo4Decimals = (value) => {
+    if (isNaN(value) || value === null || value === undefined) {
+        throw new Error(`Invalid number: ${value}`);
     }
+    return parseFloat(Number(value).toFixed(4));
+};
 
-    // Convert the input object to an array of items
+
+const createSpecialProductionOrder = (specialItem, dateTime) => {
+    return {
+        production_order_no: `WP_${specialItem.ItemNo}_${Date.now()}`,
+        ItemNo: specialItem.ItemNo,
+        Quantity: roundTo4Decimals(specialItem.Quantity),
+        uom: specialItem.uom,
+        LocationCode: specialItem.LocationCode,
+        BIN: "",
+        user: "DefaultUser",
+        line_no: 1000,
+        routing: "special_spice_production.bc",
+        date_time: dateTime,
+        ProductionJournalLines: [
+            {
+                ItemNo: specialItem.ItemNo,
+                Quantity: roundTo4Decimals(specialItem.Quantity),
+                uom: specialItem.uom,
+                LocationCode: specialItem.LocationCode,
+                BIN: "",
+                line_no: 1000,
+                type: "output",
+                date_time: dateTime,
+                user: "DefaultUser"
+            }
+        ]
+    };
+};
+
+export const transformData = (responseData) => {
+    const filePath = 'ChoppingOnly.xlsx';
+    const sheetData = readExcelFile(filePath);
+
+    const spicePremixFilePath = 'SpicePremix.xlsx';
+    const spicePremixData = readExcelFile(spicePremixFilePath);
+
     const itemsArray = Object.values(responseData).filter(
         item => item && item.id && item.chopping_id && item.item_code
     );
@@ -81,6 +116,7 @@ const sheetData = readExcelFile(filePath);
     }, {});
 
     const productionOrders = [];
+    const specialItems = ["G8900", "G8901"]; // Define special items here
 
     for (const groupKey in groupedItems) {
         const items = groupedItems[groupKey];
@@ -89,77 +125,22 @@ const sheetData = readExcelFile(filePath);
         const consumptionItems = items.filter(item => item.output === "0" || item.output === 0);
 
         if (!outputItem) {
-            console.error("Group Items:", items);
             throw new Error("No output entry found in the data");
         }
 
         const resolveItemDetails = (itemCode) => {
             return {
                 location: resolveLocationCode(itemCode, "Chopping", sheetData),
-                uom: resolveUnitOfMeasure(itemCode, "Chopping", sheetData) || "KG" // Ensure default UOM
+                uom: resolveUnitOfMeasure(itemCode, "Chopping", sheetData) || "KG"
             };
         };
 
-        // Handle special items (e.g., G8900, G8901)
-        const specialItems = ['G8900', 'G8901'];
-        const specialConsumptionLines = [];
-
-        specialItems.forEach(specialItemCode => {
-            const specialConsumptionItem = consumptionItems.find(item => item.item_code === specialItemCode);
-            if (specialConsumptionItem) {
-                const specialDetails = resolveItemDetails(specialItemCode);
-
-                const specialOrderNumber = `WP_${Date.now()}`;
-                const specialProductionOrder = {
-                    production_order_no: specialOrderNumber,
-                    ItemNo: specialConsumptionItem.item_code,
-                    Quantity: parseFloat(specialConsumptionItem.weight),
-                    uom: specialDetails.uom,
-                    LocationCode: specialDetails.location,
-                    BIN: "",
-                    user: "DefaultUser",
-                    line_no: 1000,
-                    routing: "production_data_order_chopping.bc",
-                    date_time: dateTime,
-                    ProductionJournalLines: [
-                        {
-                            ItemNo: specialConsumptionItem.item_code,
-                            Quantity: parseFloat(specialConsumptionItem.weight),
-                            uom: specialDetails.uom,
-                            LocationCode: specialDetails.location,
-                            BIN: "",
-                            line_no: 1000,
-                            type: "output",
-                            date_time: dateTime,
-                            user: "DefaultUser"
-                        }
-                    ]
-                };
-
-                // Add the special production order
-                productionOrders.push(specialProductionOrder);
-
-                // Track the consumption line for the main production order
-                specialConsumptionLines.push({
-                    item_code: specialConsumptionItem.item_code,
-                    weight: specialConsumptionItem.weight,
-                    uom: specialDetails.uom,
-                    LocationCode: specialDetails.location,
-                    BIN: "",
-                    type: "consumption",
-                    date_time: dateTime,
-                    user: "DefaultUser"
-                });
-            }
-        });
-
         const outputDetails = resolveItemDetails(outputItem.item_code);
 
-        // Build the main production order
         const mainProductionOrder = {
             production_order_no: `${outputItem.chopping_id}_${outputItem.id}`,
             ItemNo: outputItem.item_code,
-            Quantity: parseFloat(outputItem.weight),
+            Quantity: roundTo4Decimals(outputItem.weight),
             uom: outputDetails.uom,
             LocationCode: outputDetails.location,
             BIN: "",
@@ -170,13 +151,12 @@ const sheetData = readExcelFile(filePath);
             ProductionJournalLines: []
         };
 
-        const seenItems = new Set();
-        const seenLineNumbers = new Set();
+        const addedItems = new Set();
 
-        // Add the output line
+        // Add output line
         mainProductionOrder.ProductionJournalLines.push({
             ItemNo: outputItem.item_code,
-            Quantity: parseFloat(outputItem.weight),
+            Quantity: roundTo4Decimals(outputItem.weight),
             uom: outputDetails.uom,
             LocationCode: outputDetails.location,
             BIN: "",
@@ -185,34 +165,117 @@ const sheetData = readExcelFile(filePath);
             date_time: dateTime,
             user: "DefaultUser"
         });
-        seenItems.add(outputItem.item_code);
-        seenLineNumbers.add(1000);
+        addedItems.add(outputItem.item_code);
 
         // Add consumption lines
-        [...consumptionItems, ...specialConsumptionLines].forEach((item, index) => {
-            const lineNumber = 2000 + index * 1000;
+        consumptionItems.forEach((item, index) => {
+            if (!addedItems.has(item.item_code)) {
+                const lineNumber = 2000 + index * 1000;
+                const itemDetails = resolveItemDetails(item.item_code);
 
-            const itemDetails = resolveItemDetails(item.item_code);
-
-            if (!seenItems.has(item.item_code) && !seenLineNumbers.has(lineNumber)) {
                 mainProductionOrder.ProductionJournalLines.push({
                     ItemNo: item.item_code,
-                    Quantity: parseFloat(item.weight),
-                    uom: itemDetails.uom || "KG", // Ensure UOM is always set
-                    LocationCode: itemDetails.location || "2055", // Default location if missing
+                    Quantity: roundTo4Decimals(item.weight),
+                    uom: itemDetails.uom || "KG",
+                    LocationCode: itemDetails.location || "2055",
                     BIN: item.BIN || "",
                     line_no: lineNumber,
-                    type: item.type || "consumption",
+                    type: "consumption",
                     date_time: item.date_time || dateTime,
                     user: item.user || "DefaultUser"
                 });
-                seenItems.add(item.item_code);
-                seenLineNumbers.add(lineNumber);
+                addedItems.add(item.item_code);
             }
         });
 
         productionOrders.push(mainProductionOrder);
+
+        // Check for special items in the main production order
+        const specialMainItems = mainProductionOrder.ProductionJournalLines.filter(line =>
+            specialItems.includes(line.ItemNo)
+        );
+
+        specialMainItems.forEach(specialItem => {
+            const specialOrder = createSpecialProductionOrder(specialItem, dateTime);
+            productionOrders.push(specialOrder);
+        });
+
+        // Check each consumption line in the main production order for spice premix requirements
+        mainProductionOrder.ProductionJournalLines.forEach((line) => {
+            const spicePremixOutput = spicePremixData.find(row => row["output_item"] === line.ItemNo);
+
+            if (spicePremixOutput) {
+                const spiceOutputQty = roundTo4Decimals(line.Quantity);
+
+                const spicePremixOrder = {
+                    production_order_no: `SP_${line.ItemNo}_${Date.now()}`,
+                    ItemNo: spicePremixOutput["output_item"],
+                    Quantity: spiceOutputQty,
+                    uom: spicePremixOutput["output_uom"],
+                    LocationCode: spicePremixOutput["output_location_code"],
+                    BIN: "",
+                    user: "DefaultUser",
+                    line_no: 1000,
+                    routing: "production_spice_premixing.bc",
+                    date_time: dateTime,
+                    ProductionJournalLines: []
+                };
+
+                const uniqueSpiceItems = new Set();
+
+                spicePremixData
+                    .filter(row => row["output_item"] === spicePremixOutput["output_item"])
+                    .forEach((spiceRow, index) => {
+                        const consumptionLine = {
+                            ItemNo: spiceRow["input_item_code"],
+                            Quantity: roundTo4Decimals(
+                                (spiceOutputQty / spiceRow["output_batch_size"]) * spiceRow["input_qty_pe"]
+                            ),
+                            uom: spiceRow["input_uom"],
+                            LocationCode: spiceRow["input_location_code"],
+                            BIN: "",
+                            line_no: 2000 + index * 1000,
+                            type: "consumption",
+                            date_time: dateTime,
+                            user: "DefaultUser"
+                        };
+
+                        if (!uniqueSpiceItems.has(consumptionLine.ItemNo)) {
+                            spicePremixOrder.ProductionJournalLines.push(consumptionLine);
+                            uniqueSpiceItems.add(consumptionLine.ItemNo);
+                        }
+                    });
+
+                productionOrders.push(spicePremixOrder);
+
+                // Check for special items in the spice premix production order
+                const specialSpiceItems = spicePremixOrder.ProductionJournalLines.filter(spiceLine =>
+                    specialItems.includes(spiceLine.ItemNo)
+                );
+
+                specialSpiceItems.forEach(specialItem => {
+                    const specialOrder = createSpecialProductionOrder(specialItem, dateTime);
+                    productionOrders.push(specialOrder);
+                });
+            }
+        });
     }
+
+    // Reorder productionOrders: Special orders come first
+productionOrders.sort((a, b) => {
+    const isSpecialA = a.production_order_no.startsWith("WP_") ? 0 : 1;
+    const isSpecialB = b.production_order_no.startsWith("WP_") ? 0 : 1;
+
+    // Special orders (isSpecialA/B === 0) are prioritized
+    if (isSpecialA !== isSpecialB) {
+        return isSpecialA - isSpecialB;
+    }
+
+    // Maintain original order for non-special orders
+    return 0;
+});
+
+
 
     return productionOrders;
 };
@@ -222,154 +285,8 @@ const sheetData = readExcelFile(filePath);
 
 
 
-
 // Example usage
-// const jsonData = {
-//     "0":{
-//        "id":"338275",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"G2011",
-//        "weight":"50.00",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:14.307",
-//        "updated_at":"2024-12-03 14:26:14.307",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "1":{
-//        "id":"338277",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"G2005",
-//        "weight":"10.30",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:22.723",
-//        "updated_at":"2024-12-03 14:26:22.723",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "2":{
-//        "id":"338278",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"G8901",
-//        "weight":"20.10",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:34.350",
-//        "updated_at":"2024-12-03 14:26:34.350",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "3":{
-//        "id":"338279",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"G2001",
-//        "weight":"10.20",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:42.583",
-//        "updated_at":"2024-12-03 14:26:42.583",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "4":{
-//        "id":"338281",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"G2159",
-//        "weight":"30.20",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:49.543",
-//        "updated_at":"2024-12-03 14:26:49.543",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "5":{
-//        "id":"338282",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"G2109",
-//        "weight":".14",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:52.723",
-//        "updated_at":"2024-12-03 14:26:52.723",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "6":{
-//        "id":"338283",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"G2126",
-//        "weight":"3.00",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:52.723",
-//        "updated_at":"2024-12-03 14:26:52.723",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "7":{
-//        "id":"338284",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"H133003",
-//        "weight":".32",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:52.723",
-//        "updated_at":"2024-12-03 14:26:52.723",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "8":{
-//        "id":"338285",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"H133014",
-//        "weight":".32",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:52.723",
-//        "updated_at":"2024-12-03 14:26:52.723",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "9":{
-//        "id":"338286",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"H133019",
-//        "weight":"4.00",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:52.723",
-//        "updated_at":"2024-12-03 14:26:52.723",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "10":{
-//        "id":"338287",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"H133023",
-//        "weight":"6.00",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:52.723",
-//        "updated_at":"2024-12-03 14:26:52.723",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "11":{
-//        "id":"338288",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"H231025",
-//        "weight":"14.00",
-//        "output":"0",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:52.723",
-//        "updated_at":"2024-12-03 14:26:52.723",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "12":{
-//        "id":"338289",
-//        "chopping_id":"1230K56-51",
-//        "item_code":"G2208",
-//        "weight":"148.58",
-//        "output":"1",
-//        "batch_no":null,
-//        "created_at":"2024-12-03 14:26:52.783",
-//        "updated_at":"2024-12-03 14:26:52.783",
-//        "timestamp":"2024-12-03 14:26:52"
-//     },
-//     "company_name":"FCL"
-//  }
+// const jsonData = {"0":{"id":"343244","chopping_id":"1230K31-17","item_code":"G2005","weight":"16.90","output":"0","batch_no":null,"created_at":"2024-12-04 01:28:17.090","updated_at":"2024-12-04 01:28:17.090","timestamp":"2024-12-04 01:29:59"},"1":{"id":"343256","chopping_id":"1230K31-17","item_code":"G2011","weight":"27.30","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:08.290","updated_at":"2024-12-04 01:29:08.290","timestamp":"2024-12-04 01:29:59"},"2":{"id":"343257","chopping_id":"1230K31-17","item_code":"G8900","weight":"16.00","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:18.337","updated_at":"2024-12-04 01:29:18.337","timestamp":"2024-12-04 01:29:59"},"3":{"id":"343258","chopping_id":"1230K31-17","item_code":"G2159","weight":"48.30","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:32.560","updated_at":"2024-12-04 01:29:32.560","timestamp":"2024-12-04 01:29:59"},"4":{"id":"343262","chopping_id":"1230K31-17","item_code":"G2155","weight":"10.10","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:57.540","updated_at":"2024-12-04 01:29:57.540","timestamp":"2024-12-04 01:29:59"},"5":{"id":"343263","chopping_id":"1230K31-17","item_code":"G2109","weight":".14","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:59.917","updated_at":"2024-12-04 01:29:59.917","timestamp":"2024-12-04 01:29:59"},"6":{"id":"343264","chopping_id":"1230K31-17","item_code":"G2126","weight":"3.20","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:59.917","updated_at":"2024-12-04 01:29:59.917","timestamp":"2024-12-04 01:29:59"},"7":{"id":"343265","chopping_id":"1230K31-17","item_code":"H133003","weight":".32","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:59.917","updated_at":"2024-12-04 01:29:59.917","timestamp":"2024-12-04 01:29:59"},"8":{"id":"343266","chopping_id":"1230K31-17","item_code":"H133014","weight":".32","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:59.917","updated_at":"2024-12-04 01:29:59.917","timestamp":"2024-12-04 01:29:59"},"9":{"id":"343267","chopping_id":"1230K31-17","item_code":"H221016","weight":"1.20","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:59.917","updated_at":"2024-12-04 01:29:59.917","timestamp":"2024-12-04 01:29:59"},"10":{"id":"343268","chopping_id":"1230K31-17","item_code":"H231008","weight":"6.00","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:59.917","updated_at":"2024-12-04 01:29:59.917","timestamp":"2024-12-04 01:29:59"},"11":{"id":"343269","chopping_id":"1230K31-17","item_code":"H231017","weight":"12.00","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:59.917","updated_at":"2024-12-04 01:29:59.917","timestamp":"2024-12-04 01:29:59"},"12":{"id":"343270","chopping_id":"1230K31-17","item_code":"H231025","weight":"3.00","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:59.917","updated_at":"2024-12-04 01:29:59.917","timestamp":"2024-12-04 01:29:59"},"13":{"id":"343271","chopping_id":"1230K31-17","item_code":"H231068","weight":"9.00","output":"0","batch_no":null,"created_at":"2024-12-04 01:29:59.917","updated_at":"2024-12-04 01:29:59.917","timestamp":"2024-12-04 01:29:59"},"14":{"id":"343272","chopping_id":"1230K31-17","item_code":"G2206","weight":"152.58","output":"1","batch_no":null,"created_at":"2024-12-04 01:29:59.957","updated_at":"2024-12-04 01:29:59.957","timestamp":"2024-12-04 01:29:59"},"company_name":"FCL"}
 
 // try {
 //     const productionOrders = transformData(jsonData);
