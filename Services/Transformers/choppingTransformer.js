@@ -106,7 +106,7 @@ export const transformData = async (responseData) => {
 
     const productionOrders = [];
     const specialItems = ["G8900", "G8901"];
-    const specialItemQuantities = {}; // To accumulate quantities of special items
+    const specialItemQuantities = {}; // Accumulate quantities for special items
 
     for (const groupKey in groupedItems) {
         const items = groupedItems[groupKey];
@@ -227,7 +227,78 @@ export const transformData = async (responseData) => {
 
         productionOrders.push(mainProductionOrder);
 
-        // Handle spice premix orders as before...
+        // Handle spice premix orders
+        mainProductionOrder.ProductionJournalLines.forEach((line) => {
+            const spicePremixOutput = spicePremixData.find(row => row["output_item"] === line.ItemNo);
+            const uniquePart = Date.now() % 100000;
+            if (spicePremixOutput) {
+                const spiceOutputQty = roundTo4Decimals(line.Quantity);
+                const spicePremixOrder = {
+                    production_order_no: `SP_${line.ItemNo}_${uniquePart}`,
+                    ItemNo: spicePremixOutput["output_item"],
+                    Quantity: spiceOutputQty,
+                    uom: spicePremixOutput["output_uom"],
+                    LocationCode: spicePremixOutput["output_location_code"],
+                    BIN: "",
+                    user: "DefaultUser",
+                    line_no: 1000,
+                    routing: "production_spice_premixing.bc",
+                    date_time: dateTime,
+                    ProductionJournalLines: []
+                };
+
+                // Add spice premix output line
+                spicePremixOrder.ProductionJournalLines.push({
+                    ItemNo: spicePremixOutput["output_item"],
+                    Quantity: spiceOutputQty,
+                    uom: spicePremixOutput["output_uom"],
+                    LocationCode: spicePremixOutput["output_location_code"],
+                    BIN: "",
+                    line_no: 1000,
+                    type: "output",
+                    date_time: dateTime,
+                    user: "DefaultUser"
+                });
+
+                // Add consumption lines
+                spicePremixData
+                    .filter(row => row["output_item"] === spicePremixOutput["output_item"])
+                    .forEach((spiceRow, index) => {
+                        const consumptionLine = {
+                            ItemNo: replaceItemIfNeeded(spiceRow["input_item_code"]),
+                            Quantity: roundTo4Decimals(
+                                (spiceOutputQty / spiceRow["output_batch_size"]) * spiceRow["input_qty_pe"]
+                            ),
+                            uom: spiceRow["input_uom"],
+                            LocationCode: spiceRow["input_location_code"],
+                            BIN: "",
+                            line_no: 2000 + index * 1000,
+                            type: "consumption",
+                            date_time: dateTime,
+                            user: "DefaultUser"
+                        };
+
+                        spicePremixOrder.ProductionJournalLines.push(consumptionLine);
+
+                        // Create special order for G8900 in spice premix
+                        if (specialItems.includes(consumptionLine.ItemNo)) {
+                            const specialOrder = createSpecialProductionOrder(
+                                {
+                                    ItemNo: consumptionLine.ItemNo,
+                                    Quantity: consumptionLine.Quantity,
+                                    uom: consumptionLine.uom,
+                                    LocationCode: consumptionLine.LocationCode
+                                },
+                                dateTime,
+                                spicePremixOutput["output_item"]
+                            );
+                            productionOrders.push(specialOrder);
+                        }
+                    });
+
+                productionOrders.push(spicePremixOrder);
+            }
+        });
     }
 
     // Consolidate special orders
@@ -291,11 +362,11 @@ export const transformData = async (responseData) => {
 
 
 // // Example usage
-// const jsonData = {"0":{"id":"345615","chopping_id":"1230L83-90","item_code":"G2044","weight":"15.60","output":"0","batch_no":null,"created_at":"2024-12-04 08:38:08.863","updated_at":"2024-12-04 08:38:08.863","timestamp":"2024-12-04 08:41:13"},"1":{"id":"345616","chopping_id":"1230L83-90","item_code":"G2016","weight":"14.50","output":"0","batch_no":null,"created_at":"2024-12-04 08:38:40.220","updated_at":"2024-12-04 08:38:40.220","timestamp":"2024-12-04 08:41:13"},"2":{"id":"345617","chopping_id":"1230L83-90","item_code":"G2007","weight":"9.10","output":"0","batch_no":null,"created_at":"2024-12-04 08:38:59.513","updated_at":"2024-12-04 08:38:59.513","timestamp":"2024-12-04 08:41:13"},"3":{"id":"345619","chopping_id":"1230L83-90","item_code":"G2150","weight":"14.50","output":"0","batch_no":null,"created_at":"2024-12-04 08:39:30.220","updated_at":"2024-12-04 08:39:30.220","timestamp":"2024-12-04 08:41:13"},"4":{"id":"345622","chopping_id":"1230L83-90","item_code":"G2161","weight":"23.70","output":"0","batch_no":null,"created_at":"2024-12-04 08:40:23.393","updated_at":"2024-12-04 08:40:23.393","timestamp":"2024-12-04 08:41:13"},"5":{"id":"345623","chopping_id":"1230L83-90","item_code":"G2001","weight":"9.20","output":"0","batch_no":null,"created_at":"2024-12-04 08:40:41.050","updated_at":"2024-12-04 08:40:41.050","timestamp":"2024-12-04 08:41:13"},"6":{"id":"345624","chopping_id":"1230L83-90","item_code":"G8900","weight":"9.30","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:04.223","updated_at":"2024-12-04 08:41:04.223","timestamp":"2024-12-04 08:41:13"},"7":{"id":"345625","chopping_id":"1230L83-90","item_code":"G2107","weight":"1.70","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"8":{"id":"345626","chopping_id":"1230L83-90","item_code":"G2109","weight":".30","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"9":{"id":"345627","chopping_id":"1230L83-90","item_code":"G2128","weight":".94","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"10":{"id":"345628","chopping_id":"1230L83-90","item_code":"H133020","weight":"2.00","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"11":{"id":"345629","chopping_id":"1230L83-90","item_code":"H133023","weight":"8.00","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"12":{"id":"345630","chopping_id":"1230L83-90","item_code":"H221016","weight":"1.12","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"13":{"id":"345631","chopping_id":"1230L83-90","item_code":"H231017","weight":"8.00","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"14":{"id":"345632","chopping_id":"1230L83-90","item_code":"H231025","weight":"2.50","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"15":{"id":"345633","chopping_id":"1230L83-90","item_code":"H231068","weight":"7.50","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"16":{"id":"345634","chopping_id":"1230L83-90","item_code":"G8900","weight":"18.00","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"17":{"id":"345635","chopping_id":"1230L83-90","item_code":"G2223","weight":"144.84","output":"1","batch_no":null,"created_at":"2024-12-04 08:41:13.010","updated_at":"2024-12-04 08:41:13.010","timestamp":"2024-12-04 08:41:13"},"company_name":"FCL"}
+const jsonData = {"0":{"id":"345615","chopping_id":"1230L83-90","item_code":"G2044","weight":"15.60","output":"0","batch_no":null,"created_at":"2024-12-04 08:38:08.863","updated_at":"2024-12-04 08:38:08.863","timestamp":"2024-12-04 08:41:13"},"1":{"id":"345616","chopping_id":"1230L83-90","item_code":"G2016","weight":"14.50","output":"0","batch_no":null,"created_at":"2024-12-04 08:38:40.220","updated_at":"2024-12-04 08:38:40.220","timestamp":"2024-12-04 08:41:13"},"2":{"id":"345617","chopping_id":"1230L83-90","item_code":"G2007","weight":"9.10","output":"0","batch_no":null,"created_at":"2024-12-04 08:38:59.513","updated_at":"2024-12-04 08:38:59.513","timestamp":"2024-12-04 08:41:13"},"3":{"id":"345619","chopping_id":"1230L83-90","item_code":"G2150","weight":"14.50","output":"0","batch_no":null,"created_at":"2024-12-04 08:39:30.220","updated_at":"2024-12-04 08:39:30.220","timestamp":"2024-12-04 08:41:13"},"4":{"id":"345622","chopping_id":"1230L83-90","item_code":"G2161","weight":"23.70","output":"0","batch_no":null,"created_at":"2024-12-04 08:40:23.393","updated_at":"2024-12-04 08:40:23.393","timestamp":"2024-12-04 08:41:13"},"5":{"id":"345623","chopping_id":"1230L83-90","item_code":"G2001","weight":"9.20","output":"0","batch_no":null,"created_at":"2024-12-04 08:40:41.050","updated_at":"2024-12-04 08:40:41.050","timestamp":"2024-12-04 08:41:13"},"6":{"id":"345624","chopping_id":"1230L83-90","item_code":"G8900","weight":"9.30","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:04.223","updated_at":"2024-12-04 08:41:04.223","timestamp":"2024-12-04 08:41:13"},"7":{"id":"345625","chopping_id":"1230L83-90","item_code":"G2107","weight":"1.70","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"8":{"id":"345626","chopping_id":"1230L83-90","item_code":"G2109","weight":".30","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"9":{"id":"345627","chopping_id":"1230L83-90","item_code":"G2128","weight":".94","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"10":{"id":"345628","chopping_id":"1230L83-90","item_code":"H133020","weight":"2.00","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"11":{"id":"345629","chopping_id":"1230L83-90","item_code":"H133023","weight":"8.00","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"12":{"id":"345630","chopping_id":"1230L83-90","item_code":"H221016","weight":"1.12","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"13":{"id":"345631","chopping_id":"1230L83-90","item_code":"H231017","weight":"8.00","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"14":{"id":"345632","chopping_id":"1230L83-90","item_code":"H231025","weight":"2.50","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"15":{"id":"345633","chopping_id":"1230L83-90","item_code":"H231068","weight":"7.50","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"16":{"id":"345634","chopping_id":"1230L83-90","item_code":"G8900","weight":"18.00","output":"0","batch_no":null,"created_at":"2024-12-04 08:41:12.963","updated_at":"2024-12-04 08:41:12.963","timestamp":"2024-12-04 08:41:13"},"17":{"id":"345635","chopping_id":"1230L83-90","item_code":"G2223","weight":"144.84","output":"1","batch_no":null,"created_at":"2024-12-04 08:41:13.010","updated_at":"2024-12-04 08:41:13.010","timestamp":"2024-12-04 08:41:13"},"company_name":"FCL"}
 
-// try {
-//     const productionOrders = await transformData(jsonData);
-//     console.log("Transformed Production Orders:", JSON.stringify(productionOrders, null, 2));
-// } catch (error) {
-//     console.error("Error:", error.message);
-// }
+try {
+    const productionOrders = await transformData(jsonData);
+    console.log("Transformed Production Orders:", JSON.stringify(productionOrders, null, 2));
+} catch (error) {
+    console.error("Error:", error.message);
+}
