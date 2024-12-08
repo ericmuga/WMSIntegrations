@@ -69,6 +69,7 @@ const createSpecialProductionOrder = (specialItem, dateTime, context) => {
                 line_no: 1000,
                 type: "output",
                 date_time: dateTime,
+                user: "",
                
             }
         ]
