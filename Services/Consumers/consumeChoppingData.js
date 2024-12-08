@@ -54,7 +54,7 @@ export const consumechoppingData = async () => {
                         logger.info(`Received chopping data: ${JSON.stringify(choppingData)}`);
                         messages.push(transformData(choppingData)); // Transform each message data
                         logger.info(`${JSON.stringify(messages)}`);
-                        // channel.ack(msg);
+                        channel.ack(msg);
 
                         if (messages.length >= batchSize) {
                             clearTimeout(batchTimeout); // Clear timeout if batch is filled
@@ -92,11 +92,11 @@ export const consumechoppingData = async () => {
     }
 };
 
-(async () => {
-    try {
-        const data = await consumechoppingData();
-        logger.info(JSON.stringify(data, null, 2)); // Pretty-print the output
-    } catch (error) {
-        console.error('Error processing chopping data:', error.message);
-    }
-})();
+// (async () => {
+//     try {
+//         const data = await consumechoppingData();
+//         logger.info(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error processing chopping data:', error.message);
+//     }
+// })();
