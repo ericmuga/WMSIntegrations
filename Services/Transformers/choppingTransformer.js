@@ -326,7 +326,8 @@ export const transformData = async (responseData) => {
                     BIN: "",
                     line_no: 1000,
                     type: "output",
-                    date_time: new Date().toISOString()
+                    date_time: new Date().toISOString(),
+                    user: "DefaultUser"
                 }
             ]
         };
