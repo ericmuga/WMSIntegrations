@@ -1,6 +1,8 @@
 import fs from 'fs';
 import xlsx from 'xlsx';
 import logger from '../../logger.js'; 
+import { poolPromise } from '../../config/default.js';
+import sql from 'mssql';
 
 // Function to load and parse the Excel file
 const readExcelFile = (filePath) => {
@@ -34,7 +36,8 @@ const replaceItems = {
     "G2045": "G2044",
     "G2161": "G2159",
     "G2013": "G2005",
-    "G2155": "G2007"
+    "G2155": "G2007",
+    "H131001":"H231051"
 };
 
 // Replace item if needed
@@ -85,8 +88,8 @@ const removeZeroQuantityLines = (productionOrders) => {
 };
 
 export const transformData = (responseData) => {
-    const filePath = 'ChoppingOnly.xlsx';
-    const sheetData = readExcelFile(filePath);
+    // const filePath = 'ChoppingOnly.xlsx';
+    // const sheetData = readExcelFile(filePath);
 
     const spicePremixFilePath = 'SpicePremix.xlsx';
     const spicePremixData = readExcelFile(spicePremixFilePath);
@@ -126,62 +129,108 @@ export const transformData = (responseData) => {
                 return [];
             }
         };
+
+        
+
+/**
+ * Resolves item details (location and UOM) based on the database lookup.
+ * @param {string} itemCode - The code of the item to look up.
+ * @param {boolean} output - Whether to look up output details (true) or input details (false).
+ * @returns {object} An object containing the resolved location and UOM.
+ */
+ const resolveItemDetails = async (itemCode, output) => {
+  try {
+    const pool = await poolPromise; // Reuse the persistent connection pool
+
+    // Define the query based on whether output or input is needed
+    const query = output
+      ? `SELECT output_item_location AS location, output_item_uom AS uom FROM RecipeData WHERE output_item = @itemCode`
+      : `SELECT input_item_location AS location, input_item_uom AS uom FROM RecipeData WHERE input_item = @itemCode`;
+
+    const result = await pool
+      .request()
+      .input("itemCode", sql.VarChar, itemCode) // Use parameterized queries to prevent SQL injection
+      .query(query);
+
+    const record = result.recordset[0]; // Get the first matching record
+
+    if (!record) {
+      console.info(`No matching record found for itemCode: ${itemCode}`);
+      return {
+        location: "2055", // Default location (fallback)
+        uom: "KG", // Default UOM (fallback)
+      };
+    }
+
+    return {
+      location: record.location || "2055", // Use fallback if necessary
+      uom: record.uom || "KG", // Use fallback if necessary
+    };
+  } catch (error) {
+    console.error("Error resolving item details:", error.message);
+    return {
+      location: "2055", // Default location (fallback)
+      uom: "KG", // Default UOM (fallback)
+    };
+  }
+};
+
         
         // Path to your lookup Excel file
-        const lookupFilePath = 'comb.xlsx'; // Replace with the actual file path
-        const lookupData = readLookupSheet(lookupFilePath);
+        // const lookupFilePath = 'comb.xlsx'; // Replace with the actual file path
+        // const lookupData = readLookupSheet(lookupFilePath);
         
-        /**
-         * Resolves item details (location and UOM) based on the lookup sheet.
-         * @param {string} itemCode - The code of the item to look up.
-         * @param {boolean} output - Whether to look up output details (true) or input details (false).
-         * @returns {object} An object containing the resolved location and UOM.
-         */
-        const resolveItemDetails = (itemCode, output) => {
-            try {
-                if (!Array.isArray(lookupData) || lookupData.length === 0) {
-                    throw new Error("Lookup data is empty or invalid.");
-                }
+        // /**
+        //  * Resolves item details (location and UOM) based on the lookup sheet.
+        //  * @param {string} itemCode - The code of the item to look up.
+        //  * @param {boolean} output - Whether to look up output details (true) or input details (false).
+        //  * @returns {object} An object containing the resolved location and UOM.
+        //  */
+        // const resolveItemDetails = (itemCode, output) => {
+        //     try {
+        //         if (!Array.isArray(lookupData) || lookupData.length === 0) {
+        //             throw new Error("Lookup data is empty or invalid.");
+        //         }
         
-                // Filter rows based on output or input logic
-                const filteredRows = lookupData.filter(row => {
-                    if (output) {
-                        return row.output_item === itemCode;
-                    } else {
-                        return row.input_item === itemCode;
-                    }
-                });
+        //         // Filter rows based on output or input logic
+        //         const filteredRows = lookupData.filter(row => {
+        //             if (output) {
+        //                 return row.output_item === itemCode;
+        //             } else {
+        //                 return row.input_item === itemCode;
+        //             }
+        //         });
         
-                // Get the first matching row
-                const matchedRow = filteredRows[0];
-                if (!matchedRow) {
-                    logger.info(`No matching row found for itemCode: ${itemCode}`);
-                    return {
-                        location: "2055", // Default location (fallback)
-                        uom: "KG" // Default UOM (fallback)
-                    };
-                }
+        //         // Get the first matching row
+        //         const matchedRow = filteredRows[0];
+        //         if (!matchedRow) {
+        //             logger.info(`No matching row found for itemCode: ${itemCode}`);
+        //             return {
+        //                 location: "2055", // Default location (fallback)
+        //                 uom: "KG" // Default UOM (fallback)
+        //             };
+        //         }
         
-                // Return resolved location and UOM based on output or input
-                if (output) {
-                    return {
-                        location: matchedRow.output_item_location || "2055",
-                        uom: matchedRow.output_item_uom || "KG"
-                    };
-                } else {
-                    return {
-                        location: matchedRow.input_item_location || "2055",
-                        uom: matchedRow.input_item_uom || "KG"
-                    };
-                }
-            } catch (error) {
-                console.error("Error resolving item details:", error.message);
-                return {
-                    location: "2055", // Default location (fallback)
-                    uom: "KG" // Default UOM (fallback)
-                };
-            }
-        };
+        //         // Return resolved location and UOM based on output or input
+        //         if (output) {
+        //             return {
+        //                 location: matchedRow.output_item_location || "2055",
+        //                 uom: matchedRow.output_item_uom || "KG"
+        //             };
+        //         } else {
+        //             return {
+        //                 location: matchedRow.input_item_location || "2055",
+        //                 uom: matchedRow.input_item_uom || "KG"
+        //             };
+        //         }
+        //     } catch (error) {
+        //         console.error("Error resolving item details:", error.message);
+        //         return {
+        //             location: "2055", // Default location (fallback)
+        //             uom: "KG" // Default UOM (fallback)
+        //         };
+        //     }
+        // };
 
         const outputDetails = resolveItemDetails(outputItem.item_code,true);
 
