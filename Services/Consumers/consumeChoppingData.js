@@ -7,7 +7,7 @@ export const consumechoppingData = async () => {
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_chopping.bc';
     const batchSize = 1;
-    const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
+    const timeout = 10000; // Timeout in milliseconds (e.g., 10 seconds)
     const queueOptions = { 
         durable: true,
         arguments: {
@@ -47,14 +47,17 @@ export const consumechoppingData = async () => {
         // Start consuming messages
         channel.consume(
             queueName,
-            (msg) => {
+            async (msg) => {
                 if (msg !== null) {
                     try {
                         const choppingData = JSON.parse(msg.content.toString());
                         logger.info(`Received chopping data: ${JSON.stringify(choppingData)}`);
-                        messages.push(transformData(choppingData)); // Transform each message data
-                        logger.info(`${JSON.stringify(messages)}`);
-                        channel.ack(msg);
+
+                        // Await transformData and add to messages array
+                        const transformedData = await transformData(choppingData);
+                        messages.push(transformedData);
+
+                        // channel.ack(msg);
 
                         if (messages.length >= batchSize) {
                             clearTimeout(batchTimeout); // Clear timeout if batch is filled
@@ -62,7 +65,7 @@ export const consumechoppingData = async () => {
                         }
                     } catch (parseError) {
                         logger.error(`Failed to parse message content: ${parseError.message}`);
-                        channel.nack(msg, false, false); // Move to dead-letter queue
+                        // channel.nack(msg, false, false); // Move to dead-letter queue
                     }
                 } else {
                     logger.warn('Received null message');
