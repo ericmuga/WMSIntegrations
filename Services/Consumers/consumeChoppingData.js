@@ -8,7 +8,7 @@ export const consumechoppingData = async () => {
     const routingKey = 'production_data_order_chopping.bc';
     const batchSize = 1;
     const timeout = 5000; // Timeout in milliseconds (e.g., 5 seconds)
-    const queueOptions = {
+    const queueOptions = { 
         durable: true,
         arguments: {
             'x-dead-letter-exchange': 'fcl.exchange.dlx',
@@ -92,11 +92,11 @@ export const consumechoppingData = async () => {
     }
 };
 
-(async () => {
-    try {
-        const data = await consumechoppingData();
-        logger.info(JSON.stringify(data, null, 2)); // Pretty-print the output
-    } catch (error) {
-        console.error('Error processing chopping data:', error.message);
-    }
-})();
+// (async () => {
+//     try {
+//         const data = await consumechoppingData();
+//         logger.info(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error processing chopping data:', error.message);
+//     }
+// })();
