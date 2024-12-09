@@ -7,7 +7,7 @@ export const consumechoppingData = async () => {
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_chopping.bc';
     const batchSize = 1;
-    const timeout = 10000; // Timeout in milliseconds (e.g., 10 seconds)
+    const timeout = 4000; // Timeout in milliseconds (e.g., 10 seconds)
     const queueOptions = { 
         durable: true,
         arguments: {
