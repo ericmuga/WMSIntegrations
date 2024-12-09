@@ -11,10 +11,10 @@ export const consume2055_3535 = async () => {
 
     const queueOptions = {
         durable: true,
-        arguments: {
-            'x-dead-letter-exchange': 'fcl.exchange.dlx',
-            'x-dead-letter-routing-key': 'transfer_from_2055_to_3535',
-        },
+        // arguments: {
+        //     'x-dead-letter-exchange': 'fcl.exchange.dlx',
+        //     'x-dead-letter-routing-key': 'transfer_from_2055_to_3535',
+        // },
     };
 
     try {
