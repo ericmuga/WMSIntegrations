@@ -57,7 +57,7 @@ export const consumechoppingData = async () => {
                         const transformedData = await transformData(choppingData);
                         messages.push(transformedData);
 
-                        // channel.ack(msg);
+                        channel.ack(msg);
 
                         if (messages.length >= batchSize) {
                             clearTimeout(batchTimeout); // Clear timeout if batch is filled
