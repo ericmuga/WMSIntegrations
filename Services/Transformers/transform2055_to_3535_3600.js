@@ -31,41 +31,41 @@ export const transformData = async (transferData) => {
             product_code,
             transfer_from_location,
             transfer_to_location,
-            receiver_total_weight
+            receiver_total_weight,
         } = transferData;
 
         const timestamp = Date.now();
         const dateTime = new Date().toISOString();
         const user = 'DefaultUser';
 
+        // Fetch BOM data for packing
         const packingBOM = await fetchBOMData('Packing', product_code);
         if (!packingBOM.length) {
             logger.error(`No packing BOM data found for output_item: ${product_code}`);
             return [];
-            // throw new Error(`No packing BOM data found for output_item: ${product_code}`);
         }
 
-        const mainStuffingItem = packingBOM.find(row => row.input_item && row.input_item.startsWith('G'));
+        // Find main intake item for stuffing
+        const mainStuffingItem = packingBOM.find((row) => row.input_item && row.input_item.startsWith('G'));
         if (!mainStuffingItem) {
             logger.error(`No main intake item starting with "G" found in the packing BOM for output_item: ${product_code}`);
             return [];
-            // throw new Error(`No main intake item starting with "G" found in the packing BOM for output_item: ${product_code}`);
         }
 
         const stuffingOutputItem = mainStuffingItem.input_item;
 
+        // Fetch BOM data for stuffing
         const stuffingBOM = await fetchBOMData('Stuffing', stuffingOutputItem);
         if (!stuffingBOM.length) {
             logger.error(`No stuffing BOM data found for output_item: ${stuffingOutputItem}`);
             return [];
-            // throw new Error(`No stuffing BOM data found for output_item: ${stuffingOutputItem}`);
         }
 
+        // Calculate the batch multiplier
         const standardBatchSize = parseFloat(packingBOM[0].batch_size);
         if (!standardBatchSize) {
             logger.error(`No batch size (batch_size) found in the BOM for output_item: ${product_code}`);
             return [];
-            // throw new Error(`No batch size (batch_size) found in the BOM for output_item: ${product_code}`);
         }
         const batchMultiplier = receiver_total_weight / standardBatchSize;
 
@@ -76,6 +76,7 @@ export const transformData = async (transferData) => {
         //     return acc;
         // }, []);
 
+        // Generate the packing production order
         const packingOrder = {
             production_order_no: `PK_${timestamp}`,
             ItemNo: product_code,
@@ -97,22 +98,28 @@ export const transformData = async (transferData) => {
                     line_no: 1000,
                     type: 'output',
                     date_time: dateTime,
-                    user
+                    user,
                 },
-                ...packingBOM.map((row, index) => ({
-                    ItemNo: row.input_item,
-                    Quantity: roundTo4Decimals(batchMultiplier * parseFloat(row.input_item_qt_per)),
-                    uom: row.input_item_uom,
-                    LocationCode: row.input_item_location,
-                    BIN: '',
-                    line_no: 2000 + index * 1000,
-                    type: 'consumption',
-                    date_time: dateTime,
-                    user
-                }))
-            ]
+                ...packingBOM.reduce((acc, row, index) => {
+                    if (!acc.some((item) => item.ItemNo === row.input_item)) {
+                        acc.push({
+                            ItemNo: row.input_item,
+                            Quantity: roundTo4Decimals(batchMultiplier * parseFloat(row.input_item_qt_per)),
+                            uom: row.input_item_uom,
+                            LocationCode: row.input_item_location,
+                            BIN: '',
+                            line_no: 2000 + index * 1000,
+                            type: 'consumption',
+                            date_time: dateTime,
+                            user,
+                        });
+                    }
+                    return acc;
+                }, []),
+            ],
         };
 
+        // Calculate the stuffing output quantity and multiplier
         const stuffingOutputQuantity = batchMultiplier * parseFloat(mainStuffingItem.input_item_qt_per);
         // const stuffingBatchMultiplier = stuffingOutputQuantity / parseFloat(mainStuffingItem.input_item_qt_per);
          
@@ -137,7 +144,7 @@ export const transformData = async (transferData) => {
                     line_no: 1000,
                     type: 'output',
                     date_time: dateTime,
-                    user
+                    user,
                 },
                 ...stuffingBOM.map((row, index) => ({
                     ItemNo: row.input_item,
@@ -148,19 +155,18 @@ export const transformData = async (transferData) => {
                     line_no: 2000 + index * 1000,
                     type: 'consumption',
                     date_time: dateTime,
-                    user
-                }))
-            ]
+                    user,
+                })),
+            ],
         };
 
         return [stuffingOrder, packingOrder];
     } catch (error) {
-       logger.error('Error generating production orders:', error.message);
+        logger.error(`Error generating production orders: ${error.message}`);
         return [];
-        
-        // throw error;
     }
 };
+
 
 // Example usage
 // const jsonData = {
