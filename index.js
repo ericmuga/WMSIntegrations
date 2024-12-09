@@ -86,8 +86,8 @@ app.get('/fetch-production-orders', async (req, res) => {
     //  let mincingFromButchery= await consume1570_2055();
      let choppingData=await consumechoppingData();
     
-    // let localSausageTransfers =await consume2055_3535();
-    // let exportSausageTransfers =await consume2055_3600();
+    let localSausageTransfers =await consume2055_3535();
+    let exportSausageTransfers =await consume2055_3600();
 
      let productionOrders = mergeProductionOrders(
 
@@ -97,8 +97,8 @@ app.get('/fetch-production-orders', async (req, res) => {
                                                     // deboningData,
                                                     // mincingFromButchery,
                                                     choppingData,
-                                                    // localSausageTransfers,
-                                                    // exportSausageTransfers
+                                                    localSausageTransfers,
+                                                    exportSausageTransfers
 
                                                   );
     //  let productionOrders = breakingData;
