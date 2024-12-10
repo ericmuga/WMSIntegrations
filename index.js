@@ -17,7 +17,7 @@ import { consumeCarcassSales } from './Services/Consumers/consumeCarcassSales.js
 import { consumeBreakingData } from './Services/Consumers/consumeBreakingQueue.js';
 import { consumeDeboningData } from './Services/Consumers/consumeDeboningQueue.js';
 import { consumechoppingData } from './Services/Consumers/consumeChoppingData.js';
-import { printInit } from './Services/printerService.js'
+import { initPrinting } from './Services/printerService.js'
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateMtn,generateResponse } from './Services/QRCode.js';
@@ -167,7 +167,7 @@ app.get('/fetch-slaughter-data', async (req, res) => {
 app.post('/print-order', (req,res) => {
   //console.log(req)
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
-  printInit(req.body);
+  initPrinting(req.body);
   return res.status(201).json({ message: 'success' });
 
 });
