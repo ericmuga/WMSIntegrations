@@ -87,7 +87,10 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const availableParts = [...new Set(data.lines.map(line => line.part))];
     const partsText = availableParts.join('|');
 
-    const config = getCompanyConfig(data.company_flag.toLowerCase())
+    // const config = getCompanyConfig(data.company_flag.toLowerCase())
+
+    //temporatily using fcl before the company flag is added to the data
+    const config = getCompanyConfig(`fcl`)
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(15);
