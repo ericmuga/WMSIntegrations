@@ -61,7 +61,7 @@ export const consumeContinentals = async () => {
 
                             if (transformedData && transformedData.length > 0) {
                                 messages.push(...transformedData); // Spread to add all transformed results
-                                // channel.ack(msg); // Acknowledge the message
+                                channel.ack(msg); // Acknowledge the message
                             } else {
                                 logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
                                 channel.nack(msg, false, false); // Move to dead-letter queue
@@ -100,11 +100,11 @@ export const consumeContinentals = async () => {
 };
 
 // Example usage
-(async () => {
-    try {
-        const data = await consumeContinentals();
-        console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-    } catch (error) {
-        console.error('Error:', error.message);
-    }
-})();
+// (async () => {
+//     try {
+//         const data = await consumeContinentals();
+//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error:', error.message);
+//     }
+// })();
