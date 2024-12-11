@@ -220,7 +220,7 @@ const packingOrder = {
             ],
         };
 
-        return [packingOrder, smokingOrder, stuffingOrder];
+        return [stuffingOrder,smokingOrder,packingOrder];
     } catch (error) {
         logger.error(`Error generating production orders: ${error.message}`);
         return [];
