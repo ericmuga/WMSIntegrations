@@ -24,6 +24,7 @@ import { generateMtn,generateResponse } from './Services/QRCode.js';
 import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
 import { consume2055_3535 } from './Services/Consumers/consume2055_3535.js';
 import { consume2055_3600 } from './Services/Consumers/consume2055_3600.js';
+import {consumeContinentals} from './Services/Consumers/consumeContinentals.js';
 
 
 const app = express();
@@ -79,26 +80,37 @@ app.get('/fetch-production-orders', async (req, res) => {
   
      const mergeProductionOrders = (...arrays) => arrays.flat();
      const { date, item, production_order_no } = req.query;
-     let beheadingData= await consumeBeheadingData();
-     let carcassSales=await consumeCarcassSales(); 
-     let breakingData= await consumeBreakingData();
-     let deboningData= await consumeDeboningData();
-     let mincingFromButchery= await consume1570_2055();
-     let choppingData=await consumechoppingData();
-    
-    let localSausageTransfers =await consume2055_3535();
-    let exportSausageTransfers =await consume2055_3600();
+    //  let beheadingData= await consumeBeheadingData();
+    //  let carcassSales=await consumeCarcassSales(); 
+    //  let breakingData= await consumeBreakingData();
+    //  let deboningData= await consumeDeboningData();
+    //  let mincingFromButchery= await consume1570_2055();
+    //  let choppingData=await consumechoppingData();
+        const numCalls = 5;
+        const promises = [];
+
+        // Loop to create multiple calls
+        for (let i = 0; i < numCalls; i++) {
+            promises.push(consume2055_3535());
+        }
+
+        // Wait for all calls to complete
+        const localSausageTransfersResults = await Promise.all(promises);
+
+        // Merge results from all calls
+        const localSausageTransfers = localSausageTransfersResults.flat();
+    // let exportSausageTransfers =await consume2055_3600();
 
      let productionOrders = mergeProductionOrders(
 
-                                                    beheadingData,
-                                                    carcassSales,
-                                                    breakingData,
-                                                    deboningData,
-                                                    mincingFromButchery,
-                                                    choppingData,
+                                                    // beheadingData,
+                                                    // carcassSales,
+                                                    // breakingData,
+                                                    // deboningData,
+                                                    // mincingFromButchery,
+                                                    // choppingData,
                                                     localSausageTransfers,
-                                                    exportSausageTransfers
+                                                    // exportSausageTransfers
 
                                                   );
     //  let productionOrders = breakingData;

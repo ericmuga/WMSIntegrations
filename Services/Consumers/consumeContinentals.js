@@ -1,19 +1,19 @@
 import { getRabbitMQConnection } from '../../config/default.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
-import { transformData } from '../Transformers/transform2055_to_3535_3600.js';
+import { transformData } from '../Transformers/transformContinentals.js';
 
-export const consume2055_3600 = async () => {
-    const queueName = 'transfer_from_2055_to_3600';
+export const consume2055_3535 = async () => {
+    const queueName = 'continentals.bc';
     const exchange = 'fcl.exchange.direct';
-    const routingKey = 'transfer_from_2055_to_3600';
-    const batchSize = 1; // Set batch size here
-    const timeout = 3000; // Timeout in milliseconds (e.g., 5 seconds)
+    const routingKey = 'continentals.bc';
+    const batchSize = 3; // Set batch size here
+    const timeout = 3000; // Timeout in milliseconds (e.g., 3 seconds)
 
     const queueOptions = {
         durable: true,
         arguments: {
             'x-dead-letter-exchange': 'fcl.exchange.dlx',
-            'x-dead-letter-routing-key': 'transfer_from_2055_to_3600',
+            'x-dead-letter-routing-key': 'continentals.bc',
         },
     };
 
@@ -61,7 +61,7 @@ export const consume2055_3600 = async () => {
 
                             if (transformedData && transformedData.length > 0) {
                                 messages.push(...transformedData); // Spread to add all transformed results
-                                channel.ack(msg); // Acknowledge the message
+                                // channel.ack(msg); // Acknowledge the message
                             } else {
                                 logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
                                 channel.nack(msg, false, false); // Move to dead-letter queue
@@ -101,6 +101,10 @@ export const consume2055_3600 = async () => {
 
 // Example usage
 // (async () => {
-//     const data = await consume2055_3600();
-//     console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     try {
+//         const data = await consume2055_3535();
+//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error:', error.message);
+//     }
 // })();
