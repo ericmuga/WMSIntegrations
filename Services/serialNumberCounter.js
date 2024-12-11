@@ -1,4 +1,5 @@
 import { Mutex } from 'async-mutex';
+import amqp from 'amqplib';
 import { getRabbitMQConnection } from '../config/default.js';
 
 let connection = null;
