@@ -265,7 +265,7 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 const getCompanyConfig = (flag) => {
     let config
     if (!flag)
-        companyParameter['fcl'];
+       config = companyParameter['fcl'];
 
     config = companyParameter[flag];
 
