@@ -189,6 +189,7 @@ const packingOrder = {
             Quantity: roundTo4Decimals(stuffingOutputQuantity),
             uom: stuffingBOM[0].output_item_uom,
             LocationCode: transfer_from_location,
+            BIN: '',
             user,
             line_no: 1000,
             routing: 'continentals',

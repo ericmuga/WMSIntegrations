@@ -6,7 +6,7 @@ export const consumeContinentals = async () => {
     const queueName = 'continentals.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'continentals.bc';
-    const batchSize = 3; // Set batch size here
+    const batchSize = 1; // Set batch size here
     const timeout = 3000; // Timeout in milliseconds (e.g., 3 seconds)
 
     const queueOptions = {
@@ -61,7 +61,7 @@ export const consumeContinentals = async () => {
 
                             if (transformedData && transformedData.length > 0) {
                                 messages.push(...transformedData); // Spread to add all transformed results
-                                channel.ack(msg); // Acknowledge the message
+                                // channel.ack(msg); // Acknowledge the message
                             } else {
                                 logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
                                 channel.nack(msg, false, false); // Move to dead-letter queue
@@ -100,11 +100,11 @@ export const consumeContinentals = async () => {
 };
 
 // Example usage
-// (async () => {
-//     try {
-//         const data = await consumeContinental();
-//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
-//     } catch (error) {
-//         console.error('Error:', error.message);
-//     }
-// })();
+(async () => {
+    try {
+        const data = await consumeContinentals();
+        console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
+})();
