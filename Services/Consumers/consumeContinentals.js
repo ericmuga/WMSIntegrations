@@ -2,7 +2,7 @@ import { getRabbitMQConnection } from '../../config/default.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
 import { transformData } from '../Transformers/transformContinentals.js';
 
-export const consume2055_3535 = async () => {
+export const consumeContinentals = async () => {
     const queueName = 'continentals.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'continentals.bc';
@@ -102,7 +102,7 @@ export const consume2055_3535 = async () => {
 // Example usage
 // (async () => {
 //     try {
-//         const data = await consume2055_3535();
+//         const data = await consumeContinental();
 //         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
 //     } catch (error) {
 //         console.error('Error:', error.message);

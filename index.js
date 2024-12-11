@@ -100,6 +100,7 @@ app.get('/fetch-production-orders', async (req, res) => {
         // Merge results from all calls
         const localSausageTransfers = localSausageTransfersResults.flat();
     // let exportSausageTransfers =await consume2055_3600();
+     let continentalsData = await consumeContinentals();
 
      let productionOrders = mergeProductionOrders(
 
@@ -109,7 +110,8 @@ app.get('/fetch-production-orders', async (req, res) => {
                                                     // deboningData,
                                                     // mincingFromButchery,
                                                     // choppingData,
-                                                    localSausageTransfers,
+                                                    // localSausageTransfers,
+                                                    continentalsData
                                                     // exportSausageTransfers
 
                                                   );
