@@ -17,6 +17,7 @@
     "amqplib": "^0.10.4",
     "async-mutex": "^0.5.0",
     "axios": "^1.7.7",
+    "dayjs": "^1.11.13",
     "express": "^4.21.1",
     "fs": "^0.0.1-security",
     "jspdf": "^2.5.2",

@@ -32,9 +32,11 @@ export const transformData = async (transferData) => {
             transfer_from_location,
             transfer_to_location,
             receiver_total_weight,
+            id,
+            timestamp
         } = transferData;
 
-        const timestamp = Date.now();
+        // const timestamp = Date.now();
         const dateTime = new Date().toISOString();
         const user = 'DefaultUser';
 
@@ -69,16 +71,16 @@ export const transformData = async (transferData) => {
         }
         const batchMultiplier = receiver_total_weight / standardBatchSize;
 
-        // const uniqueStuffingBOM = stuffingBOM.reduce((acc, row) => {
-        //     if (!acc.some(item => item.input_item === row.input_item)) {
-        //         acc.push(row);
-        //     }
-        //     return acc;
-        // }, []);
+        const uniqueStuffingBOM = stuffingBOM.reduce((acc, row) => {
+            if (!acc.some(item => item.input_item === row.input_item)) {
+                acc.push(row);
+            }
+            return acc;
+        }, []);
 
         // Generate the packing production order
         const packingOrder = {
-            production_order_no: `PK_${timestamp}`,
+            production_order_no: `PK_${product_code}_${id}`,
             ItemNo: product_code,
             Quantity: roundTo4Decimals(receiver_total_weight),
             uom: packingBOM[0].output_item_uom,
@@ -124,7 +126,7 @@ export const transformData = async (transferData) => {
         // const stuffingBatchMultiplier = stuffingOutputQuantity / parseFloat(mainStuffingItem.input_item_qt_per);
          
         const stuffingOrder = {
-            production_order_no: `ST_${timestamp}`,
+            production_order_no: `ST_${stuffingOutputItem}_${id}`,
             ItemNo: stuffingOutputItem,
             Quantity: roundTo4Decimals(stuffingOutputQuantity),
             uom: mainStuffingItem.output_item_uom,
@@ -146,9 +148,9 @@ export const transformData = async (transferData) => {
                     date_time: dateTime,
                     user,
                 },
-                ...stuffingBOM.map((row, index) => ({
+                ...uniqueStuffingBOM.map((row, index) => ({
                     ItemNo: row.input_item,
-                    Quantity: roundTo4Decimals(stuffingOutputQuantity/stuffingBOM[0].batch_size * parseFloat(row.input_item_qt_per)),
+                    Quantity: roundTo4Decimals(stuffingOutputQuantity/uniqueStuffingBOM[0].batch_size * parseFloat(row.input_item_qt_per)),
                     uom: row.input_item_uom,
                     LocationCode: row.input_item_location,
                     BIN: '',
