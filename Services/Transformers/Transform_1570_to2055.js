@@ -27,7 +27,7 @@ export const transformData = (responseData) => {
     const orderId = data.id ? data.id.toString() : Date.now().toString(); // Use provided id or fallback
 
     return {
-        production_order_no: `${PROCESS_PREFIX}_${orderId}`,
+        production_order_no: `${lookupEntry.output_item}_${orderId}`,
         Quantity: outputQuantity,
         uom: 'KG',
         ItemNo: lookupEntry.output_item,

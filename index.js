@@ -86,21 +86,29 @@ app.get('/fetch-production-orders', async (req, res) => {
     //  let deboningData= await consumeDeboningData();
     //  let mincingFromButchery= await consume1570_2055();
     //  let choppingData=await consumechoppingData();
-        // const numCalls = 5;
-        // const promises = [];
+    const numCalls = 5;
 
-        // // Loop to create multiple calls
-        // for (let i = 0; i < numCalls; i++) {
-        //     promises.push(consume2055_3535());
-        // }
-
-        // Wait for all calls to complete
-        // const localSausageTransfersResults = await Promise.all(promises);
-
-        // Merge results from all calls
-        // const localSausageTransfers = localSausageTransfersResults.flat();
-    // let exportSausageTransfers =await consume2055_3600();
-     let continentalsData = await consumeContinentals();
+    // Create promises for `consume2055_3535`
+    // const sausagePromises = [];
+    // for (let i = 0; i < numCalls; i++) {
+    //     sausagePromises.push(consume2055_3535());
+    // }
+    
+    // Create promises for `consumeContinentals`
+    const continentalsPromises = [];
+    for (let i = 0; i < numCalls; i++) {
+        continentalsPromises.push(consumeContinentals());
+    }
+    
+    // Wait for all calls to complete
+    const [ continentalsResults] = await Promise.all([
+        // Promise.all(sausagePromises),
+        Promise.all(continentalsPromises),
+    ]);
+    
+    // Merge results from all calls
+    // const localSausageTransfers = localSausageTransfersResults.flat();
+    const continentalsData = continentalsResults.flat();
 
      let productionOrders = mergeProductionOrders(
 

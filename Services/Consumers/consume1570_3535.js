@@ -3,16 +3,16 @@ import { consumeRabbitMQ } from './consumer.js';
 
 
 (async () => {
-    const queueName = 'continentals.bc';
-    const routingKey = 'continentals.bc';
-    const sequence = processConfig.continentals;
+    const queueName = 'transfer_from_1570_to_3535';
+    const routingKey = 'transfer_from_1570_to_3535';
+    const sequence = processConfig.packing;
 
     try {
         const productionOrders = await consumeRabbitMQ({
             queueName,
             routingKey,
             sequence,
-            batchSize: 1, // Customize batch size
+            batchSize: 5, // Customize batch size
             timeout: 5000, // Customize timeout
         });
 
