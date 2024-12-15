@@ -3,11 +3,11 @@ import logger from '../../logger.js';
 import dayjs from 'dayjs';
 
 export const cleanUp = async () => {
-    const mainQueueName = 'transfer_from_1570_to_3600';
+    const mainQueueName = 'transfer_from_1570_to_2055';
     const mainExchange = 'fcl.exchange.direct';
     const dlExchange = 'fcl.exchange.dlx';
-    const routingKey = 'transfer_from_1570_to_3600';
-    const dateThreshold = dayjs('2024-12-04');
+    const routingKey = 'transfer_from_1570_to_2055';
+    const dateThreshold = dayjs('2024-12-01');
 
     const mainQueueOptions = {
         durable: true,

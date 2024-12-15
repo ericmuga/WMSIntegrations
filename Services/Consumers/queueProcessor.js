@@ -1,6 +1,6 @@
-import { consumeRabbitMQ } from './path/to/consumeRabbitMQ.js';
-import { processConfig } from './path/to/processConfig.js';
-import logger from './path/to/logger.js';
+// import { consumeRabbitMQ } from '';
+import { consumeRabbitMQ } from './consumer.js';
+import { processConfig } from './processConfig.js';
 
 /**
  * Processes RabbitMQ messages and converts them into production orders.
@@ -29,8 +29,7 @@ export const processProductionOrders = async ({
             timeout,
         });
 
-        // logger.info('Processed Production Orders:', JSON.stringify(productionOrders, null, 2));
-    } catch (error) {
+     } catch (error) {
         console.error(`Error: ${error.message}`);
     }
 };

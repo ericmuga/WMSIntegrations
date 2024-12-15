@@ -3,19 +3,18 @@ import logger from '../../logger.js'; // Assuming you have a logger module set u
 import { transformData } from '../Transformers/Transform_1570_to2055.js';
 
 export const consume1570_2055 = async () => {
-    const queueName = 'transfer_from_1570_to_2055.dl';
-    // const exchange = 'fcl.exchange.direct';
-    const exchange = 'fcl.exchange.dlx';
+    const queueName = 'transfer_from_1570_to_2055';
+    const exchange = 'fcl.exchange.direct';
     const routingKey = 'transfer_from_1570_to_2055';
     const batchSize = 5; // Set batch size here
     const timeout = 2000; // Timeout in milliseconds (e.g., 5 seconds)
 
     const queueOptions = {
         durable: true,
-        // arguments: {
-        //     'x-dead-letter-exchange': 'fcl.exchange.dlx',
-        //     'x-dead-letter-routing-key': 'transfer_from_1570_to_2055',
-        // },
+        arguments: {
+            'x-dead-letter-exchange': 'fcl.exchange.dlx',
+            'x-dead-letter-routing-key': 'transfer_from_1570_to_2055',
+        },
     };
 
     try {
