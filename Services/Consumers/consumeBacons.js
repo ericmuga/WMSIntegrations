@@ -1,21 +1,21 @@
-import processConfig from './processConfig';
-import { consumeRabbitMQ } from './consumer';
+import { consumeRabbitMQ } from './consumer.js';
+
 
 (async () => {
     const queueName = 'bacon.bc';
     const routingKey = 'bacon.bc';
-    const sequence = processConfig.Path11;
+    const finalProcess ='Salting' 
 
     try {
         const productionOrders = await consumeRabbitMQ({
             queueName,
             routingKey,
-            sequence,
-            batchSize: 5, // Customize batch size
+            batchSize: 1, // Customize batch size
             timeout: 5000, // Customize timeout
+            finalProcess
         });
 
-        console.log('Processed Production Orders:', productionOrders);
+        // logger.info('Processed Production Orders:', JSON.stringify(productionOrders, null, 2));
     } catch (error) {
         console.error(`Error: ${error.message}`);
     }

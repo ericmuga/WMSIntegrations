@@ -16,9 +16,9 @@ import { transformData } from '../Transformers/transformData.js';
 export const consumeRabbitMQ = async ({
     queueName,
     routingKey,
-    sequence,
     batchSize = rabbitmqConfig.defaultBatchSize,
     timeout = rabbitmqConfig.defaultTimeout,
+    finalProcess
 }) => {
     const exchange = rabbitmqConfig.defaultExchange;
     const queueOptions = {
@@ -71,7 +71,7 @@ export const consumeRabbitMQ = async ({
 
                         try {
                             // Transform the data using the provided sequence
-                            const transformedData = await transformData(transferData, sequence);
+                            const transformedData = await transformData(transferData, finalProcess);
 
                             if (transformedData && transformedData.length > 0) {
                                 messages.push(...transformedData); // Spread to add all transformed results

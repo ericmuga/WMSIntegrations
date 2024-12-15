@@ -255,7 +255,7 @@ export const constructProductionOrder = ({
  * @param {String} context - Context form  \\ production.
  * @returns {Object} - Special production order object.
  */
-const createSpecialProductionOrder = (specialItem, dateTime, context) => {
+export const createSpecialProductionOrder = (specialItem, dateTime, context) => {
     const uniquePart = Date.now() % 100000;
     return {
         production_order_no: `WP${specialItem.ItemNo}${context}_${uniquePart}`,
