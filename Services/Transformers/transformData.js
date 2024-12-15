@@ -58,28 +58,28 @@ export const transformData = async (transferData, finalProcess) => {
 };
 
 // Example usage
-const jsonData = ` {
-  "product_code": "J31020612",
-  "transfer_from_location": 2595,
-  "transfer_to_location": "3535",
-  "receiver_total_pieces": "250",
-  "receiver_total_weight": "100",
-  "received_by": 82,
-  "production_date": "2024-12-03T21:00:00.000000Z",
-  "timestamp": "2024-12-04 01:18:38",
-  "id": 44,
-  "company_name": "FCL"
-}`;
+// const jsonData = ` {
+//   "product_code": "J31020612",
+//   "transfer_from_location": 2595,
+//   "transfer_to_location": "3535",
+//   "receiver_total_pieces": "250",
+//   "receiver_total_weight": "100",
+//   "received_by": 82,
+//   "production_date": "2024-12-03T21:00:00.000000Z",
+//   "timestamp": "2024-12-04 01:18:38",
+//   "id": 44,
+//   "company_name": "FCL"
+// }`;
 
-(async () => {
-    try {
-        const data = await transformData(JSON.parse(jsonData),'CuringP');
-        logger.info(`transfer: ${JSON.stringify(JSON.parse(jsonData), null, 2)}`); // Pretty-print the output
-        logger.info(`Orders: ${JSON.stringify(data, null, 2)}`); // Pretty-print the output
-        // logger.info(`Orders: ${JSON.stringify(data, null, 2)}`); // Pretty-print the output
-    } catch (error) {
-        logger.error('Error:', error.message);
-    }
-})();
+// (async () => {
+//     try {
+//         const data = await transformData(JSON.parse(jsonData),'CuringP');
+//         logger.info(`transfer: ${JSON.stringify(JSON.parse(jsonData), null, 2)}`); // Pretty-print the output
+//         logger.info(`Orders: ${JSON.stringify(data, null, 2)}`); // Pretty-print the output
+//         // logger.info(`Orders: ${JSON.stringify(data, null, 2)}`); // Pretty-print the output
+//     } catch (error) {
+//         logger.error('Error:', error.message);
+//     }
+// })();
 
 
