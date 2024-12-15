@@ -1,5 +1,4 @@
-import sql from 'mssql';
-import { poolPromise } from '../../config/default.js'; // Database connection pool
+
 import logger from '../../logger.js';
 import { roundTo4Decimals, fetchBOMData } from '../Utils/utilities.js';
 

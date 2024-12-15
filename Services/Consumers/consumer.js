@@ -1,7 +1,7 @@
-import { getRabbitMQConnection } from '../../config/default.js';
+import { getRabbitMQConnection, rabbitmqConfig } from '../../config/default.js';
 import logger from '../../logger.js';
 import { transformData } from '../Transformers/transformData.js';
-import { rabbitmqConfig } from '../../config/default.js';
+
 
 /**
  * Generic RabbitMQ Consumer
@@ -104,7 +104,7 @@ export const consumeRabbitMQ = async ({
 
         // Wait for the batch to be filled or timeout
         const batch = await batchPromise;
-
+           console.log('batch',JSON.stringify(batch,null,2));
         logger.info(`Processd ${batch.length} orders from queue: ${queueName}`);
 
         // Cleanup and close the channel

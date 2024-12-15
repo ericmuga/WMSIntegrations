@@ -10,7 +10,7 @@ import {processConfig} from '../Consumers/processConfig.js';
  * @param {Array} sequence - The sequence of processes to follow.
  * @returns {Array} - The generated production orders in reverse order.
  */
-export const transformData = async (transferData, sequence) => {
+export const transformData = async (transferData, finalProcess) => {
     try {
         const {
             product_code,
@@ -41,12 +41,12 @@ export const transformData = async (transferData, sequence) => {
 
         // Process the sequence of operations
         const productionOrders = await processSequenceHandler({
-            sequence,
             initialItem: product_code,
             batchMultiplier,
             user,
             dateTime,
             id,
+            finalProcess
         });
 
         // Reverse the order of production orders
@@ -73,7 +73,7 @@ const jsonData = ` {
 
 (async () => {
     try {
-        const data = await transformData(JSON.parse(jsonData));
+        const data = await transformData(JSON.parse(jsonData),'CuringP');
         logger.info(`transfer: ${JSON.stringify(JSON.parse(jsonData), null, 2)}`); // Pretty-print the output
         logger.info(`Orders: ${JSON.stringify(data, null, 2)}`); // Pretty-print the output
         // logger.info(`Orders: ${JSON.stringify(data, null, 2)}`); // Pretty-print the output
