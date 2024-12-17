@@ -1,4 +1,4 @@
-import { processProductionOrders } from "./queueProcessor";
+import { processProductionOrders } from "./queueProcessor.js";
 import { processConfig } from './processConfig.js';
 
 // Call the function

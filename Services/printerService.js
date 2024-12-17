@@ -10,8 +10,10 @@ import logger from '../logger.js';
 const { getPrinters, print: sendToPrinter } = pkg;
 import { companyParameter } from '../config/default.js';
 import { getSerialNumber } from './serialNumberCounter.js';
+import { getCompanyConfig } from './companyConfig.js';
+import { defaultPrinter } from '../config/default.js';
 
-export const defaultPrinter = 'Microsoft Print to PDF (redirected 2)';
+// export const defaultPrinter = 'Microsoft Print to PDF (redirected 2)';
 
 const listPrinters = async () => {
     try {
