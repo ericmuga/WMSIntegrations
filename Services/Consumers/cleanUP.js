@@ -3,11 +3,11 @@ import logger from '../../logger.js';
 import dayjs from 'dayjs';
 
 export const cleanUp = async () => {
-    const mainQueueName = 'transfer_from_1570_to_2055';
+    const mainQueueName = 'production_data_order_deboning.bc';
     const mainExchange = 'fcl.exchange.direct';
     const dlExchange = 'fcl.exchange.dlx';
-    const routingKey = 'transfer_from_1570_to_2055';
-    const dateThreshold = dayjs('2024-12-01');
+    const routingKey = 'production_data_order_deboning.bc';
+    const dateThreshold = dayjs('2024-16-01');
 
     const mainQueueOptions = {
         durable: true,
@@ -47,7 +47,7 @@ export const cleanUp = async () => {
                             dayjs(timestamp).isBefore(dateThreshold); // Timestamp earlier than 4th Dec 2024
 
                         if (isInvalid) {
-                            logger.warn(`Invalid message: ${JSON.stringify(messageData)}`);
+                            //logger.warn(`Invalid message: ${JSON.stringify(messageData)}`);
                             channel.nack(msg, false, false); // Dead-letter the message
                             return;
                         }

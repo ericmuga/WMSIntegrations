@@ -7,6 +7,7 @@ import {
     constructProductionOrder,
     createSpecialProductionOrder,
     SPECIAL_ITEMS,
+    logProcessBOM
 } from '../Utils/utilities.js';
 import logger from '../../logger.js';
 
@@ -31,15 +32,25 @@ export const processSequenceHandler = async ({
 
     while (currentItem) {
         // Fetch BOM data for the current output item
+       
+        //log process BOM and item to DBTable for tracking
+
         const processBOM = await fetchBOMData(null, currentItem);
+
         if (!processBOM.length) {
             logger.error(`No BOM data found for output_item: ${currentItem}`);
+            await logProcessBOM({
+                fg: initialItem,
+                process: 'Error',
+                item: currentItem,
+                qtyPer: 0,
+                loss: 0,
+                batchSize: 0,
+            });
             break;
         }
 
         const currentProcess = processBOM[0].Process;
-        logger.info(`Processing: ${currentItem} under process: ${currentProcess}`);
-
         const mainIntakeItem = getMainIntakeItem(processBOM, excludedItems);
         if (!mainIntakeItem) {
             logger.error(`No valid intake item for ${currentItem} in process: ${currentProcess}`);
@@ -49,6 +60,38 @@ export const processSequenceHandler = async ({
         const outputQuantity = currentItem === initialItem
             ? batchMultiplier * parseFloat(processBOM[0].batch_size)
             : previousOutputQuantity || 0;
+
+        // Log BOM and item data to the database
+        await logProcessBOM({
+            fg: initialItem,
+            process: currentProcess,
+            item: currentItem,
+            qtyPer: processBOM[0].input_item_qt_per,
+            loss: processBOM[0].loss || 0,
+            batchSize: processBOM[0].batch_size,
+        });
+
+
+        // const processBOM = await fetchBOMData(null, currentItem);
+        // if (!processBOM.length) {
+        //     logger.error(`No BOM data found for output_item: ${currentItem}`);
+        //     break;
+        // }
+  
+        
+
+        // const currentProcess = processBOM[0].Process;
+        // logger.info(`Processing: ${currentItem} under process: ${currentProcess}`);
+
+        // const mainIntakeItem = getMainIntakeItem(processBOM, excludedItems);
+        // if (!mainIntakeItem) {
+        //     logger.error(`No valid intake item for ${currentItem} in process: ${currentProcess}`);
+        //     break;
+        // }
+
+        // const outputQuantity = currentItem === initialItem
+        //     ? batchMultiplier * parseFloat(processBOM[0].batch_size)
+        //     : previousOutputQuantity || 0;
 
         // Create the production order
         const productionOrder = constructProductionOrder({
