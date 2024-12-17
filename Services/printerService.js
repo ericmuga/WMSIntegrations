@@ -67,7 +67,12 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const fileName = `${itemNo}_${part}.pdf`;
     const filePath = path.join(pdfDirPath, fileName);
 
-    const doc = new jsPDF('p', 'mm', 'a4'); // A4 size page
+    const doc = new jsPDF('p', 'mm', 'a3'); // A4 size page
+    // const doc = new jsPDF({
+    //     orientation: 'p',
+    //     unit: 'mm',
+    //     format: [215, 285], // Width: 215mm, Height: 285mm
+    // });
 
     doc.setFont("helvetica", "bold");
 
@@ -80,7 +85,7 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
             doc.setFont("helvetica", "bold");
             doc.setFontSize(10);
             // doc.text(`Page ${i} of ${pageCount}`, 105, 290, { align: 'center' }); // Appears at the footer
-            doc.text(`Page ${i} of ${pageCount}`, 190, 19, { align: 'right' });
+            doc.text(`Page ${i} of ${pageCount}`, 200, 8.5, { align: 'right' });
         }
     };
     
@@ -93,79 +98,79 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const config = getCompanyConfig(`fcl`)
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(15);
+    doc.setFontSize(20);
     // Drawing the header at slightly offset position of x to simulate a bolder text
-    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
-    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105 + 0.2, 20, { align: 'center' });
-    doc.setFontSize(12);
+    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 10, { align: 'center' });
+    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105 + 0.2, 10, { align: 'center' });
+    doc.setFontSize(14);
 
-    doc.text(`${config.parkingListPrefix}${data.order_no}`, 25, 30)
+    doc.text(`${config.parkingListPrefix}${data.order_no}`, 15, 30)
 
-    doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
+    doc.text(`${data.ending_date} ${data.ending_time}`, 230, 30, { align: 'right' })
 
     // ----------------Line----------------
-    doc.text('Order Date:', 2, 38)
+    doc.text('Order Date:', -12, 38)
     doc.text(data.shp_date, 42, 38)
 
-    doc.text('Sell To Address:', 100, 38)
-    doc.text(data.shp_name, 140, 38)
+    doc.text('Sell To Address:', 120, 38)
+    doc.text(data.shp_name, 170, 38)
 
     // ----------------Line----------------
-    doc.text('Order No.:', 2, 46)
+    doc.text('Order No:', -12, 46)
     doc.text(`${config.orderPrefix}${data.order_no}`, 42, 46)
 
-    doc.text('Sales Person:', 100, 46)
-    doc.text(data.sp_code, 140, 46)
+    doc.text('Sales Person:', 120, 46)
+    doc.text(data.sp_code, 170, 46)
 
     // ----------------Line----------------
-    doc.text('Customer No.:', 2, 54)
+    doc.text('Customer No:', -12, 54)
     doc.text(data.customer_no, 42, 54)
 
-    doc.text('', 100, 54)
-    doc.text(data.sp_name, 140, 54)
+    doc.text('', 120, 54)
+    doc.text(data.sp_name, 170, 54)
 
     // ----------------Line----------------
-    doc.text('Customer Name:', 2, 62)
+    doc.text('Customer Name:', -12, 62)
     doc.text(data.customer_name, 42, 62)
 
-    doc.text('Delivery Date:', 100, 62)
-    doc.text(data.shp_date, 140, 62)
+    doc.text('Delivery Date:', 120, 62)
+    doc.text(data.shp_date, 170, 62)
 
     // ----------------Line----------------
-    doc.text('External DocNo:', 2, 70)
+    doc.text('External DocNo:', -12, 70)
     doc.text(data.ext_doc_no, 42, 70)
 
-    doc.text('Ship To Name:', 100, 70)
-    doc.text(data.shp_name, 140, 70)
+    doc.text('Ship To Name:', 120, 70)
+    doc.text(data.shp_name, 170, 70)
 
     // ----------------Line----------------
-    doc.text('PDA Order:', 2, 78)
+    doc.text('PDA Order:', -12, 78)
     doc.text(data.pda ? 'Yes' : 'No', 42, 78)
 
-    doc.text('Cust Ref. No:', 100, 78)
-    doc.text(data.ext_doc_no, 140, 78)
+    doc.text('Cust Ref. No:', 120, 78)
+    doc.text(data.ext_doc_no, 170, 78)
 
     // ----------------Line----------------
-    doc.text('Order Receiver:', 2, 86)
+    doc.text('Order Receiver:', -12, 86)
     doc.text(data.ended_by, 42, 86)
 
-    doc.text('External DocNo:', 100, 86)
-    doc.text(data.ext_doc_no, 140, 86)
+    doc.text('External DocNo:', 120, 86)
+    doc.text(data.ext_doc_no, 170, 86)
 
     // ----------------Line----------------
-    doc.text('Your Ref:', 2, 94)
+    doc.text('Your Ref:', -12, 94)
     doc.text('', 42, 94)
 
-    doc.text('District Group:', 100, 94)
-    doc.text('', 140, 94)
+    doc.text('District Group:', 120, 94)
+    doc.text('', 170, 94)
 
     // ----------------Line----------------
-    doc.text('Location:', 2, 102)
+    doc.text('Location:', -12, 102)
     doc.text(data.route_code, 42, 102)
 
-    doc.setFontSize(8);
-    doc.text('Time Stamp:', 162, 102)
-    doc.text(Date.now().toString(), 200, 102, { align: 'right' })
+    doc.setFontSize(12);
+    doc.text('Time Stamp:', 182, 102)
+    doc.text(Date.now().toString(), 240, 102, { align: 'right' })
 
     const serial = await getSerialNumber('serial_number_counter')
         .catch(error => {
@@ -176,14 +181,14 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     console.log(serial)
 
-    doc.text('Serial No:', 165, 107)
-    doc.text(`${serial}`, 200, 107, { align: 'right' })
+    doc.text('Serial No:', 185, 107)
+    doc.text(`${serial}`, 240, 107, { align: 'right' })
 
-    doc.setFontSize(10);
+    doc.setFontSize(14);
 
     const tableColumnNames = [
-        'Item No.', 'Description', 'Cust. Specs', 'Unit of Measure',
-        'Order Qty', 'QTY Supplied', 'No. Of Cartons', 'Carton Serial No.'
+        'Item No.', 'Description', 'Cust. Specs', 'Unit of \nMeasure',
+        'Order Qty', 'QTY \nSupplied', 'No. Of Cartons', 'Carton \nSerial No.'
     ];
 
     const tableData = lines.map(line => [
@@ -204,19 +209,19 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
         startX: 2,
         margin: { left: 2, top: 30, bottom: 80 },
         columnStyles: {
-            0: { cellWidth: 30, fillColor: null, halign: 'left' },
-            1: { cellWidth: 55, fillColor: null, halign: 'left' },
+            0: { cellWidth: 40, fillColor: null, halign: 'left' },
+            1: { cellWidth: 65, fillColor: null, halign: 'left' },
             2: { cellWidth: 20, fillColor: null, halign: 'left' },
-            3: { cellWidth: 20, fillColor: null, halign: 'left' },
+            3: { cellWidth: 30, fillColor: null, halign: 'left' },
             4: { cellWidth: 15, fillColor: null, halign: 'left' },
-            5: { cellWidth: 20, fillColor: null, halign: 'left' },
+            5: { cellWidth: 25, fillColor: null, halign: 'left' },
             6: { cellWidth: 20, fillColor: null, halign: 'left' },
-            7: { cellWidth: 25, fillColor: null, halign: 'left' },
+            7: { cellWidth: 35, fillColor: null, halign: 'left' },
         },
         headStyles: {
             fillColor: null,
             textColor: [0, 0, 0],
-            fontSize: 9,
+            fontSize: 12,
             fontStyle: 'bold',
             halign: 'left',
             valign: 'bottom'
@@ -226,37 +231,39 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
                 const lineY = data.cell.y + data.cell.height;
                 doc.setDrawColor(0);
                 doc.setLineWidth(0.5);
-                doc.line(2, lineY, 205, lineY);
+                doc.line(2, lineY, 245, lineY);
             }
         },
         didParseCell: (data) => {
-            if (data.section === 'body' && data.column.index === 0) {
+            // if (data.section === 'body' && data.column.index === 0) {
                 data.cell.styles.fontStyle = 'bold'
-                data.cell.styles.fontSize = 10
-            }
+                data.cell.styles.fontSize = 12
+            // }
 
             data.cell.styles.textColor = [0, 0, 0]
         },
         didDrawPage: (data) => {
             const footerY = 240; // Fixed Y position for the footer
 
+            
+            doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
-            doc.text('Prepared By (Name & Sign):', 10, footerY);
-            doc.rect(10 /*X*/, footerY + 2 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S' /*'S' for stroke only*/);
+            doc.text('Prepared By (Name & Sign):', 5, footerY);
+            doc.rect(5 /*X*/, footerY + 2 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S' /*'S' for stroke only*/);
 
             doc.text('Packed By (Name & Sign):', 75, footerY);
             doc.rect(75, footerY + 2, 60, 12, 'S');
 
-            doc.text('Checked By (Name & Sign):', 140, footerY);
-            doc.rect(140, footerY + 2, 60, 12, 'S');
+            doc.text('Checked By (Name & Sign):', 145, footerY);
+            doc.rect(145, footerY + 2, 60, 12, 'S');
 
             doc.text('Total Net Weight: ___________', 75, footerY + 20);
-            doc.text('Total Gross Weight: ___________', 75, footerY + 25);
-            doc.text('Total No. Of Cartons: ___________', 75, footerY + 30);
+            doc.text('Total Gross Weight: ___________', 75, footerY + 30);
+            doc.text('Total No. Of Cartons: ___________', 75, footerY + 40);
         },
     });
 
-    doc.setFont("helvetica", "normal");
+    doc.setFont("helvetica", "bold");
     doc.text(`Total Order Quantity: ${lines.length}`, 105, doc.lastAutoTable.finalY + 10, { align: 'center' });
 
     addPageNumber();
