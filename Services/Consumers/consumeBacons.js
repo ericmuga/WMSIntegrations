@@ -2,9 +2,9 @@ import { consumeRabbitMQ } from './consumer.js';
 
 
 (async () => {
-    const queueName = 'continentals.bc';
-    const routingKey = 'continentals.bc';
-    const finalProcess ='Stuffing' 
+    const queueName = 'bacon.bc';
+    const routingKey = 'bacon.bc';
+    const finalProcess ='Salting' 
 
     try {
         const productionOrders = await consumeRabbitMQ({

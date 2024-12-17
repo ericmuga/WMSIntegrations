@@ -1,32 +1,7 @@
-import sql from 'mssql';
-import { poolPromise } from '../../config/default.js'; // Database connection pool
+
 import logger from '../../logger.js';
+import { roundTo4Decimals, fetchBOMData } from '../Utils/utilities.js';
 
-const roundTo4Decimals = (num) => {
-    const validNum = parseFloat(num);
-    if (isNaN(validNum)) {
-        throw new Error(`Invalid number: ${num}`);
-    }
-    return parseFloat(validNum.toFixed(4));
-};
-
-const fetchBOMData = async (process, outputItem) => {
-    // console.log(outputItem)
-    const pool = await poolPromise;
-    const query = `
-        SELECT * 
-        FROM RecipeData
-        WHERE Process = @process AND output_item = @outputItem;
-    `;
-    const result = await pool
-        .request()
-        .input('process', sql.VarChar, process)
-        .input('outputItem', sql.VarChar, outputItem)
-        .query(query);
-
-        // console.log(result.recordset)
-    return result.recordset;
-};
 
 export const transformData = async (transferData) => {
     try {

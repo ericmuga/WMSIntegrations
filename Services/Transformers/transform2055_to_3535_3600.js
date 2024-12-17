@@ -80,7 +80,7 @@ export const transformData = async (transferData) => {
 
         // Generate the packing production order
         const packingOrder = {
-            production_order_no: `PK_${product_code}_${id}`,
+            production_order_no: `${packingBOM[0].recipe}_${id}`,
             ItemNo: product_code,
             Quantity: roundTo4Decimals(receiver_total_weight),
             uom: packingBOM[0].output_item_uom,
@@ -126,7 +126,7 @@ export const transformData = async (transferData) => {
         // const stuffingBatchMultiplier = stuffingOutputQuantity / parseFloat(mainStuffingItem.input_item_qt_per);
          
         const stuffingOrder = {
-            production_order_no: `ST_${stuffingOutputItem}_${id}`,
+            production_order_no: `${stuffingBOM[0].recipe}_${id}`,
             ItemNo: stuffingOutputItem,
             Quantity: roundTo4Decimals(stuffingOutputQuantity),
             uom: mainStuffingItem.output_item_uom,

@@ -1,9 +1,11 @@
+import {processProductionOrders } from './queueProcessor.js';
+
 import { consumeRabbitMQ } from './consumer.js';
 
 
 (async () => {
-    const queueName = 'continentals.bc';
-    const routingKey = 'continentals.bc';
+    const queueName = 'sausages.bc';
+    const routingKey = 'sausages.bc';
     const finalProcess ='Stuffing' 
 
     try {
