@@ -21,10 +21,10 @@ import { initPrinting } from './Services/printerService.js'
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateMtn,generateResponse } from './Services/QRCode.js';
-// import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
+import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
 // import { consume2055_3535 } from './Services/Consumers/consume2055_3535.js';
 // import { consume2055_3600 } from './Services/Consumers/consume2055_3600.js';
-import {consumeContinentals} from './Services/Consumers/consumeContinentals.js';
+// import {consumeContinentals} from './Services/Consumers/consumeContinentals.js';
 // import {consume1570}
 
 
@@ -85,7 +85,7 @@ app.get('/fetch-production-orders', async (req, res) => {
      let carcassSales=await consumeCarcassSales(); 
      let breakingData= await consumeBreakingData();
      let deboningData= await consumeDeboningData();
-    //  let mincingFromButchery= await consume1570_2055();
+     let mincingFromButchery= await consume1570_2055();
     //  let choppingData=await consumechoppingData();
     // const numCalls = 5;
 
@@ -117,7 +117,7 @@ app.get('/fetch-production-orders', async (req, res) => {
                                                     carcassSales,
                                                     breakingData,
                                                     deboningData,
-                                                    // mincingFromButchery,
+                                                    mincingFromButchery,
                                                     // choppingData,
                                                     // localSausageTransfers,
                                                     // continentalsData
