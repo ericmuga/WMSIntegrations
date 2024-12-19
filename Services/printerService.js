@@ -10,7 +10,7 @@ import logger from '../logger.js';
 const { getPrinters, print: sendToPrinter } = pkg;
 import { companyParameter } from '../config/default.js';
 import { getSerialNumber } from './serialNumberCounter.js';
-import { getCompanyConfig } from './companyConfig.js';
+// import { getCompanyConfig } from './companyConfig.js';
 import { defaultPrinter } from '../config/default.js';
 
 // export const defaultPrinter = 'Microsoft Print to PDF (redirected 2)';
@@ -274,15 +274,15 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     doc.save(filePath);
 };
 
-const getCompanyConfig = (flag) => {
-    let config
-    if (!flag)
-       config = companyParameter['fcl'];
+// const getCompanyConfig = (flag) => {
+//     let config
+//     if (!flag)
+//        config = companyParameter['fcl'];
 
-    config = companyParameter[flag];
+//     config = companyParameter[flag];
 
-    return config;
-}
+//     return config;
+// }
 
 
 export const printFromFolder = async (pdfDirPath, printedDirPath, printerName) => {
