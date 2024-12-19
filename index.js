@@ -21,9 +21,11 @@ import { initPrinting } from './Services/printerService.js'
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateMtn,generateResponse } from './Services/QRCode.js';
-import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
-import { processSausageQueue } from './Services/Consumers/consumeSausages.js';
-import {processContinentalsQueue} from './Services/Consumers/consumeContinentals.js';
+// import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
+// import { consume2055_3535 } from './Services/Consumers/consume2055_3535.js';
+// import { consume2055_3600 } from './Services/Consumers/consume2055_3600.js';
+import {consumeContinentals} from './Services/Consumers/consumeContinentals.js';
+// import {consume1570}
 
 
 const app = express();
@@ -80,25 +82,45 @@ app.get('/fetch-production-orders', async (req, res) => {
      const mergeProductionOrders = (...arrays) => arrays.flat();
      const { date, item, production_order_no } = req.query;
      let beheadingData= await consumeBeheadingData();
-    //  let carcassSales=await consumeCarcassSales(); 
+     let carcassSales=await consumeCarcassSales(); 
      let breakingData= await consumeBreakingData();
-    //  let deboningData= await consumeDeboningData();
+     let deboningData= await consumeDeboningData();
     //  let mincingFromButchery= await consume1570_2055();
-    //   let choppingData=await consumechoppingData();
-    //   let sausageData=await processSausageQueue();
-    //   let continentalsData=await processContinentalsQueue();
-      let productionOrders = mergeProductionOrders(
-                                                   
+    //  let choppingData=await consumechoppingData();
+    // const numCalls = 5;
+
+    // Create promises for `consume2055_3535`
+    // const sausagePromises = [];
+    // for (let i = 0; i < numCalls; i++) {
+    //     sausagePromises.push(consume2055_3535());
+    // }
+    
+    // Create promises for `consumeContinentals`
+    // const continentalsPromises = [];
+    // for (let i = 0; i < numCalls; i++) {
+    //     continentalsPromises.push(consumeContinentals());
+    // }
+    
+    // // Wait for all calls to complete
+    // const [ continentalsResults] = await Promise.all([
+    //     // Promise.all(sausagePromises),
+    //     Promise.all(continentalsPromises),
+    // ]);
+    
+    // Merge results from all calls
+    // const localSausageTransfers = localSausageTransfersResults.flat();
+    // const continentalsData = continentalsResults.flat();
+
+     let productionOrders = mergeProductionOrders(
 
                                                     beheadingData,
-                                                    // carcassSales,
+                                                    carcassSales,
                                                     breakingData,
-                                                    // deboningData,
+                                                    deboningData,
                                                     // mincingFromButchery,
-                                                    // choppingData, 
-                                                    // sausageData,
-                                                    // // localSausageTransfers,
-                                                    // continentalsData,
+                                                    // choppingData,
+                                                    // localSausageTransfers,
+                                                    // continentalsData
                                                     // exportSausageTransfers
 
                                                   );
