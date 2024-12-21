@@ -22,6 +22,7 @@ import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateMtn,generateResponse } from './Services/QRCode.js';
 import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
+import {consumeSausages} from './Services/Consumers/consumeSausages.js';
 // import { consume2055_3535 } from './Services/Consumers/consume2055_3535.js';
 // import { consume2055_3600 } from './Services/Consumers/consume2055_3600.js';
 // import {consumeContinentals} from './Services/Consumers/consumeContinentals.js';
@@ -86,31 +87,8 @@ app.get('/fetch-production-orders', async (req, res) => {
      let breakingData= await consumeBreakingData();
      let deboningData= await consumeDeboningData();
      let mincingFromButchery= await consume1570_2055();
-    //  let choppingData=await consumechoppingData();
-    // const numCalls = 5;
-
-    // Create promises for `consume2055_3535`
-    // const sausagePromises = [];
-    // for (let i = 0; i < numCalls; i++) {
-    //     sausagePromises.push(consume2055_3535());
-    // }
-    
-    // Create promises for `consumeContinentals`
-    // const continentalsPromises = [];
-    // for (let i = 0; i < numCalls; i++) {
-    //     continentalsPromises.push(consumeContinentals());
-    // }
-    
-    // // Wait for all calls to complete
-    // const [ continentalsResults] = await Promise.all([
-    //     // Promise.all(sausagePromises),
-    //     Promise.all(continentalsPromises),
-    // ]);
-    
-    // Merge results from all calls
-    // const localSausageTransfers = localSausageTransfersResults.flat();
-    // const continentalsData = continentalsResults.flat();
-
+     let choppingData=await consumechoppingData();
+     let sausageData=await consumeSausages();
      let productionOrders = mergeProductionOrders(
 
                                                     beheadingData,
@@ -118,7 +96,8 @@ app.get('/fetch-production-orders', async (req, res) => {
                                                     breakingData,
                                                     deboningData,
                                                     mincingFromButchery,
-                                                    // choppingData,
+                                                    choppingData,
+                                                    sausageData,
                                                     // localSausageTransfers,
                                                     // continentalsData
                                                     // exportSausageTransfers

@@ -89,13 +89,13 @@ const createQueuesAndConsume = async (sourceQueueNames, targetQueueName, options
     }
 };
 
-const sourceQueueNames = ['transfer_from_2055_to_3600'];
+const sourceQueueNames = ['transfer_from_2055_to_3535'];
 const targetQueueName = 'sausages.bc';
 const options = {
     exchange: 'fcl.exchange.direct',
     dlExchange: 'fcl.exchange.dlx',
     routingKey: 'sausages.bc',
-    dateThreshold: dayjs('2024-12-01'),
+    dateThreshold: dayjs('2024-12-16'),
     targetQueueOptions: {
         durable: true,
         arguments: {

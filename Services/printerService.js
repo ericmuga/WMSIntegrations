@@ -12,8 +12,11 @@ import { companyParameter } from '../config/default.js';
 import { getSerialNumber } from './serialNumberCounter.js';
 // import { getCompanyConfig } from './companyConfig.js';
 import { defaultPrinter } from '../config/default.js';
+import { config } from 'process';
 
 // export const defaultPrinter = 'Microsoft Print to PDF (redirected 2)';
+
+// export const defaultPrinter = 'HP0F5A0C (HP LaserJet Pro M404-M405)';
 
 const listPrinters = async () => {
     try {
@@ -29,6 +32,7 @@ const listPrinters = async () => {
 
 export const initPrinting = (data) => {
     // Resolve __dirname in ES module
+    console.log('data',data)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
@@ -62,7 +66,7 @@ export const initPrinting = (data) => {
         createPDF(data, pdfDirPath, itemNo, part, lines);
     });
 
-    printFromFolder(pdfDirPath, printedDirPath, defaultPrinter)
+    printFromFolder(pdfDirPath, printedDirPath, config.defaultPrinter);
 }
 
 const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
@@ -97,8 +101,20 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     // const config = getCompanyConfig(data.company_flag.toLowerCase())
 
     //temporatily using fcl before the company flag is added to the data
-    const config = getCompanyConfig(`fcl`)
+    // const config = getCompanyConfig(`fcl`)
+    let  config;// = companyParameter['fcl'];
 
+    //switch between company printers
+    
+    if (data.sp_code==='270')
+        config = companyParameter['exp']
+    else
+        switch (data.lines[0].item_no.substring(0, 1)) {
+        
+            case 'B': config = companyParameter['cm']; break;
+            default :config = companyParameter['fcl']; break;
+        }
+    
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     // Drawing the header at slightly offset position of x to simulate a bolder text
@@ -369,3 +385,103 @@ export const printSingleFile = async (pdfFilePath, printedFolder, printerName) =
     }
 };
 
+// await listPrinters();
+const sampleData=`{
+    "order_no": "BSO00031",
+    "ended_by": "AGILEBIZPAIVY.ESHIRERA",
+    "customer_no": "B25",
+    "customer_name": "Naivas Limited",
+    "shp_code": "B25_50_CM",
+    "shp_name": "NAIVAS - NEW BAMBURI",
+    "route_code": "B3535",
+    "sp_code": "B285",
+    "sp_name": "Mombasa Choice Meats",
+    "shp_date": "2024-12-20",
+    "assembler": "",
+    "checker": "",
+    "status": 4,
+    "pda": false,
+    "ending_time": "15:58:41.137",
+    "ending_date": "2024-12-20",
+    "ext_doc_no": "",
+    "company_flag": "Choice Meats",
+    "lines": [
+        {
+            "line_no": 10000,
+            "item_no": "BJ31015201",
+            "item_description": "Meaty Beef Sausages, 500gms",
+            "customer_spec": "",
+            "posting_group": "BF-SAUSAGE",
+            "part": "B",
+            "order_qty": 150,
+            "ass_qty": 0,
+            "exec_qty": 150,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 150
+        },
+        {
+            "line_no": 20000,
+            "item_no": "BJ31015401",
+            "item_description": "Value Pack Beef Sausages 1kg",
+            "customer_spec": "",
+            "posting_group": "BF-SAUSAGE",
+            "part": "B",
+            "order_qty": 80,
+            "ass_qty": 0,
+            "exec_qty": 80,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 80
+        },
+        {
+            "line_no": 30000,
+            "item_no": "BJ31015301",
+            "item_description": "Spicy Beef Sausages 500gms",
+            "customer_spec": "",
+            "posting_group": "BF-SAUSAGE",
+            "part": "B",
+            "order_qty": 0,
+            "ass_qty": 0,
+            "exec_qty": 0,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 0
+        },
+        {
+            "line_no": 40000,
+            "item_no": "BJ31015101",
+            "item_description": "Beef Chipolatas 200gms",
+            "customer_spec": "",
+            "posting_group": "BF-SAUSAGE",
+            "part": "B",
+            "order_qty": 0,
+            "ass_qty": 0,
+            "exec_qty": 0,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 0
+        },
+        {
+            "line_no": 50000,
+            "item_no": "BJ31100213",
+            "item_description": "Fresh Beef Burger 400gms",
+            "customer_spec": "",
+            "posting_group": "BF-FRSH BG",
+            "part": "D",
+            "order_qty": 0,
+            "ass_qty": 0,
+            "exec_qty": 0,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 0
+        }
+    ]
+}`;
+
+// initPrinting(JSON.parse(sampleData));

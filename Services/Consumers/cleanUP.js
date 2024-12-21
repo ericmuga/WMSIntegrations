@@ -3,10 +3,10 @@ import logger from '../../logger.js';
 import dayjs from 'dayjs';
 
 export const cleanUp = async () => {
-    const mainQueueName = 'production_data_order_deboning.bc';
+    const mainQueueName = 'production_data_order_chopping.bc';
     const mainExchange = 'fcl.exchange.direct';
     const dlExchange = 'fcl.exchange.dlx';
-    const routingKey = 'production_data_order_deboning.bc';
+    const routingKey = 'production_data_order_chopping.bc';
     const dateThreshold = dayjs('2024-16-01');
 
     const mainQueueOptions = {
