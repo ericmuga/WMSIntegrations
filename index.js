@@ -22,7 +22,7 @@ import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateMtn,generateResponse } from './Services/QRCode.js';
 import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
-import {consumeSausages} from './Services/Consumers/consumeSausages.js';
+import {processSausageQueue } from './Services/Consumers/consumeSausages.js';
 // import { consume2055_3535 } from './Services/Consumers/consume2055_3535.js';
 // import { consume2055_3600 } from './Services/Consumers/consume2055_3600.js';
 // import {consumeContinentals} from './Services/Consumers/consumeContinentals.js';
@@ -88,7 +88,7 @@ app.get('/fetch-production-orders', async (req, res) => {
      let deboningData= await consumeDeboningData();
      let mincingFromButchery= await consume1570_2055();
      let choppingData=await consumechoppingData();
-     let sausageData=await consumeSausages();
+     let sausageData=await processSausageQueue ();
      let productionOrders = mergeProductionOrders(
 
                                                     beheadingData,
