@@ -75,16 +75,25 @@ export const initPrinting = (data) => {
     printFromFolder(pdfDirPath, printedDirPath, config.defaultPrinter);
 }
 
+const truncateWithEllipses = (text, maxWidth, doc) => {
+    let ellipsis = '';
+    let truncatedText = text;
+    while (doc.getTextWidth(truncatedText + ellipsis) > maxWidth) {
+        truncatedText = truncatedText.slice(0, -1);
+    }
+    return truncatedText + ellipsis;
+}
+
 const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const fileName = `${itemNo}_${part}.pdf`;
     const filePath = path.join(pdfDirPath, fileName);
 
-    // const doc = new jsPDF('p', 'mm', 'a4'); // A4 size page
-    const doc = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: [215, 285], // Width: 215mm, Height: 285mm
-    });
+    const doc = new jsPDF('p', 'mm', 'a4'); // A4 size page
+    // const doc = new jsPDF({
+    //     orientation: 'p',
+    //     unit: 'mm',
+    //     format: [215, 285], // Width: 215mm, Height: 285mm
+    // });
 
     doc.setFont("helvetica", "bold");
 
@@ -115,11 +124,13 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     // Drawing the header at slightly offset position of x to simulate a bolder text
-    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 10, { align: 'center' });
-    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105 + 0.2, 10, { align: 'center' });
+    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
+    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105 + 0.2, 20, { align: 'center' });
     doc.setFontSize(14);
 
-    doc.text(`${config.parkingListPrefix}${data.order_no}`, 15, 30)
+    doc.text(`${config.parkingListPrefix}${data.order_no}`, 25, 30)
+
+    doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
 
     doc.text(`${data.ending_date} ${data.ending_time}`, 180, 30, { align: 'right' })
 
@@ -136,11 +147,15 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     doc.text('Sales Person:', 100, 46)
     doc.text(data.sp_code, 140, 46)
+    doc.text('Sales Person:', 100, 46)
+    doc.text(data.sp_code, 140, 46)
 
     // ----------------Line----------------
     doc.text('Customer No:', 0, 54)
     doc.text(data.customer_no, 42, 54)
 
+    doc.text('', 100, 54)
+    doc.text(data.sp_name, 140, 54)
     doc.text('', 100, 54)
     doc.text(data.sp_name, 140, 54)
 
@@ -150,6 +165,8 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     doc.text('Delivery Date:', 100, 62)
     doc.text(data.shp_date, 140, 62)
+    doc.text('Delivery Date:', 100, 62)
+    doc.text(data.shp_date, 140, 62)
 
     // ----------------Line----------------
     doc.text('External DocNo:', 0, 70)
@@ -157,11 +174,15 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     doc.text('Ship To Name:', 100, 70)
     doc.text(data.shp_name, 140, 70)
+    doc.text('Ship To Name:', 100, 70)
+    doc.text(data.shp_name, 140, 70)
 
     // ----------------Line----------------
     doc.text('PDA Order:', 0, 78)
     doc.text(data.pda ? 'Yes' : 'No', 42, 78)
 
+    doc.text('Cust Ref. No:', 100, 78)
+    doc.text(data.ext_doc_no, 140, 78)
     doc.text('Cust Ref. No:', 100, 78)
     doc.text(data.ext_doc_no, 140, 78)
 
@@ -179,6 +200,8 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     doc.text('Your Ref:', 0, 94)
     doc.text('', 42, 94)
 
+    doc.text('District Group:', 100, 94)
+    doc.text('', 140, 94)
     doc.text('District Group:', 100, 94)
     doc.text('', 140, 94)
 
@@ -206,7 +229,7 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     const tableColumnNames = [
         'Item No.', 'Description', 'Cust. Specs', 'Unit of \nMeasure',
-        'Order Qty', 'QTY \nSupplied', 'No. Of Cartons', 'Carton \nSerial No.'
+        'Order Qty', 'Qty \nSupplied', 'No. Of Cartons', 'Carton \nSerial No.'
     ];
 
     const tableData = lines.map(line => [
@@ -263,7 +286,7 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
             data.cell.styles.textColor = [0, 0, 0]
         },
         didDrawPage: (data) => {
-            const footerY = 240; // Fixed Y position for the footer
+            const footerY = 230; // Fixed Y position for the footer
 
             doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
