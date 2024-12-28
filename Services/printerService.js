@@ -400,7 +400,7 @@ const loadConfig = (data) => {
 
 
 
-await listPrinters();
+// await listPrinters();
 // const sampleData=`{
 //     "order_no": "BSO00031",
 //     "ended_by": "AGILEBIZPAIVY.ESHIRERA",

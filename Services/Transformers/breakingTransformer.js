@@ -26,7 +26,7 @@ export const transformData = (responseData) => {
       BIN: "", // Default to empty if not provided
       user: responseData.user_id || "DEFAULT", // Default to "EMUGA" if not provided
       line_no: 1000, // Default to 1000 if not provided
-      routing: "production_order.bc",
+      routing: "breaking",
       date_time: dateTime,
       ProductionJournalLines: items.flatMap((item, index) => {
         const processDetails = getProcessDetails(parseInt(item.process_code));

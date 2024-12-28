@@ -6,7 +6,7 @@ export const consumeCarcassSales = async () => {
     const queueName = 'production_sales_transfers.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_sales_transfers.bc';
-    const batchSize = 5; // Set the desired batch size
+    const batchSize = 10; // Set the desired batch size
     const timeout = 2000; // Timeout in milliseconds (e.g., 5 seconds)
 
     const queueOptions = {

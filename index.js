@@ -23,6 +23,7 @@ import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateMtn,generateResponse } from './Services/QRCode.js';
 import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
 import {processSausageQueue } from './Services/Consumers/consumeSausages.js';
+import { pushToPickAndPack } from './Services/Utils/insertIntoPP.js';
 // import { consume2055_3535 } from './Services/Consumers/consume2055_3535.js';
 // import { consume2055_3600 } from './Services/Consumers/consume2055_3600.js';
 // import {consumeContinentals} from './Services/Consumers/consumeContinentals.js';
@@ -166,9 +167,10 @@ app.get('/fetch-slaughter-data', async (req, res) => {
 });
 
 
-app.post('/print-order', (req,res) => {
+app.post('/print-order', async (req,res) => {
   //console.log(req)
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+  await pushToPickAndPack(req.body);
   initPrinting(req.body);
   return res.status(201).json({ message: 'success' });
 

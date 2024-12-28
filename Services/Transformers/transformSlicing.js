@@ -57,7 +57,7 @@ export const transformData = (responseData) => {
       BIN: item.bin || "",
       user: item.user_id || "EMUGA",
       line_no: 1000 + index * 1000,
-      routing: "production_order.bc",
+      routing: "deboning",
       date_time: dateTime,
       ProductionJournalLines: [
         ...intakeItems.map((intakeItem, intakeIndex) => ({

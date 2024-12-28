@@ -212,8 +212,21 @@ export const updateQueueStatus = async (recordIds, status, tableName) => {
 export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queryParams = {}) => {
   try {
     const pool = await poolPromise;
-    const { startDate } = queryParams;
+    const { startDate, productCodeRanges = [] } = queryParams;
     const today = new Date(); // Current date
+
+    // Build dynamic filtering for product codes
+    const productCodeConditions = productCodeRanges
+      .map(
+        ({ rangeStart, rangeEnd }) =>
+          `(t.product_code BETWEEN '${rangeStart}' AND '${rangeEnd}')`
+      )
+      .join(' OR ');
+
+    // Add product code conditions to WHERE clause if any
+    const additionalConditions = productCodeConditions
+      ? `AND (${productCodeConditions})`
+      : '';
 
     const result = await pool.request()
       .input('startDate', pkg.DateTime, startDate ? new Date(startDate) : today)
@@ -227,6 +240,7 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queryPa
             WHERE qs.table_name = '${sourceTable}' AND qs.record_id = t.id
           )
           AND t.created_at >= @startDate
+          ${additionalConditions}
         )
         -- Insert into queue_status and return fetched records
         INSERT INTO ${queueTable} (table_name, record_id, status)
@@ -242,7 +256,8 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queryPa
           WHERE qs.table_name = '${sourceTable}' AND qs.record_id = t.id
           AND qs.status = 'new'
         )
-        AND t.created_at >= @startDate;
+        AND t.created_at >= @startDate
+        ${additionalConditions};
       `);
 
     return result.recordset || []; // Return the fetched records

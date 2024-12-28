@@ -1,4 +1,4 @@
-import { processProductionOrders } from './queueProcessor.js';
+
 import { consumeRabbitMQ } from './consumer.js';
 
 export const processSausageQueue = async () => {

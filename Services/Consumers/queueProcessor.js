@@ -1,6 +1,6 @@
 // import { consumeRabbitMQ } from '';
 import { consumeRabbitMQ } from './consumer.js';
-import { processConfig } from './processConfig.js';
+// import { processConfig } from './processConfig.js';
 
 /**
  * Processes RabbitMQ messages and converts them into production orders.
@@ -16,7 +16,7 @@ import { processConfig } from './processConfig.js';
 export const processProductionOrders = async ({
     queueName = 'transfer_from_1570_to_3535',
     routingKey = 'transfer_from_1570_to_3535',
-    sequence = processConfig.packing,
+    // sequence = processConfig.packing,
     batchSize = 5,
     timeout = 5000,
 }) => {
