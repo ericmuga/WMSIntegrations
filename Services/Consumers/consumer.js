@@ -75,7 +75,7 @@ export const consumeRabbitMQ = async ({
 
                             if (transformedData && transformedData.length > 0) {
                                 messages.push(...transformedData); // Spread to add all transformed results
-                                // channel.ack(msg); // Acknowledge the message
+                                channel.ack(msg); // Acknowledge the message
                                 
                             } else {
                                 logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);

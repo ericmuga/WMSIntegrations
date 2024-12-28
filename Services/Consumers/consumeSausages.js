@@ -1,12 +1,10 @@
-import {processProductionOrders } from './queueProcessor.js';
-
+import { processProductionOrders } from './queueProcessor.js';
 import { consumeRabbitMQ } from './consumer.js';
 
-
-(async () => {
+export const processSausageQueue = async () => {
     const queueName = 'sausages.bc';
     const routingKey = 'sausages.bc';
-    const finalProcess ='Stuffing' 
+    const finalProcess = 'Stuffing';
 
     try {
         const productionOrders = await consumeRabbitMQ({
@@ -17,8 +15,15 @@ import { consumeRabbitMQ } from './consumer.js';
             finalProcess
         });
 
-        // logger.info('Processed Production Orders:', JSON.stringify(productionOrders, null, 2));
+        console.log('Processed Production Orders:', JSON.stringify(productionOrders, null, 2));
+        return productionOrders; // Return results for further use
     } catch (error) {
         console.error(`Error: ${error.message}`);
+        throw error; // Rethrow for handling at higher levels
     }
-})();
+};
+
+// Uncomment below to run directly
+// (async () => {
+//     await processSausageQueue();
+// })();

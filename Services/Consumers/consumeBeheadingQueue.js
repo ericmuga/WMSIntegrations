@@ -6,7 +6,7 @@ export const consumeBeheadingData = async () => {
     const queueName = 'production_data_order_beheading.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_beheading.bc';
-    const batchSize = 5;
+    const batchSize = 10;
     const timeout = 2000; // Timeout in milliseconds (e.g., 5 seconds)
 
     const queueOptions = {

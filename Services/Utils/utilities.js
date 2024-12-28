@@ -142,6 +142,38 @@ export const generateMixtureOrders = async (mainItem, processType, dateTime, use
 
 
 
+/**
+ * Logs process BOM and item data to the BOMValidation table.
+ * @param {Object} params - Parameters for logging.
+ * @param {string} params.fg - Finished good (initial item).
+ * @param {string} params.process - Current process.
+ * @param {string} params.item - Current item.
+ * @param {number} params.qtyPer - Quantity per batch.
+ * @param {number} params.loss - Loss value (default is 0).
+ * @param {number} params.batchSize - Batch size.
+ */
+
+export const logProcessBOM = async ({ fg, process, item, qtyPer, loss = 0, batchSize }) => {
+    try {
+        const pool = await poolPromise; // Reuse the shared pool connection
+        await pool.request()
+            .input('FG', sql.NVarChar, fg)
+            .input('Process', sql.NVarChar, process)
+            .input('Item', sql.NVarChar, item)
+            .input('QtyPer', sql.Float, qtyPer)
+            .input('Loss', sql.Float, loss)
+            .input('BatchSize', sql.Float, batchSize)
+            .query(`
+                INSERT INTO [BOM].[dbo].[BOMValidation] ([FG], [Process], [Item], [QtyPer], [Loss], [BatchSize])
+                VALUES (@FG, @Process, @Item, @QtyPer, @Loss, @BatchSize)
+            `);
+        logger.info(`Logged BOM data: FG=${fg}, Process=${process}, Item=${item}`);
+    } catch (error) {
+        logger.error(`Failed to log BOM data for Item: ${item}, Process: ${process}. Error: ${error.message}`);
+    }
+};
+
+
 // export const fetchBOMDataForItem = async ( outputItem) => {
 //     const pool = await poolPromise;
 //     const query = `
