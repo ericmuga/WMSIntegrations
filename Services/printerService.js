@@ -79,12 +79,12 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const fileName = `${itemNo}_${part}.pdf`;
     const filePath = path.join(pdfDirPath, fileName);
 
-    const doc = new jsPDF('p', 'mm', 'a3'); // A4 size page
-    // const doc = new jsPDF({
-    //     orientation: 'p',
-    //     unit: 'mm',
-    //     format: [215, 285], // Width: 215mm, Height: 285mm
-    // });
+    // const doc = new jsPDF('p', 'mm', 'a4'); // A4 size page
+    const doc = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: [215, 285], // Width: 215mm, Height: 285mm
+    });
 
     doc.setFont("helvetica", "bold");
 
@@ -260,7 +260,6 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
         didDrawPage: (data) => {
             const footerY = 240; // Fixed Y position for the footer
 
-            
             doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
             doc.text('Prepared By (Name & Sign):', 5, footerY);
@@ -272,8 +271,8 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
             doc.text('Checked By (Name & Sign):', 145, footerY);
             doc.rect(145, footerY + 2, 60, 12, 'S');
 
-            doc.text('Total Net Weight: ___________', 75, footerY + 20);
-            doc.text('Total Gross Weight: ___________', 75, footerY + 30);
+            doc.text('Total Net Weight: ___________', 75, footerY + 24);
+            doc.text('Total Gross Weight: ___________', 75, footerY + 32);
             doc.text('Total No. Of Cartons: ___________', 75, footerY + 40);
         },
     });
