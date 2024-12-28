@@ -187,11 +187,8 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     doc.text(data.ext_doc_no, 140, 78)
 
     // ----------------Line----------------
-    doc.setFontSize(10); //
     doc.text('Order Receiver:', 0, 86)
     doc.text(data.ended_by, 42, 86)
-
-    // doc.setFontSize(20);
 
     doc.text('External DocNo:', 100, 86)
     doc.text(data.ext_doc_no, 140, 86)
