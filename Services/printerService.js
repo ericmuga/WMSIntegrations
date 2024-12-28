@@ -75,6 +75,15 @@ export const initPrinting = (data) => {
     printFromFolder(pdfDirPath, printedDirPath, config.defaultPrinter);
 }
 
+const truncateWithEllipses = (text, maxWidth, doc) => {
+    let ellipsis = '';
+    let truncatedText = text;
+    while (doc.getTextWidth(truncatedText + ellipsis) > maxWidth) {
+        truncatedText = truncatedText.slice(0, -1);
+    }
+    return truncatedText + ellipsis;
+}
+
 const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const fileName = `${itemNo}_${part}.pdf`;
     const filePath = path.join(pdfDirPath, fileName);
@@ -123,12 +132,16 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
 
+    const maxWidth = 100; // Width of the wrapping area
+    
     // ----------------Line----------------
     doc.text('Order Date:', 2, 38)
     doc.text(data.shp_date, 42, 38)
 
     doc.text('Sell To Address:', 100, 38)
-    doc.text(data.shp_name, 140, 38)
+
+    const sellToText = truncateWithEllipses(data.shp_name, maxWidth, doc);
+    doc.text(sellToText, 140, 38, { maxWidth })
 
     // ----------------Line----------------
     doc.text('Order No:', 2, 46)
@@ -146,7 +159,9 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     // ----------------Line----------------
     doc.text('Customer Name:', 2, 62)
-    doc.text(data.customer_name, 42, 62)
+    
+    const custNameText = truncateWithEllipses(data.customer_name, maxWidth, doc);
+    doc.text(custNameText, 42, 62, { maxWidth })
 
     doc.text('Delivery Date:', 100, 62)
     doc.text(data.shp_date, 140, 62)
