@@ -121,71 +121,74 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     doc.text(`${config.parkingListPrefix}${data.order_no}`, 15, 30)
 
-    doc.text(`${data.ending_date} ${data.ending_time}`, 230, 30, { align: 'right' })
+    doc.text(`${data.ending_date} ${data.ending_time}`, 180, 30, { align: 'right' })
 
     // ----------------Line----------------
-    doc.text('Order Date:', -12, 38)
+    doc.text('Order Date:', 0, 38)
     doc.text(data.shp_date, 42, 38)
 
-    doc.text('Sell To Address:', 120, 38)
-    doc.text(data.shp_name, 170, 38)
+    doc.text('Sell To Address:', 100, 38)
+    doc.text(data.shp_name, 140, 38)
 
     // ----------------Line----------------
-    doc.text('Order No:', -12, 46)
+    doc.text('Order No:', 0, 46)
     doc.text(`${config.orderPrefix}${data.order_no}`, 42, 46)
 
-    doc.text('Sales Person:', 120, 46)
-    doc.text(data.sp_code, 170, 46)
+    doc.text('Sales Person:', 100, 46)
+    doc.text(data.sp_code, 140, 46)
 
     // ----------------Line----------------
-    doc.text('Customer No:', -12, 54)
+    doc.text('Customer No:', 0, 54)
     doc.text(data.customer_no, 42, 54)
 
-    doc.text('', 120, 54)
-    doc.text(data.sp_name, 170, 54)
+    doc.text('', 100, 54)
+    doc.text(data.sp_name, 140, 54)
 
     // ----------------Line----------------
-    doc.text('Customer Name:', -12, 62)
+    doc.text('Customer Name:', 0, 62)
     doc.text(data.customer_name, 42, 62)
 
-    doc.text('Delivery Date:', 120, 62)
-    doc.text(data.shp_date, 170, 62)
+    doc.text('Delivery Date:', 100, 62)
+    doc.text(data.shp_date, 140, 62)
 
     // ----------------Line----------------
-    doc.text('External DocNo:', -12, 70)
+    doc.text('External DocNo:', 0, 70)
     doc.text(data.ext_doc_no, 42, 70)
 
-    doc.text('Ship To Name:', 120, 70)
-    doc.text(data.shp_name, 170, 70)
+    doc.text('Ship To Name:', 100, 70)
+    doc.text(data.shp_name, 140, 70)
 
     // ----------------Line----------------
-    doc.text('PDA Order:', -12, 78)
+    doc.text('PDA Order:', 0, 78)
     doc.text(data.pda ? 'Yes' : 'No', 42, 78)
 
-    doc.text('Cust Ref. No:', 120, 78)
-    doc.text(data.ext_doc_no, 170, 78)
+    doc.text('Cust Ref. No:', 100, 78)
+    doc.text(data.ext_doc_no, 140, 78)
 
     // ----------------Line----------------
-    doc.text('Order Receiver:', -12, 86)
+    doc.setFontSize(10); //
+    doc.text('Order Receiver:', 0, 86)
     doc.text(data.ended_by, 42, 86)
 
-    doc.text('External DocNo:', 120, 86)
-    doc.text(data.ext_doc_no, 170, 86)
+    // doc.setFontSize(20);
+
+    doc.text('External DocNo:', 100, 86)
+    doc.text(data.ext_doc_no, 140, 86)
 
     // ----------------Line----------------
-    doc.text('Your Ref:', -12, 94)
+    doc.text('Your Ref:', 0, 94)
     doc.text('', 42, 94)
 
-    doc.text('District Group:', 120, 94)
-    doc.text('', 170, 94)
+    doc.text('District Group:', 100, 94)
+    doc.text('', 140, 94)
 
     // ----------------Line----------------
-    doc.text('Location:', -12, 102)
+    doc.text('Location:', 0, 102)
     doc.text(data.route_code, 42, 102)
 
     doc.setFontSize(12);
-    doc.text('Time Stamp:', 182, 102)
-    doc.text(Date.now().toString(), 240, 102, { align: 'right' })
+    doc.text('Time Stamp:', 130, 102)
+    doc.text(Date.now().toString(), 200, 102, { align: 'right' })
 
     const serial = await getSerialNumber('serial_number_counter')
         .catch(error => {
@@ -196,8 +199,8 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     console.log(serial)
 
-    doc.text('Serial No:', 185, 107)
-    doc.text(`${serial}`, 240, 107, { align: 'right' })
+    doc.text('Serial No:', 130, 107)
+    doc.text(`${serial}`, 180, 107, { align: 'right' })
 
     doc.setFontSize(14);
 
@@ -212,35 +215,37 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
         line.customer_spec,
         line.unit_of_measure,
         line.order_qty,
-        line.qty_supplied || '_______',
-        line.cartons_count || '_______',
-        line.carton_serial || '___________'
+        line.qty_supplied || '____',
+        line.cartons_count || '____',
+        line.carton_serial || '________'
     ]);
 
     doc.autoTable({
-        head: [tableColumnNames],
-        body: tableData,
-        startY: 115,
-        startX: 2,
-        margin: { left: 2, top: 30, bottom: 80 },
-        columnStyles: {
-            0: { cellWidth: 40, fillColor: null, halign: 'left' },
-            1: { cellWidth: 65, fillColor: null, halign: 'left' },
-            2: { cellWidth: 20, fillColor: null, halign: 'left' },
-            3: { cellWidth: 30, fillColor: null, halign: 'left' },
-            4: { cellWidth: 15, fillColor: null, halign: 'left' },
-            5: { cellWidth: 25, fillColor: null, halign: 'left' },
-            6: { cellWidth: 20, fillColor: null, halign: 'left' },
-            7: { cellWidth: 35, fillColor: null, halign: 'left' },
-        },
-        headStyles: {
-            fillColor: null,
-            textColor: [0, 0, 0],
-            fontSize: 12,
-            fontStyle: 'bold',
-            halign: 'left',
-            valign: 'bottom'
-        },
+    head: [tableColumnNames],
+    body: tableData,
+    startY: 115,
+    startX: 2,
+    margin: { left: 2, top: 30, bottom: 80, right: 2 },
+    columnStyles: {
+        0: { cellWidth: 40 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        1: { cellWidth: 65 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        2: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        3: { cellWidth: 30 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        4: { cellWidth: 15 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        5: { cellWidth: 25 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        6: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        7: { cellWidth: 35 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+    },
+    headStyles: {
+        fillColor: null,
+        textColor: [0, 0, 0],
+        fontSize: 10,
+        fontStyle: 'bold',
+        halign: 'left',
+        valign: 'bottom'
+    },
+
+
         didDrawCell: (data) => {
             if (data.section === 'head' && data.row.index === 0) {
                 const lineY = data.cell.y + data.cell.height;
@@ -400,102 +405,102 @@ const loadConfig = (data) => {
 
 
 // await listPrinters();
-// const sampleData=`{
-//     "order_no": "BSO00031",
-//     "ended_by": "AGILEBIZPAIVY.ESHIRERA",
-//     "customer_no": "B25",
-//     "customer_name": "Naivas Limited",
-//     "shp_code": "B25_50_CM",
-//     "shp_name": "NAIVAS - NEW BAMBURI",
-//     "route_code": "B3535",
-//     "sp_code": "B285",
-//     "sp_name": "Mombasa Choice Meats",
-//     "shp_date": "2024-12-20",
-//     "assembler": "",
-//     "checker": "",
-//     "status": 4,
-//     "pda": false,
-//     "ending_time": "15:58:41.137",
-//     "ending_date": "2024-12-20",
-//     "ext_doc_no": "",
-//     "company_flag": "Choice Meats",
-//     "lines": [
-//         {
-//             "line_no": 10000,
-//             "item_no": "BJ31015201",
-//             "item_description": "Meaty Beef Sausages, 500gms",
-//             "customer_spec": "",
-//             "posting_group": "BF-SAUSAGE",
-//             "part": "B",
-//             "order_qty": 150,
-//             "ass_qty": 0,
-//             "exec_qty": 150,
-//             "assembler": "",
-//             "checker": "",
-//             "barcode": "",
-//             "qty_base": 150
-//         },
-//         {
-//             "line_no": 20000,
-//             "item_no": "BJ31015401",
-//             "item_description": "Value Pack Beef Sausages 1kg",
-//             "customer_spec": "",
-//             "posting_group": "BF-SAUSAGE",
-//             "part": "B",
-//             "order_qty": 80,
-//             "ass_qty": 0,
-//             "exec_qty": 80,
-//             "assembler": "",
-//             "checker": "",
-//             "barcode": "",
-//             "qty_base": 80
-//         },
-//         {
-//             "line_no": 30000,
-//             "item_no": "BJ31015301",
-//             "item_description": "Spicy Beef Sausages 500gms",
-//             "customer_spec": "",
-//             "posting_group": "BF-SAUSAGE",
-//             "part": "B",
-//             "order_qty": 0,
-//             "ass_qty": 0,
-//             "exec_qty": 0,
-//             "assembler": "",
-//             "checker": "",
-//             "barcode": "",
-//             "qty_base": 0
-//         },
-//         {
-//             "line_no": 40000,
-//             "item_no": "BJ31015101",
-//             "item_description": "Beef Chipolatas 200gms",
-//             "customer_spec": "",
-//             "posting_group": "BF-SAUSAGE",
-//             "part": "B",
-//             "order_qty": 0,
-//             "ass_qty": 0,
-//             "exec_qty": 0,
-//             "assembler": "",
-//             "checker": "",
-//             "barcode": "",
-//             "qty_base": 0
-//         },
-//         {
-//             "line_no": 50000,
-//             "item_no": "BJ31100213",
-//             "item_description": "Fresh Beef Burger 400gms",
-//             "customer_spec": "",
-//             "posting_group": "BF-FRSH BG",
-//             "part": "D",
-//             "order_qty": 0,
-//             "ass_qty": 0,
-//             "exec_qty": 0,
-//             "assembler": "",
-//             "checker": "",
-//             "barcode": "",
-//             "qty_base": 0
-//         }
-//     ]
-// }`;
+const sampleData=`{
+    "order_no": "BSO00031",
+    "ended_by": "AGILEBIZPAIVY.ESHIRERA",
+    "customer_no": "B25",
+    "customer_name": "Naivas Limited",
+    "shp_code": "B25_50_CM",
+    "shp_name": "NAIVAS - NEW BAMBURI",
+    "route_code": "B3535",
+    "sp_code": "B285",
+    "sp_name": "Mombasa Choice Meats",
+    "shp_date": "2024-12-20",
+    "assembler": "",
+    "checker": "",
+    "status": 4,
+    "pda": false,
+    "ending_time": "15:58:41.137",
+    "ending_date": "20240-20",
+    "ext_doc_no": "",
+    "company_flag": "Choice Meats",
+    "lines": [
+        {
+            "line_no": 10000,
+            "item_no": "BJ31015201",
+            "item_description": "Meaty Beef Sausages, 500gms",
+            "customer_spec": "",
+            "posting_group": "BF-SAUSAGE",
+            "part": "B",
+            "order_qty": 150,
+            "ass_qty": 0,
+            "exec_qty": 150,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 150
+        },
+        {
+            "line_no": 20000,
+            "item_no": "BJ31015401",
+            "item_description": "Value Pack Beef Sausages 1kg",
+            "customer_spec": "",
+            "posting_group": "BF-SAUSAGE",
+            "part": "B",
+            "order_qty": 80,
+            "ass_qty": 0,
+            "exec_qty": 80,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 80
+        },
+        {
+            "line_no": 30000,
+            "item_no": "BJ31015301",
+            "item_description": "Spicy Beef Sausages 500gms",
+            "customer_spec": "",
+            "posting_group": "BF-SAUSAGE",
+            "part": "B",
+            "order_qty": 0,
+            "ass_qty": 0,
+            "exec_qty": 0,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 0
+        },
+        {
+            "line_no": 40000,
+            "item_no": "BJ31015101",
+            "item_description": "Beef Chipolatas 200gms",
+            "customer_spec": "",
+            "posting_group": "BF-SAUSAGE",
+            "part": "B",
+            "order_qty": 0,
+            "ass_qty": 0,
+            "exec_qty": 0,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 0
+        },
+        {
+            "line_no": 50000,
+            "item_no": "BJ31100213",
+            "item_description": "Fresh Beef Burger 400gms",
+            "customer_spec": "",
+            "posting_group": "BF-FRSH BG",
+            "part": "D",
+            "order_qty": 0,
+            "ass_qty": 0,
+            "exec_qty": 0,
+            "assembler": "",
+            "checker": "",
+            "barcode": "",
+            "qty_base": 0
+        }
+    ]
+}`;
 
-// initPrinting(JSON.parse(sampleData));
+initPrinting(JSON.parse(sampleData));
