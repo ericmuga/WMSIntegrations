@@ -35,8 +35,8 @@ const listPrinters = async () => {
 let config
 export const initPrinting = (data) => {
     // Resolve __dirname in ES module
-        config = loadConfig(data);
-    console.log('data',data)
+    config = loadConfig(data);
+    console.log('data', data)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
@@ -109,7 +109,7 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
             doc.text(`Page ${i} of ${pageCount}`, 200, 8.5, { align: 'right' });
         }
     };
-    
+
     const availableParts = [...new Set(data.lines.map(line => line.part))];
     const partsText = availableParts.join('|');
 
@@ -120,7 +120,7 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     // let  config;// = companyParameter['fcl'];
 
     //switch between company printers
-   
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(20);
     // Drawing the header at slightly offset position of x to simulate a bolder text
@@ -136,75 +136,94 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
 
     // ----------------Line----------------
     doc.text('Order Date:', 0, 38)
-    doc.text(data.shp_date, 42, 38)
+    if (data.shp_date)
+        doc.text(data.shp_date, 42, 38)
 
     doc.text('Sell To Address:', 100, 38)
-    doc.text(data.shp_name, 140, 38)
+    if (data.shp_name)
+        doc.text(data.shp_name, 140, 38)
 
     // ----------------Line----------------
     doc.text('Order No:', 0, 46)
-    doc.text(`${config.orderPrefix}${data.order_no}`, 42, 46)
+    if (config.orderPrefix && data.order_no)
+        doc.text(`${config.orderPrefix}${data.order_no}`, 42, 46)
 
     doc.text('Sales Person:', 100, 46)
-    doc.text(data.sp_code, 140, 46)
+    if (data.sp_code)
+        doc.text(data.sp_code, 140, 46)
     doc.text('Sales Person:', 100, 46)
-    doc.text(data.sp_code, 140, 46)
+    if (data.sp_code)
+        doc.text(data.sp_code, 140, 46)
 
     // ----------------Line----------------
     doc.text('Customer No:', 0, 54)
-    doc.text(data.customer_no, 42, 54)
+    if (data.customer_no)
+        doc.text(data.customer_no, 42, 54)
 
     doc.text('', 100, 54)
-    doc.text(data.sp_name, 140, 54)
+    if (data.sp_name)
+        doc.text(data.sp_name, 140, 54)
     doc.text('', 100, 54)
-    doc.text(data.sp_name, 140, 54)
+    if (data.sp_name)
+        doc.text(data.sp_name, 140, 54)
 
     // ----------------Line----------------
     doc.text('Customer Name:', 0, 62)
-    doc.text(data.customer_name, 42, 62)
+    if (data.customer_name)
+        doc.text(data.customer_name, 42, 62)
 
     doc.text('Delivery Date:', 100, 62)
-    doc.text(data.shp_date, 140, 62)
+    if (data.shp_date)
+        doc.text(data.shp_date, 140, 62)
     doc.text('Delivery Date:', 100, 62)
-    doc.text(data.shp_date, 140, 62)
+    if (data.shp_date)
+        doc.text(data.shp_date, 140, 62)
 
     // ----------------Line----------------
     doc.text('External DocNo:', 0, 70)
     doc.text(data.ext_doc_no, 42, 70)
 
     doc.text('Ship To Name:', 100, 70)
-    doc.text(data.shp_name, 140, 70)
+    if (data.shp_name)
+        doc.text(data.shp_name, 140, 70)
     doc.text('Ship To Name:', 100, 70)
-    doc.text(data.shp_name, 140, 70)
+    if (data.shp_name)
+        doc.text(data.shp_name, 140, 70)
 
     // ----------------Line----------------
     doc.text('PDA Order:', 0, 78)
-    doc.text(data.pda ? 'Yes' : 'No', 42, 78)
+    if (data.pda)
+        doc.text(data.pda ? 'Yes' : 'No', 42, 78)
 
     doc.text('Cust Ref. No:', 100, 78)
-    doc.text(data.ext_doc_no, 140, 78)
+    if (data.ext_doc_no)
+        doc.text(data.ext_doc_no, 140, 78)
     doc.text('Cust Ref. No:', 100, 78)
-    doc.text(data.ext_doc_no, 140, 78)
+    if (data.ext_doc_no)
+        doc.text(data.ext_doc_no, 140, 78)
 
     // ----------------Line----------------
     doc.text('Order Receiver:', 0, 86)
-    doc.text(data.ended_by, 42, 86)
+    if (data.ended_by)
+        doc.text(data.ended_by, 42, 86)
 
     doc.text('External DocNo:', 100, 86)
-    doc.text(data.ext_doc_no, 140, 86)
+    if (data.ext_doc_no)
+        doc.text(data.ext_doc_no, 140, 86)
 
     // ----------------Line----------------
     doc.text('Your Ref:', 0, 94)
-    doc.text('', 42, 94)
+    if (data.your_ref)
+        doc.text(data.your_ref, 42, 94)
 
     doc.text('District Group:', 100, 94)
-    doc.text('', 140, 94)
-    doc.text('District Group:', 100, 94)
-    doc.text('', 140, 94)
+    if (data.district_group)
+        doc.text(data.district_group, 140, 94)
 
     // ----------------Line----------------
     doc.text('Location:', 0, 102)
-    doc.text(data.route_code, 42, 102)
+    if (data.route_code)
+        doc.text(data.route_code, 42, 102)
 
     doc.setFontSize(12);
     doc.text('Time Stamp:', 130, 102)
@@ -220,7 +239,8 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     console.log(serial)
 
     doc.text('Serial No:', 130, 107)
-    doc.text(`${serial}`, 180, 107, { align: 'right' })
+    if (serial)
+        doc.text(`${serial}`, 180, 107, { align: 'right' })
 
     doc.setFontSize(14);
 
@@ -241,29 +261,29 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     ]);
 
     doc.autoTable({
-    head: [tableColumnNames],
-    body: tableData,
-    startY: 115,
-    startX: 2,
-    margin: { left: 2, top: 30, bottom: 80, right: 2 },
-    columnStyles: {
-        0: { cellWidth: 40 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        1: { cellWidth: 65 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        2: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        3: { cellWidth: 30 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        4: { cellWidth: 15 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        5: { cellWidth: 25 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        6: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        7: { cellWidth: 35 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-    },
-    headStyles: {
-        fillColor: null,
-        textColor: [0, 0, 0],
-        fontSize: 10,
-        fontStyle: 'bold',
-        halign: 'left',
-        valign: 'bottom'
-    },
+        head: [tableColumnNames],
+        body: tableData,
+        startY: 115,
+        startX: 2,
+        margin: { left: 2, top: 30, bottom: 80, right: 2 },
+        columnStyles: {
+            0: { cellWidth: 40 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            1: { cellWidth: 65 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            2: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            3: { cellWidth: 30 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            4: { cellWidth: 15 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            5: { cellWidth: 25 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            6: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            7: { cellWidth: 35 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        },
+        headStyles: {
+            fillColor: null,
+            textColor: [0, 0, 0],
+            fontSize: 10,
+            fontStyle: 'bold',
+            halign: 'left',
+            valign: 'bottom'
+        },
 
 
         didDrawCell: (data) => {
@@ -276,8 +296,8 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
         },
         didParseCell: (data) => {
             // if (data.section === 'body' && data.column.index === 0) {
-                data.cell.styles.fontStyle = 'bold'
-                data.cell.styles.fontSize = 12
+            data.cell.styles.fontStyle = 'bold'
+            data.cell.styles.fontSize = 12
             // }
 
             data.cell.styles.textColor = [0, 0, 0]
@@ -310,16 +330,6 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     // Save the PDF
     doc.save(filePath);
 };
-
-// const getCompanyConfig = (flag) => {
-//     let config
-//     if (!flag)
-//        config = companyParameter['fcl'];
-
-//     config = companyParameter[flag];
-
-//     return config;
-// }
 
 
 export const printFromFolder = async (pdfDirPath, printedDirPath, printerName) => {
@@ -408,24 +418,24 @@ export const printSingleFile = async (pdfFilePath, printedFolder, printerName) =
 
 
 
-const loadConfig = (data) => { 
-   let config;
-    if (data.sp_code==='270')
+const loadConfig = (data) => {
+    let config;
+    if (data.sp_code === '270')
         config = companyParameter['exp']
     else
         switch (data.lines[0].item_no.substring(0, 1)) {
-        
+
             case 'B': config = companyParameter['cm']; break;
-            default :config = companyParameter['fcl']; break;
+            default: config = companyParameter['fcl']; break;
         }
-        return config;
-   }
+    return config;
+}
 
 
 
 
 // await listPrinters();
-const sampleData=`{
+const sampleData = `{
     "order_no": "BSO00031",
     "ended_by": "AGILEBIZPAIVY.ESHIRERA",
     "customer_no": "B25",
