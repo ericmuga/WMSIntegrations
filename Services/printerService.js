@@ -35,8 +35,8 @@ const listPrinters = async () => {
 let config
 export const initPrinting = (data) => {
     // Resolve __dirname in ES module
-        config = loadConfig(data);
-    console.log('data',data)
+    config = loadConfig(data);
+    console.log('data', data)
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
 
@@ -109,7 +109,7 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
             doc.text(`Page ${i} of ${pageCount}`, 200, 8.5, { align: 'right' });
         }
     };
-    
+
     const availableParts = [...new Set(data.lines.map(line => line.part))];
     const partsText = availableParts.join('|');
 
@@ -277,8 +277,8 @@ doc.text(`${serial}`, 180, y, { align: 'right' });
         },
         didParseCell: (data) => {
             // if (data.section === 'body' && data.column.index === 0) {
-                data.cell.styles.fontStyle = 'bold'
-                data.cell.styles.fontSize = 12
+            data.cell.styles.fontStyle = 'bold'
+            data.cell.styles.fontSize = 12
             // }
 
             data.cell.styles.textColor = [0, 0, 0]
@@ -311,16 +311,6 @@ doc.text(`${serial}`, 180, y, { align: 'right' });
     // Save the PDF
     doc.save(filePath);
 };
-
-// const getCompanyConfig = (flag) => {
-//     let config
-//     if (!flag)
-//        config = companyParameter['fcl'];
-
-//     config = companyParameter[flag];
-
-//     return config;
-// }
 
 
 export const printFromFolder = async (pdfDirPath, printedDirPath, printerName) => {
@@ -409,18 +399,18 @@ export const printSingleFile = async (pdfFilePath, printedFolder, printerName) =
 
 
 
-const loadConfig = (data) => { 
-   let config;
-    if (data.sp_code==='270')
+const loadConfig = (data) => {
+    let config;
+    if (data.sp_code === '270')
         config = companyParameter['exp']
     else
         switch (data.lines[0].item_no.substring(0, 1)) {
-        
+
             case 'B': config = companyParameter['cm']; break;
-            default :config = companyParameter['fcl']; break;
+            default: config = companyParameter['fcl']; break;
         }
-        return config;
-   }
+    return config;
+}
 
 
 
