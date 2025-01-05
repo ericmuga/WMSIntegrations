@@ -201,15 +201,7 @@ export const updateQueueStatus = async (recordIds, status, tableName) => {
 
 
 
-/**
- * Fetch records from the source table where they are not in queue_status and insert into queue_status.
- *
- * @param {string} sourceTable - The name of the source table.
- * @param {string} queueTable - The name of the queue status table.
- * @param {Object} queryParams - Query parameters to filter the source table.
- * @returns {Promise<Array>} - The fetched records.
- */
-export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queryParams = {}) => {
+export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueName, queryParams = {}) => {
   try {
     const pool = await poolPromise;
     const { startDate, productCodeRanges = [] } = queryParams;
@@ -243,8 +235,8 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queryPa
           ${additionalConditions}
         )
         -- Insert into queue_status and return fetched records
-        INSERT INTO ${queueTable} (table_name, record_id, status)
-        SELECT '${sourceTable}', id, 'new'
+        INSERT INTO ${queueTable} (table_name, record_id, status, queue_name)
+        SELECT '${sourceTable}', id, 'new', '${queueName}'
         FROM NewRecords;
 
         -- Return the inserted records
@@ -254,7 +246,7 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queryPa
           SELECT 1
           FROM ${queueTable} qs
           WHERE qs.table_name = '${sourceTable}' AND qs.record_id = t.id
-          AND qs.status = 'new'
+          AND qs.status = 'new' AND qs.queue_name = '${queueName}'
         )
         AND t.created_at >= @startDate
         ${additionalConditions};
@@ -266,7 +258,6 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queryPa
     throw error;
   }
 };
-
 
 
 

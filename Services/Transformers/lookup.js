@@ -9,8 +9,8 @@ export const processLookup = {
       input_location: "1020", 
       output_location: "1570", 
       production_order_series: `P${String(0).padStart(2, '0')}`,
-      // process_loss: 0.02 // 5% loss
-      process_loss: 0.00 // 5% loss
+      process_loss: 0.02 // 5% loss
+    //   process_loss: 0.00 // 5% loss
   },
   2: { 
       process_code: 1, 

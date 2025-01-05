@@ -1,54 +1,17 @@
-import { processQueueWorkflow } from '../Utils/processQueueWorkflow.js';
-// import { queries } from '../Utils/dbUtils.js';
 
-const sourceTable = '[FCL-WMS].[calibra].[dbo].[idt_transfers]'; // Source table
-const queueTable = '[BOM].[dbo].[queue_status]'; // Queue status table
-const queueName = 'continentals.bc'; // RabbitMQ queue name
+import { transformFn,runQueueWorkflow } from '../Utils/processQueueWorkflow.js';
 
+const sourceTable = '[FCL-WMS].[calibra].[dbo].[idt_transfers]';
+const queueTable = '[BOM].[dbo].[queue_status]';
+const queueName = 'continentals.bc';
 
-
-// Custom query parameters for filtering
 const customParams = {
-  location_code: ['3600', '3535'], // Additional condition as an array
-  transfer_from: '2595', // Additional condition as a single value
+  location_code: ['3600', '3535'],
+  transfer_from: '2595',
   productCodeRanges: [
     { rangeStart: 'J31010101', rangeEnd: 'J31019199' },
     { rangeStart: 'J31030101', rangeEnd: 'J31032199' },
-  ], 
+  ],
 };
 
-// Default query parameters
-const defaultParams = {
-  start_date: '2024-12-16',
-  startDate: '2024-12-16',
-};
-
-// Transformation function to format records for RabbitMQ
-const transformFn = (row) => ({
-  product_code: row.product_code,
-  transfer_from_location: row.transfer_from_location,
-  transfer_to_location: row.transfer_to_location,
-  receiver_total_pieces: row.receiver_total_pieces,
-  receiver_total_weight: row.receiver_total_weight,
-  received_by: row.received_by,
-  production_date: row.production_date,
-  with_variance: row.with_variance,
-  timestamp: row.created_at,
-  id: row.id,
-  company_name: 'FCL',
-});
-
-// Execute the workflow
-processQueueWorkflow(
-  sourceTable, // Source table name
-  queueTable, // Queue status table
-  queueName, // RabbitMQ queue name
-  { ...defaultParams, ...customParams }, // Merged query parameters
-  transformFn // Transformation function
-)
-  .then(() => {
-    console.log('Queue processing workflow completed.');
-  })
-  .catch((error) => {
-    console.error(`Queue processing workflow failed: ${error.message}`);
-  });
+runQueueWorkflow(sourceTable, queueTable, queueName, customParams, undefined, transformFn);

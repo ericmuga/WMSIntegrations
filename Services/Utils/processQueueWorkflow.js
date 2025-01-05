@@ -13,7 +13,7 @@ import { publishToQueue } from '../Producers/publishToQueue.js';
  */
 export const processQueueWorkflow = async (sourceTable, queueTable, queueName, queryParams, transformFn) => {
   try {
-    const records = await fetchAndInsertQueueStatus(sourceTable, queueTable, queryParams);
+    const records = await fetchAndInsertQueueStatus(sourceTable, queueTable,queueName, queryParams);
     console.log('Records fetched:', records);
 
     if (!Array.isArray(records) || records.length === 0) {
@@ -49,4 +49,47 @@ export const processQueueWorkflow = async (sourceTable, queueTable, queueName, q
     throw error;
   }
 };
+
+export const transformFn = (row) => ({
+  product_code: row.product_code,
+  transfer_from_location: row.transfer_from_location,
+  transfer_to_location: row.transfer_to_location,
+  receiver_total_pieces: row.receiver_total_pieces,
+  receiver_total_weight: row.receiver_total_weight,
+  received_by: row.received_by,
+  production_date: row.production_date,
+  with_variance: row.with_variance,
+  timestamp: row.created_at,
+  id: row.id,
+  company_name: 'FCL',
+});
+
+
+
+
+export const runQueueWorkflow = async (
+  sourceTable,
+  queueTable,
+  queueName,
+  customParams,
+  queryParams = {}, // Accept queryParams from caller
+  transformFn
+) => {
+  try {
+    const defaultParams = {
+      start_date: queryParams?.start_date || '2024-12-16',
+      startDate: queryParams?.startDate || new Date('2024-12-16'),
+    };
+
+    const mergedParams = { ...defaultParams, ...customParams };
+
+    await processQueueWorkflow(sourceTable, queueTable, queueName, mergedParams, transformFn);
+
+    console.log(`Queue processing workflow for '${queueName}' completed.`);
+  } catch (error) {
+    console.error(`Queue processing workflow for '${queueName}' failed: ${error.message}`);
+    throw error;
+  }
+};
+
 

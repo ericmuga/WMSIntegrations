@@ -1,11 +1,11 @@
-import { processConfig } from './processConfig.js';
+// import { processConfig } from './processConfig.js';
 import { consumeRabbitMQ } from './consumer.js';
 
 
-(async () => {
+export const processButcheryPackingQueue=async () => {
     const queueName = 'transfer_from_1570_to_3535';
     const routingKey = 'transfer_from_1570_to_3535';
-    const sequence = processConfig.packing;
+    const sequence ='Packing';
 
     try {
         const productionOrders = await consumeRabbitMQ({
@@ -20,4 +20,4 @@ import { consumeRabbitMQ } from './consumer.js';
     } catch (error) {
         console.error(`Error: ${error.message}`);
     }
-})();
+};

@@ -174,6 +174,8 @@ export const logProcessBOM = async ({ fg, process, item, qtyPer, loss = 0, batch
 };
 
 
+
+
 // export const fetchBOMDataForItem = async ( outputItem) => {
 //     const pool = await poolPromise;
 //     const query = `
@@ -298,7 +300,7 @@ export const createSpecialProductionOrder = (specialItem, dateTime, context) => 
         BIN: '',
         user: '',
         line_no: 1000,
-        routing: 'special_production.bc',
+        routing: 'water_ice',
         date_time: dateTime,
         ProductionJournalLines: [
             {

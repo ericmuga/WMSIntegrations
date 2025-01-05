@@ -8,7 +8,6 @@ import { generateOrders } from './Services/fetchPortalOrders.js';
 
 import { groupOrdersByExtDocNo } from './Services/fetchBOTOrders.js';
 import { generateTransferOrders } from './Services/transferOrderGenerator.js';
-
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
@@ -24,16 +23,14 @@ import { generateMtn,generateResponse } from './Services/QRCode.js';
 import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
 import {processSausageQueue } from './Services/Consumers/consumeSausages.js';
 import { pushToPickAndPack } from './Services/Utils/insertIntoPP.js';
-// import { consume2055_3535 } from './Services/Consumers/consume2055_3535.js';
-// import { consume2055_3600 } from './Services/Consumers/consume2055_3600.js';
-// import {consumeContinentals} from './Services/Consumers/consumeContinentals.js';
-// import {consume1570}
+import {processContinentalsQueue} from './Services/Consumers/consumeContinentals.js';
 
 
 const app = express();
 app.use(express.json());
 
 app.get('/generate-mtn',async(req,res)=>{
+  logger.info(`Received request to generate MTN`);
   res.json(generateResponse());
 });
 
@@ -90,6 +87,7 @@ app.get('/fetch-production-orders', async (req, res) => {
      let mincingFromButchery= await consume1570_2055();
      let choppingData=await consumechoppingData();
      let sausageData=await processSausageQueue ();
+     let continentalsData=await processContinentalsQueue();
      let productionOrders = mergeProductionOrders(
 
                                                     beheadingData,
@@ -99,13 +97,11 @@ app.get('/fetch-production-orders', async (req, res) => {
                                                     mincingFromButchery,
                                                     choppingData,
                                                     sausageData,
-                                                    // localSausageTransfers,
-                                                    // continentalsData
-                                                    // exportSausageTransfers
+                                                    continentalsData,
+                                                   
 
                                                   );
-    //  let productionOrders = breakingData;
-     
+    
      if (date) {
         productionOrders = productionOrders.filter(order =>
           order.date_time.startsWith(date)

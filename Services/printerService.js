@@ -515,3 +515,5 @@ const loadConfig = (data) => {
 // }`;
 
 // initPrinting(JSON.parse(sampleData));
+
+listPrinters();
