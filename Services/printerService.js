@@ -88,12 +88,12 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     const fileName = `${itemNo}_${part}.pdf`;
     const filePath = path.join(pdfDirPath, fileName);
 
-    // const doc = new jsPDF('p', 'mm', 'a4'); // A4 size page
-    const doc = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: [215, 285], // Width: 215mm, Height: 285mm
-    });
+    const doc = new jsPDF('p', 'mm', 'a4'); // A4 size page
+    // const doc = new jsPDF({
+    //     orientation: 'p',
+    //     unit: 'mm',
+    //     format: [215, 285], // Width: 215mm, Height: 285mm
+    // });
 
     doc.setFont("helvetica", "bold");
 
@@ -120,110 +120,129 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     // let  config;// = companyParameter['fcl'];
 
     //switch between company printers
-   
-    // Initial line positions and spacing
-let y = 10; // Starting Y position
-const originalLineSpacing = 8; // Current line spacing
-const adjustedLineSpacing = originalLineSpacing * 0.8; // Reduce spacing to 0.8 times
 
-doc.setFont("helvetica", "bold");
-doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    // Drawing the header at slightly offset position of x to simulate a bolder text
+    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105, 20, { align: 'center' });
+    doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105 + 0.2, 20, { align: 'center' });
+    doc.setFontSize(14);
 
-// Drawing the header
-doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105,y , { align: 'center' });
-doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105 + 0.2, y, { align: 'center' });
-doc.setFontSize(12);
-y += adjustedLineSpacing;
+    doc.text(`${config.parkingListPrefix}${data.order_no}`, 25, 30)
 
+    doc.text(`${data.ending_date} ${data.ending_time}`, 200, 30, { align: 'right' })
 
-doc.text(`${config.parkingListPrefix}${data.order_no}`, 25, y);
-doc.text(`${data.ending_date} ${data.ending_time}`, 200, y, { align: 'right' });
-y += adjustedLineSpacing;
+    doc.text(`${data.ending_date} ${data.ending_time}`, 180, 30, { align: 'right' })
 
-// ----------------Line----------------
-doc.text('Order Date:', 0, y);
-doc.text(data.shp_date, 42, y);
+    // ----------------Line----------------
+    doc.text('Order Date:', 0, 38)
+    if (data.shp_date)
+        doc.text(data.shp_date, 42, 38)
 
-doc.text('Sell To Address:', 100, y);
-doc.text(data.shp_name, 140, y);
-y += adjustedLineSpacing;
+    doc.text('Sell To Address:', 100, 38)
+    if (data.shp_name)
+        doc.text(data.shp_name, 140, 38)
 
-// ----------------Line----------------
-doc.text('Order No:', 0, y);
-doc.text(`${config.orderPrefix}${data.order_no}`, 42, y);
+    // ----------------Line----------------
+    doc.text('Order No:', 0, 46)
+    if (config.orderPrefix && data.order_no)
+        doc.text(`${config.orderPrefix}${data.order_no}`, 42, 46)
 
-doc.text('Sales Person:', 100, y);
-doc.text(data.sp_code, 140, y);
-y += adjustedLineSpacing;
+    doc.text('Sales Person:', 100, 46)
+    if (data.sp_code)
+        doc.text(data.sp_code, 140, 46)
+    doc.text('Sales Person:', 100, 46)
+    if (data.sp_code)
+        doc.text(data.sp_code, 140, 46)
 
-// ----------------Line----------------
-doc.text('Customer No:', 0, y);
-doc.text(data.customer_no, 42, y);
+    // ----------------Line----------------
+    doc.text('Customer No:', 0, 54)
+    if (data.customer_no)
+        doc.text(data.customer_no, 42, 54)
 
-doc.text('', 100, y);
-doc.text(data.sp_name, 140, y);
-y += adjustedLineSpacing;
+    doc.text('', 100, 54)
+    if (data.sp_name)
+        doc.text(data.sp_name, 140, 54)
+    doc.text('', 100, 54)
+    if (data.sp_name)
+        doc.text(data.sp_name, 140, 54)
 
-// ----------------Line----------------
-doc.text('Customer Name:', 0, y);
-doc.text(data.customer_name, 42, y);
+    // ----------------Line----------------
+    doc.text('Customer Name:', 0, 62)
+    if (data.customer_name)
+        doc.text(data.customer_name, 42, 62)
 
-doc.text('Delivery Date:', 100, y);
-doc.text(data.shp_date, 140, y);
-y += adjustedLineSpacing;
+    doc.text('Delivery Date:', 100, 62)
+    if (data.shp_date)
+        doc.text(data.shp_date, 140, 62)
+    doc.text('Delivery Date:', 100, 62)
+    if (data.shp_date)
+        doc.text(data.shp_date, 140, 62)
 
-// ----------------Line----------------
-doc.text('External DocNo:', 0, y);
-doc.text(data.ext_doc_no, 42, y);
+    // ----------------Line----------------
+    doc.text('External DocNo:', 0, 70)
+    doc.text(data.ext_doc_no, 42, 70)
 
-doc.text('Ship To Name:', 100, y);
-doc.text(data.shp_name, 140, y);
-y += adjustedLineSpacing;
+    doc.text('Ship To Name:', 100, 70)
+    if (data.shp_name)
+        doc.text(data.shp_name, 140, 70)
+    doc.text('Ship To Name:', 100, 70)
+    if (data.shp_name)
+        doc.text(data.shp_name, 140, 70)
 
-// ----------------Line----------------
-doc.text('PDA Order:', 0, y);
-doc.text(data.pda ? 'Yes' : 'No', 42, y);
+    // ----------------Line----------------
+    doc.text('PDA Order:', 0, 78)
+    if (data.pda)
+        doc.text(data.pda ? 'Yes' : 'No', 42, 78)
 
-doc.text('Cust Ref. No:', 100, y);
-doc.text(data.ext_doc_no, 140, y);
-y += adjustedLineSpacing;
+    doc.text('Cust Ref. No:', 100, 78)
+    if (data.ext_doc_no)
+        doc.text(data.ext_doc_no, 140, 78)
+    doc.text('Cust Ref. No:', 100, 78)
+    if (data.ext_doc_no)
+        doc.text(data.ext_doc_no, 140, 78)
 
-// ----------------Line----------------
-doc.setFontSize(10);
-doc.text('Order Receiver:', 0, y);
-doc.text(data.ended_by, 42, y);
+    // ----------------Line----------------
+    doc.text('Order Receiver:', 0, 86)
+    if (data.ended_by)
+        doc.text(data.ended_by, 42, 86)
 
-doc.text('External DocNo:', 100, y);
-doc.text(data.ext_doc_no, 140, y);
-y += adjustedLineSpacing;
+    doc.text('External DocNo:', 100, 86)
+    if (data.ext_doc_no)
+        doc.text(data.ext_doc_no, 140, 86)
 
-// ----------------Line----------------
-doc.text('Your Ref:', 0, y);
-doc.text('', 42, y);
+    // ----------------Line----------------
+    doc.text('Your Ref:', 0, 94)
+    if (data.your_ref)
+        doc.text(data.your_ref, 42, 94)
 
-doc.text('District Group:', 100, y);
-doc.text('', 140, y);
-y += adjustedLineSpacing;
+    doc.text('District Group:', 100, 94)
+    // if (data.district_group)
+        doc.text(data.route_code, 140, 94)
 
-// ----------------Line----------------
-doc.text('Location:', 0, y);
-doc.text(data.route_code, 42, y);
-
-doc.setFontSize(10);
-doc.text('Time Stamp:', 130, y);
-doc.text(Date.now().toString(), 200, y, { align: 'right' });
-y += adjustedLineSpacing;
-
-// Serial number
-const serial = await getSerialNumber('serial_number_counter').catch(error => {
-    console.error('Error fetching serial number:', error.message);
-    return 'DOC-00000000'; // Fallback value
-});
-
-doc.text('Serial No:', 130, y);
-doc.text(`${serial}`, 180, y, { align: 'right' });
+    // ----------------Line----------------
+    doc.text('Location:', 0, 102)
+    if (data.route_code)
+        doc.text(data.route_code, 42, 102)
 
     doc.setFontSize(12);
+    doc.text('Time Stamp:', 130, 102)
+    doc.text(Date.now().toString(), 200, 102, { align: 'right' })
+
+    const serial = await getSerialNumber('serial_number_counter')
+        .catch(error => {
+            console.error('Error fetching serial number:', error.message);
+
+            return 'DOC-00000000'; // Fallback value
+        });
+
+    console.log(serial)
+
+    doc.text('Serial No:', 130, 107)
+    if (serial)
+        doc.text(`${serial}`, 180, 107, { align: 'right' })
+
+    doc.setFontSize(14);
 
     const tableColumnNames = [
         'Item No.', 'Description', 'Cust. Specs', 'Unit of \nMeasure',
@@ -242,29 +261,29 @@ doc.text(`${serial}`, 180, y, { align: 'right' });
     ]);
 
     doc.autoTable({
-    head: [tableColumnNames],
-    body: tableData,
-    startY: 80,
-    startX: 2,
-    margin: { left: 2, top: 2, bottom: 15, right: 2 },
-    columnStyles: {
-        0: { cellWidth: 40 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        1: { cellWidth: 75 , fillColor: null, halign: 'left' }, // Reduce width by 20%
-        2: { cellWidth: 20 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        3: { cellWidth: 30 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        4: { cellWidth: 15 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        5: { cellWidth: 25 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        6: { cellWidth: 20 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        7: { cellWidth: 35 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
-    },
-    headStyles: {
-        fillColor: null,
-        textColor: [0, 0, 0],
-        fontSize: 10,
-        fontStyle: 'bold',
-        halign: 'left',
-        valign: 'bottom'
-    },
+        head: [tableColumnNames],
+        body: tableData,
+        startY: 115,
+        startX: 2,
+        margin: { left: 2, top: 30, bottom: 80, right: 2 },
+        columnStyles: {
+            0: { cellWidth: 40 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            1: { cellWidth: 65 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            2: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            3: { cellWidth: 30 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            4: { cellWidth: 15 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            5: { cellWidth: 25 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            6: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+            7: { cellWidth: 35 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        },
+        headStyles: {
+            fillColor: null,
+            textColor: [0, 0, 0],
+            fontSize: 10,
+            fontStyle: 'bold',
+            halign: 'left',
+            valign: 'bottom'
+        },
 
 
         didDrawCell: (data) => {
@@ -284,7 +303,7 @@ doc.text(`${serial}`, 180, y, { align: 'right' });
             data.cell.styles.textColor = [0, 0, 0]
         },
         didDrawPage: (data) => {
-            const footerY = 210; // Fixed Y position for the footer
+            const footerY = 230; // Fixed Y position for the footer
 
             doc.setFontSize(12);
             doc.setFont("helvetica", "bold");
@@ -416,7 +435,7 @@ const loadConfig = (data) => {
 
 
 // await listPrinters();
-// const sampleData=`{
+// const sampleData = `{
 //     "order_no": "BSO00031",
 //     "ended_by": "AGILEBIZPAIVY.ESHIRERA",
 //     "customer_no": "B25",
