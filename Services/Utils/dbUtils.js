@@ -201,10 +201,75 @@ export const updateQueueStatus = async (recordIds, status, tableName) => {
 
 
 
+// export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueName, queryParams = {}) => {
+//   try {
+//     const pool = await poolPromise;
+//     const { startDate, productCodeRanges = [] } = queryParams;
+
+//     const today = new Date(); // Current date
+
+//     // Build dynamic filtering for product codes
+//     const productCodeConditions = productCodeRanges
+//       .map(
+//         ({ rangeStart, rangeEnd }) =>
+//           `(t.product_code BETWEEN '${rangeStart}' AND '${rangeEnd}')`
+//       )
+//       .join(' OR ');
+
+//     // Add product code conditions to WHERE clause if any
+//     const additionalConditions = productCodeConditions
+//       ? `AND (${productCodeConditions})`
+//       : '';
+
+//     const result = await pool.request()
+//       .input('startDate', pkg.DateTime, startDate ? new Date(startDate) : today)
+//       .query(`
+//         -- Fetch records not in queue_status
+//         WITH NewRecords AS (
+//           SELECT t.id AS record_id, t.* -- Ensure record_id is explicitly selected
+//           FROM ${sourceTable} t
+//           WHERE NOT EXISTS (
+//             SELECT 1 FROM ${queueTable} qs
+//             WHERE qs.table_name = '${sourceTable}' AND qs.record_id = t.id
+//           )
+//           AND t.created_at >= @startDate
+//           ${additionalConditions}
+//         )
+//         -- Insert into queue_status and return fetched records
+//         INSERT INTO ${queueTable} (table_name, record_id, status, queue_name)
+//         SELECT '${sourceTable}', id, 'new', '${queueName}'
+//         FROM NewRecords;
+
+//         -- Return the inserted records
+//         SELECT t.id AS record_id, t.*
+//         FROM ${sourceTable} t
+//         WHERE EXISTS (
+//           SELECT 1
+//           FROM ${queueTable} qs
+//           WHERE qs.table_name = '${sourceTable}' AND qs.record_id = t.id
+//           AND qs.status = 'new' AND qs.queue_name = '${queueName}'
+//         )
+//         AND t.created_at >= @startDate
+//         ${additionalConditions};
+//       `);
+
+//     return result.recordset || []; // Return the fetched records
+//   } catch (error) {
+//     console.error(`Error fetching and inserting queue status: ${error.message}`);
+//     throw error;
+//   }
+// };
+
+
 export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueName, queryParams = {}) => {
   try {
     const pool = await poolPromise;
-    const { startDate, productCodeRanges = [] } = queryParams;
+    const { startDate, productCodeRanges = [], location_code = [], transfer_from } = queryParams;
+
+    if (!location_code.length || !transfer_from) {
+      throw new Error('Both locationCodes and transferFrom are mandatory parameters.');
+    }
+
     const today = new Date(); // Current date
 
     // Build dynamic filtering for product codes
@@ -215,6 +280,9 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueNa
       )
       .join(' OR ');
 
+    // Prepare location codes for SQL IN clause
+    const locationCodeCondition = location_code.map((code) => `'${code}'`).join(',');
+
     // Add product code conditions to WHERE clause if any
     const additionalConditions = productCodeConditions
       ? `AND (${productCodeConditions})`
@@ -222,6 +290,7 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueNa
 
     const result = await pool.request()
       .input('startDate', pkg.DateTime, startDate ? new Date(startDate) : today)
+      .input('transferFrom', pkg.VarChar, transfer_from)
       .query(`
         -- Fetch records not in queue_status
         WITH NewRecords AS (
@@ -232,6 +301,8 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueNa
             WHERE qs.table_name = '${sourceTable}' AND qs.record_id = t.id
           )
           AND t.created_at >= @startDate
+          AND t.location_code IN (${locationCodeCondition})
+          AND t.transfer_from = @transferFrom
           ${additionalConditions}
         )
         -- Insert into queue_status and return fetched records
@@ -249,6 +320,8 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueNa
           AND qs.status = 'new' AND qs.queue_name = '${queueName}'
         )
         AND t.created_at >= @startDate
+        AND t.location_code IN (${locationCodeCondition})
+        AND t.transfer_from = @transferFrom
         ${additionalConditions};
       `);
 
@@ -258,6 +331,4 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueNa
     throw error;
   }
 };
-
-
 

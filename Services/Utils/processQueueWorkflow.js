@@ -50,19 +50,26 @@ export const processQueueWorkflow = async (sourceTable, queueTable, queueName, q
   }
 };
 
-export const transformFn = (row) => ({
-  product_code: row.product_code,
-  transfer_from_location: row.transfer_from_location,
-  transfer_to_location: row.transfer_to_location,
-  receiver_total_pieces: row.receiver_total_pieces,
-  receiver_total_weight: row.receiver_total_weight,
-  received_by: row.received_by,
-  production_date: row.production_date,
-  with_variance: row.with_variance,
-  timestamp: row.created_at,
-  id: row.id,
-  company_name: 'FCL',
-});
+export const transformFn = (row) => {
+  // Define the cutoff date
+  const cutoffDate = new Date('2025-01-06');
+  // Parse the row.created_at to a Date object
+  const createdAt = new Date(row.created_at);
+  
+  return {
+    product_code: row.product_code,
+    transfer_from_location: row.transfer_from_location,
+    transfer_to_location: row.transfer_to_location,
+    receiver_total_pieces: row.receiver_total_pieces,
+    receiver_total_weight: row.receiver_total_weight,
+    received_by: row.received_by,
+    production_date: row.production_date,
+    with_variance: row.with_variance,
+    timestamp: createdAt < cutoffDate ? '2025-01-06' : row.created_at,
+    id: row.id,
+    company_name: 'FCL',
+  };
+};
 
 
 
@@ -77,11 +84,17 @@ export const runQueueWorkflow = async (
 ) => {
   try {
     const defaultParams = {
-      start_date: queryParams?.start_date || '2024-12-16',
-      startDate: queryParams?.startDate || new Date('2024-12-16'),
+      start_date: queryParams?.start_date || '2025-01-04',
+      startDate: queryParams?.startDate || new Date('2025-01-04'),
     };
 
     const mergedParams = { ...defaultParams, ...customParams };
+    // console.log(JSON.stringify(mergedParams.transfer_from))
+
+    if ((!mergedParams.location_code) || (!mergedParams.transfer_from)) {
+      
+      throw new Error('Both location_code and transfer_from must be provided.');
+    }
 
     await processQueueWorkflow(sourceTable, queueTable, queueName, mergedParams, transformFn);
 
