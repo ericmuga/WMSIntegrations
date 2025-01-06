@@ -246,16 +246,16 @@ doc.text(`${serial}`, 180, y, { align: 'right' });
     body: tableData,
     startY: 80,
     startX: 2,
-    margin: { left: 2, top: 5, bottom: 30, right: 2 },
+    margin: { left: 2, top: 2, bottom: 15, right: 2 },
     columnStyles: {
-        0: { cellWidth: 40 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        1: { cellWidth: 65 , fillColor: null, halign: 'left' }, // Reduce width by 20%
-        2: { cellWidth: 20 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        3: { cellWidth: 30 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        4: { cellWidth: 15 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        5: { cellWidth: 25 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        6: { cellWidth: 20 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-        7: { cellWidth: 35 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        0: { cellWidth: 40 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        1: { cellWidth: 75 , fillColor: null, halign: 'left' }, // Reduce width by 20%
+        2: { cellWidth: 20 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        3: { cellWidth: 30 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        4: { cellWidth: 15 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        5: { cellWidth: 25 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        6: { cellWidth: 20 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        7: { cellWidth: 35 * 0.95, fillColor: null, halign: 'left' }, // Reduce width by 20%
     },
     headStyles: {
         fillColor: null,
