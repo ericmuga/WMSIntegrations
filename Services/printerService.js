@@ -96,20 +96,7 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
     });
 
     doc.setFont("helvetica", "bold");
-    const addHeader = () => {
-        const partsText = [...new Set(data.lines.map(line => line.part))].join('|');
-        doc.setFontSize(16);
-        doc.text(`DISPATCH Packing List ${part} OF ${partsText}`, 105, 10, { align: 'center' });
-    };
 
-    const addFooter = () => {
-        const pageCount = doc.getNumberOfPages();
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            doc.setFontSize(10);
-            doc.text(`Page ${i} of ${pageCount}`, 200, 8.5, { align: 'right' });
-        }
-    };
     // Pagination
     const totalPages = () => doc.getNumberOfPages();
     const addPageNumber = () => {
@@ -123,280 +110,205 @@ const createPDF = async (data, pdfDirPath, itemNo, part, lines) => {
         }
     };
 
-    // const availableParts = [...new Set(data.lines.map(line => line.part))];
-    // const partsText = availableParts.join('|');
+    const availableParts = [...new Set(data.lines.map(line => line.part))];
+    const partsText = availableParts.join('|');
 
+    // const config = getCompanyConfig(data.company_flag.toLowerCase())
+
+    //temporatily using fcl before the company flag is added to the data
+    // const config = getCompanyConfig(`fcl`)
+    // let  config;// = companyParameter['fcl'];
+
+    //switch between company printers
+   
     // Initial line positions and spacing
-    let y = 10; // Starting Y position
-    const originalLineSpacing = 8; // Current line spacing
-    const adjustedLineSpacing = originalLineSpacing * 0.8; // Reduce spacing to 0.8 times
+let y = 10; // Starting Y position
+const originalLineSpacing = 8; // Current line spacing
+const adjustedLineSpacing = originalLineSpacing * 0.8; // Reduce spacing to 0.8 times
+
+doc.setFont("helvetica", "bold");
+doc.setFontSize(16);
+
+// Drawing the header
+doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105,y , { align: 'center' });
+doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105 + 0.2, y, { align: 'center' });
+doc.setFontSize(12);
+y += adjustedLineSpacing;
+
+
+doc.text(`${config.parkingListPrefix}${data.order_no}`, 25, y);
+doc.text(`${data.ending_date} ${data.ending_time}`, 200, y, { align: 'right' });
+y += adjustedLineSpacing;
+
+// ----------------Line----------------
+doc.text('Order Date:', 0, y);
+doc.text(data.shp_date, 42, y);
+
+doc.text('Sell To Address:', 100, y);
+doc.text(data.shp_name, 140, y);
+y += adjustedLineSpacing;
+
+// ----------------Line----------------
+doc.text('Order No:', 0, y);
+doc.text(`${config.orderPrefix}${data.order_no}`, 42, y);
+
+doc.text('Sales Person:', 100, y);
+doc.text(data.sp_code, 140, y);
+y += adjustedLineSpacing;
+
+// ----------------Line----------------
+doc.text('Customer No:', 0, y);
+doc.text(data.customer_no, 42, y);
+
+doc.text('', 100, y);
+doc.text(data.sp_name, 140, y);
+y += adjustedLineSpacing;
+
+// ----------------Line----------------
+doc.text('Customer Name:', 0, y);
+doc.text(data.customer_name, 42, y);
+
+doc.text('Delivery Date:', 100, y);
+doc.text(data.shp_date, 140, y);
+y += adjustedLineSpacing;
+
+// ----------------Line----------------
+doc.text('External DocNo:', 0, y);
+doc.text(data.ext_doc_no, 42, y);
+
+doc.text('Ship To Name:', 100, y);
+doc.text(data.shp_name, 140, y);
+y += adjustedLineSpacing;
+
+// ----------------Line----------------
+doc.text('PDA Order:', 0, y);
+doc.text(data.pda ? 'Yes' : 'No', 42, y);
+
+doc.text('Cust Ref. No:', 100, y);
+doc.text(data.ext_doc_no, 140, y);
+y += adjustedLineSpacing;
+
+// ----------------Line----------------
+doc.setFontSize(10);
+doc.text('Order Receiver:', 0, y);
+doc.text(data.ended_by, 42, y);
+
+doc.text('External DocNo:', 100, y);
+doc.text(data.ext_doc_no, 140, y);
+y += adjustedLineSpacing;
+
+// ----------------Line----------------
+doc.text('Your Ref:', 0, y);
+doc.text('', 42, y);
+
+doc.text('District Group:', 100, y);
+doc.text('', 140, y);
+y += adjustedLineSpacing;
+
+// ----------------Line----------------
+doc.text('Location:', 0, y);
+doc.text(data.route_code, 42, y);
+
+doc.setFontSize(10);
+doc.text('Time Stamp:', 130, y);
+doc.text(Date.now().toString(), 200, y, { align: 'right' });
+y += adjustedLineSpacing;
+
+// Serial number
+const serial = await getSerialNumber('serial_number_counter').catch(error => {
+    console.error('Error fetching serial number:', error.message);
+    return 'DOC-00000000'; // Fallback value
+});
+
+doc.text('Serial No:', 130, y);
+doc.text(`${serial}`, 180, y, { align: 'right' });
+
+    doc.setFontSize(12);
+
+    const tableColumnNames = [
+        'Item No.', 'Description', 'Cust. Specs', 'Unit of \nMeasure',
+        'Order Qty', 'Qty \nSupplied', 'No. Of Cartons', 'Carton \nSerial No.'
+    ];
+
+    const tableData = lines.map(line => [
+        line.item_no,
+        line.item_description,
+        line.customer_spec,
+        line.unit_of_measure,
+        line.order_qty,
+        line.qty_supplied || '____',
+        line.cartons_count || '____',
+        line.carton_serial || '________'
+    ]);
+
+    doc.autoTable({
+    head: [tableColumnNames],
+    body: tableData,
+    startY: 80,
+    startX: 2,
+    margin: { left: 2, top: 5, bottom: 30, right: 2 },
+    columnStyles: {
+        0: { cellWidth: 40 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        1: { cellWidth: 65 , fillColor: null, halign: 'left' }, // Reduce width by 20%
+        2: { cellWidth: 20 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        3: { cellWidth: 30 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        4: { cellWidth: 15 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        5: { cellWidth: 25 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        6: { cellWidth: 20 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
+        7: { cellWidth: 35 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
+    },
+    headStyles: {
+        fillColor: null,
+        textColor: [0, 0, 0],
+        fontSize: 10,
+        fontStyle: 'bold',
+        halign: 'left',
+        valign: 'bottom'
+    },
+
+
+        didDrawCell: (data) => {
+            if (data.section === 'head' && data.row.index === 0) {
+                const lineY = data.cell.y + data.cell.height;
+                doc.setDrawColor(0);
+                doc.setLineWidth(0.5);
+                doc.line(2, lineY, 245, lineY);
+            }
+        },
+        didParseCell: (data) => {
+            // if (data.section === 'body' && data.column.index === 0) {
+            data.cell.styles.fontStyle = 'bold'
+            data.cell.styles.fontSize = 12
+            // }
+
+            data.cell.styles.textColor = [0, 0, 0]
+        },
+        didDrawPage: (data) => {
+            const footerY = 210; // Fixed Y position for the footer
+
+            doc.setFontSize(12);
+            doc.setFont("helvetica", "bold");
+            doc.text('Prepared By (Name & Sign):', 5, footerY);
+            doc.rect(5 /*X*/, footerY + 2 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S' /*'S' for stroke only*/);
+
+            doc.text('Packed By (Name & Sign):', 75, footerY);
+            doc.rect(75, footerY + 2, 60, 12, 'S');
+
+            doc.text('Checked By (Name & Sign):', 145, footerY);
+            doc.rect(145, footerY + 2, 60, 12, 'S');
+
+            doc.text('Total Net Weight: ___________', 75, footerY + 24);
+            doc.text('Total Gross Weight: ___________', 75, footerY + 32);
+            doc.text('Total No. Of Cartons: ___________', 75, footerY + 40);
+        },
+    });
 
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-
-    // Drawing the header
-    // doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105,y , { align: 'center' });
-    // doc.text(`DISPATCH Packing List ${part}        OF ${partsText}`, 105 + 0.2, y, { align: 'center' });
-    doc.setFontSize(12);
-    y += adjustedLineSpacing;
-
-
-    doc.text(`${config.parkingListPrefix}${data.order_no}`, 25, y);
-    doc.text(`${data.ending_date} ${data.ending_time}`, 200, y, { align: 'right' });
-    y += adjustedLineSpacing;
-
-    // ----------------Line----------------
-    doc.text('Order Date:', 0, y);
-    doc.text(data.shp_date, 42, y);
-
-    doc.text('Sell To Address:', 100, y);
-    doc.text(data.shp_name, 140, y);
-    y += adjustedLineSpacing;
-
-    // ----------------Line----------------
-    doc.text('Order No:', 0, y);
-    doc.text(`${config.orderPrefix}${data.order_no}`, 42, y);
-
-    doc.text('Sales Person:', 100, y);
-    doc.text(data.sp_code, 140, y);
-    y += adjustedLineSpacing;
-
-    // ----------------Line----------------
-    doc.text('Customer No:', 0, y);
-    doc.text(data.customer_no, 42, y);
-
-    doc.text('', 100, y);
-    doc.text(data.sp_name, 140, y);
-    y += adjustedLineSpacing;
-
-    // ----------------Line----------------
-    doc.text('Customer Name:', 0, y);
-    doc.text(data.customer_name, 42, y);
-
-    doc.text('Delivery Date:', 100, y);
-    doc.text(data.shp_date, 140, y);
-    y += adjustedLineSpacing;
-
-    // ----------------Line----------------
-    doc.text('External DocNo:', 0, y);
-    doc.text(data.ext_doc_no, 42, y);
-
-    doc.text('Ship To Name:', 100, y);
-    doc.text(data.shp_name, 140, y);
-    y += adjustedLineSpacing;
-
-    // ----------------Line----------------
-    doc.text('PDA Order:', 0, y);
-    doc.text(data.pda ? 'Yes' : 'No', 42, y);
-
-    doc.text('Cust Ref. No:', 100, y);
-    doc.text(data.ext_doc_no, 140, y);
-    y += adjustedLineSpacing;
-
-    // ----------------Line----------------
-    // doc.setFontSize(10);
-    doc.text('Order Receiver:', 0, y);
-    doc.text(data.ended_by, 42, y);
-
-    doc.text('External DocNo:', 100, y);
-    doc.text(data.ext_doc_no, 140, y);
-    y += adjustedLineSpacing;
-
-    // ----------------Line----------------
-    doc.text('Your Ref:', 0, y);
-    doc.text('', 42, y);
-
-    doc.text('District Group:', 100, y);
-    doc.text('', 140, y);
-    y += adjustedLineSpacing;
-
-    // ----------------Line----------------
-    doc.text('Location:', 0, y);
-    doc.text(data.route_code, 42, y);
-
-    doc.setFontSize(10);
-    doc.text('Time Stamp:', 130, y);
-    doc.text(Date.now().toString(), 200, y, { align: 'right' });
-    y += adjustedLineSpacing;
-
-    // Serial number
-    const serial = await getSerialNumber('serial_number_counter').catch(error => {
-        console.error('Error fetching serial number:', error.message);
-        return 'DOC-00000000'; // Fallback value
-    });
-
-    doc.text('Serial No:', 130, y);
-    doc.text(`${serial}`, 180, y, { align: 'right' });
-
-    doc.setFontSize(12);
-
-    // const tableColumnNames = [
-    //     'Item No.', 'Description', 'Cust. Specs', 'Unit of \nMeasure',
-    //     'Order Qty', 'Qty \nSupplied', 'No. Of Cartons', 'Carton \nSerial No.'
-    // ];
-
-    // const tableData = lines.map(line => [
-    //     line.item_no,
-    //     line.item_description,
-    //     line.customer_spec,
-    //     line.unit_of_measure,
-    //     line.order_qty,
-    //     line.qty_supplied || '____',
-    //     line.cartons_count || '____',
-    //     line.carton_serial || '________'
-    // ]);
-
-    // doc.autoTable({
-    // head: [tableColumnNames],
-    // body: tableData,
-    // startY: 80,
-    // startX: 2,
-    // margin: { left: 2, top: 5, bottom: 30, right: 2 },
-    // columnStyles: {
-    //     0: { cellWidth: 40 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-    //     1: { cellWidth: 65 , fillColor: null, halign: 'left' }, // Reduce width by 20%
-    //     2: { cellWidth: 20 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-    //     3: { cellWidth: 30 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-    //     4: { cellWidth: 15 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-    //     5: { cellWidth: 25 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-    //     6: { cellWidth: 20 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-    //     7: { cellWidth: 35 * 0.9, fillColor: null, halign: 'left' }, // Reduce width by 20%
-    // },
-    // headStyles: {
-    //     fillColor: null,
-    //     textColor: [0, 0, 0],
-    //     fontSize: 10,
-    //     fontStyle: 'bold',
-    //     halign: 'left',
-    //     valign: 'bottom'
-    // },
-    //     didDrawCell: (data) => {
-    //         if (data.section === 'head' && data.row.index === 0) {
-    //             const lineY = data.cell.y + data.cell.height;
-    //             doc.setDrawColor(0);
-    //             doc.setLineWidth(0.5);
-    //             doc.line(2, lineY, 245, lineY);
-    //         }
-    //     },
-    //     didParseCell: (data) => {
-    //         // if (data.section === 'body' && data.column.index === 0) {
-    //         data.cell.styles.fontStyle = 'bold'
-    //         data.cell.styles.fontSize = 12
-    //         // }
-
-    //         data.cell.styles.textColor = [0, 0, 0]
-    //     },
-    //     didDrawPage: (data) => {
-    //         addHeader();
-
-    //         const footerY = 210; // Fixed Y position for the footer
-
-    //         doc.setFontSize(12);
-    //         doc.setFont("helvetica", "bold");
-    //         doc.text('Prepared By (Name & Sign):', 5, footerY);
-    //         doc.rect(5 /*X*/, footerY + 2 /*Y*/, 60 /*Width*/, 12 /*Height*/, 'S' /*'S' for stroke only*/);
-
-    //         doc.text('Packed By (Name & Sign):', 75, footerY);
-    //         doc.rect(75, footerY + 2, 60, 12, 'S');
-
-    //         doc.text('Checked By (Name & Sign):', 145, footerY);
-    //         doc.rect(145, footerY + 2, 60, 12, 'S');
-
-    //         doc.text('Total Net Weight: ___________', 75, footerY + 24);
-    //         doc.text('Total Gross Weight: ___________', 75, footerY + 32);
-    //         doc.text('Total No. Of Cartons: ___________', 75, footerY + 40);
-    //     },
-    // });
-
-    // doc.setFont("helvetica", "bold");
-    // doc.text(`Total Order Quantity: ${lines.length}`, 105, doc.lastAutoTable.finalY + 10, { align: 'center' });
-
-    // addFooter();
-
-    // Save the PDF
-
-
-    // Split the lines into chunks of 12 lines per page
-    const chunks = [];
-    for (let i = 0; i < lines.length; i += 12) {
-        chunks.push(lines.slice(i, i + 12));
-    }
-
-    chunks.forEach((chunk, index) => {
-        let startY = 85
-        if (index > 0) {
-            doc.addPage(); // Add a new page for each chunk except the first
-            startY = 20
-        }
-
-        addHeader();
-
-        doc.autoTable({
-            head: [
-                [
-                    'Item No.', 'Description', 'Cust. Specs', 'Unit of Measure',
-                    'Order Qty', 'Qty Supplied', 'No. Of Cartons', 'Carton Serial No.'
-                ]
-            ],
-            body: chunk.map(line => [
-                line.item_no,
-                line.item_description,
-                line.customer_spec,
-                line.unit_of_measure,
-                line.order_qty,
-                line.qty_supplied || '____',
-                line.cartons_count || '____',
-                line.carton_serial || '________'
-            ]),
-            startY: startY,
-            startX: 2,
-            margin: { left: 2, top: 5, bottom: 30, right: 2 },
-            columnStyles: {
-                0: { cellWidth: 40 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-                1: { cellWidth: 65 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-                2: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-                3: { cellWidth: 30 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-                4: { cellWidth: 20 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-                5: { cellWidth: 28 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-                6: { cellWidth: 27 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-                7: { cellWidth: 38 * 0.8, fillColor: null, halign: 'left' }, // Reduce width by 20%
-            },
-            headStyles: {
-                fillColor: null,
-                textColor: [0, 0, 0],
-                fontSize: 12,
-                fontStyle: 'bold',
-                halign: 'left',
-                valign: 'bottom'
-            },
-            didDrawPage: (data) => {
-                doc.setFontSize(12);
-                const qtPosition = lines.length * 10
-                // doc.text(`Total Order Quantity: ${lines.length}`, 105, qtPosition, { align: 'center' });
-
-                const footerY = 210; // Fixed Y position for the footer
-                doc.setFont("helvetica", "bold");
-                doc.text('Prepared By (Name & Sign):', 10, footerY);
-                doc.rect(10, footerY + 2, 60, 12, 'S');
-
-                doc.text('Packed By (Name & Sign):', 80, footerY);
-                doc.rect(80, footerY + 2, 60, 12, 'S');
-
-                doc.text('Checked By (Name & Sign):', 150, footerY);
-                doc.rect(150, footerY + 2, 60, 12, 'S');
-
-                doc.text('Total Net Weight: ___________', 75, footerY + 28);
-                doc.text('Total Gross Weight: ___________', 75, footerY + 36);
-                doc.text('Total No. Of Cartons: ___________', 75, footerY + 44);
-            },
-        });
-    });
-
-    doc.setFontSize(12);
     doc.text(`Total Order Quantity: ${lines.length}`, 105, doc.lastAutoTable.finalY + 10, { align: 'center' });
 
-    addFooter();
+    addPageNumber();
 
+    // Save the PDF
     doc.save(filePath);
 };
 
@@ -603,5 +515,3 @@ const loadConfig = (data) => {
 // }`;
 
 // initPrinting(JSON.parse(sampleData));
-
-listPrinters();
