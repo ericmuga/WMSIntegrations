@@ -81,23 +81,23 @@ app.get('/fetch-production-orders', async (req, res) => {
      const mergeProductionOrders = (...arrays) => arrays.flat();
      const { date, item, production_order_no } = req.query;
      let beheadingData= await consumeBeheadingData();
-     let carcassSales=await consumeCarcassSales(); 
-     let breakingData= await consumeBreakingData();
-     let deboningData= await consumeDeboningData();
-     let mincingFromButchery= await consume1570_2055();
-    //  let choppingData=await consumechoppingData();
-     let sausageData=await processSausageQueue ();
-     let continentalsData=await processContinentalsQueue();
+    //  let carcassSales=await consumeCarcassSales(); 
+    //  let breakingData= await consumeBreakingData();
+    //  let deboningData= await consumeDeboningData();
+    //  let mincingFromButchery= await consume1570_2055();
+     let choppingData=await consumechoppingData();
+    //  let sausageData=await processSausageQueue ();
+    //  let continentalsData=await processContinentalsQueue();
      let productionOrders = mergeProductionOrders(
 
                                                     beheadingData,
-                                                    carcassSales,
-                                                    breakingData,
-                                                    deboningData,
-                                                    mincingFromButchery,
-                                                    // choppingData,
-                                                    sausageData,
-                                                    continentalsData,
+    //                                                 // carcassSales,
+    //                                                 // breakingData,
+    //                                                 // deboningData,
+    //                                                 // mincingFromButchery,
+                                                     choppingData,
+    //                                                 // sausageData,
+    //                                                 // continentalsData,
                                                    
 
                                                   );

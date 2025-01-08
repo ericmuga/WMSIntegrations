@@ -7,13 +7,13 @@ export const consume1570_2055 = async () => {
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'transfer_from_1570_to_2055';
     const batchSize = 10; // Set batch size here
-    const timeout = 2000; // Timeout in milliseconds (e.g., 5 seconds)
+    const timeout = 2000; // Timeout in milliseconds (e.g., 2 seconds)
 
     const queueOptions = {
         durable: true,
         arguments: {
             'x-dead-letter-exchange': 'fcl.exchange.dlx',
-            'x-dead-letter-routing-key': 'transfer_from_1570_to_2055',
+            'x-dead-letter-routing-key': routingKey,
         },
     };
 
@@ -25,82 +25,67 @@ export const consume1570_2055 = async () => {
         await channel.assertQueue(queueName, queueOptions);
         await channel.bindQueue(queueName, exchange, routingKey);
 
-        // Prefetch to limit the number of unacknowledged messages delivered
         channel.prefetch(batchSize);
 
         logger.info(`Waiting for up to ${batchSize} messages in queue: ${queueName}`);
 
         const messages = [];
-        let batchResolve;
-        let batchTimeout;
 
-        // Batch promise to return the messages array
-        const batchPromise = new Promise((resolve) => {
-            batchResolve = resolve;
-        });
+        // Handle batching and timeout logic
+        await new Promise((resolve) => {
+            channel.consume(
+                queueName,
+                (msg) => {
+                    if (msg) {
+                        try {
+                            const transferData = JSON.parse(msg.content.toString());
+                            logger.info(`Received transfer data: ${JSON.stringify(transferData)}`);
 
-        // Set a timeout to resolve with the collected messages
-        batchTimeout = setTimeout(() => {
-            if (messages.length === 0) {
-                logger.info('Timeout reached and no messages found, resolving with empty array');
-            } else {
-                logger.info('Timeout reached, resolving with partial batch');
-            }
-            batchResolve(messages);
-        }, timeout);
+                            const transformedData = transformData(transferData);
 
-        // Start consuming messages
-        channel.consume(
-            queueName,
-            (msg) => {
-                if (msg !== null) {
-                    try {
-                        const transferData = JSON.parse(msg.content.toString());
-                        logger.info(`Received transfer data: ${JSON.stringify(transferData)}`);
+                            if (transformedData && transformedData.length > 0) {
+                                messages.push(...transformedData); // Spread to add all transformed results
+                                // channel.ack(msg); // Acknowledge the message
+                            } else {
+                                logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
+                                channel.nack(msg, false, false); // Move to dead-letter queue
+                            }
 
-                        const transformedData = transformData(transferData);
-
-                        if (transformedData && transformedData.length > 0) {
-
-
-
-                            messages.push(...transformedData); // Spread to add all transformed results
-                            channel.ack(msg); // Acknowledge the message
-                        } else {
-                            logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
+                            // Resolve batch if filled
+                            if (messages.length >= batchSize) {
+                                resolve();
+                            }
+                        } catch (error) {
+                            logger.error(`Failed to parse message content: ${error.message}`);
                             channel.nack(msg, false, false); // Move to dead-letter queue
                         }
-
-                        // Resolve batch if filled
-                        if (messages.length >= batchSize) {
-                            clearTimeout(batchTimeout); // Clear timeout if batch is filled
-                            batchResolve(messages);
-                        }
-                    } catch (parseError) {
-                        logger.error(`Failed to parse message content: ${parseError.message}`);
-                        channel.nack(msg, false, false); // Move to dead-letter queue
                     }
-                } else {
-                    logger.warn('Received null message');
-                }
-            },
-            { noAck: false }
-        );
+                },
+                { noAck: false }
+            );
 
-        // Wait for the batch to be filled or timeout
-        const batch = await batchPromise;
+            // Resolve after timeout if no messages or partial batch
+            setTimeout(() => {
+                logger.info(`Timeout reached, resolving with ${messages.length} collected messages`);
+                resolve();
+            }, timeout);
+        });
 
-        // Cleanup and close the channel
         await channel.close();
-        return batch; // Return the flat array of messages
+
+        return messages.flat(); // Return the flat array of messages
     } catch (error) {
-        logger.error('Error consuming transfer data from RabbitMQ: ' + error.message);
+        logger.error(`Error consuming transfer data from RabbitMQ: ${error.message}`);
         throw error;
     }
 };
 
 // Example usage
 // (async () => {
-//     const data = await consume1570_2055();
-//     console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     try {
+//         const data = await consume1570_2055();
+//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error processing transfer data:', error.message);
+//     }
 // })();

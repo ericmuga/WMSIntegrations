@@ -6,13 +6,14 @@ export const consumechoppingData = async () => {
     const queueName = 'production_data_order_chopping.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_chopping.bc';
-    const batchSize = 1;
-    const timeout = 4000; // Timeout in milliseconds (e.g., 10 seconds)
-    const queueOptions = { 
+    const batchSize = 1; // Process one message at a time
+    const timeout = 4000; // Timeout in milliseconds (e.g., 4 seconds)
+
+    const queueOptions = {
         durable: true,
         arguments: {
             'x-dead-letter-exchange': 'fcl.exchange.dlx',
-            'x-dead-letter-routing-key': 'production_data_order_chopping.bc',
+            'x-dead-letter-routing-key': routingKey,
         },
     };
 
@@ -23,78 +24,58 @@ export const consumechoppingData = async () => {
         await channel.assertExchange(exchange, 'direct', { durable: true });
         await channel.assertQueue(queueName, queueOptions);
         await channel.bindQueue(queueName, exchange, routingKey);
+
         channel.prefetch(batchSize);
 
-        logger.info(`Waiting for up to ${batchSize} messages in queue: ${queueName}`);
+        logger.info(`Waiting for up to ${batchSize} message(s) in queue: ${queueName}`);
 
         const messages = [];
-        let batchResolve;
-        let batchTimeout;
 
-        // Batch promise to return the messages array
-        const batchPromise = new Promise((resolve) => {
-            batchResolve = resolve;
+        // Promise to handle batch processing
+        await new Promise((resolve) => {
+            channel.consume(
+                queueName,
+                async (msg) => {
+                    if (msg) {
+                        try {
+                            const choppingData = JSON.parse(msg.content.toString());
+                            logger.info(`Received chopping data: ${JSON.stringify(choppingData)}`);
+
+                            const transformedData = await transformData(choppingData);
+
+                            if (transformedData) {
+                                messages.push(transformedData);
+                                channel.ack(msg);
+
+                                if (messages.length >= batchSize) {
+                                    resolve(); // Resolve when batch size is met
+                                }
+                            } else {
+                                logger.warn('Transformation returned null or undefined data.');
+                                channel.nack(msg, false, false); // Send to dead-letter queue
+                            }
+                        } catch (error) {
+                            logger.error(`Failed to process message: ${error.message}`);
+                            channel.nack(msg, false, false); // Send to dead-letter queue
+                        }
+                    }
+                },
+                { noAck: false }
+            );
+
+            setTimeout(() => resolve(), timeout); // Resolve after timeout
         });
 
-        // Set a timeout to resolve with an empty array if no messages are received
-        batchTimeout = setTimeout(() => {
-            if (messages.length === 0) {
-                logger.info('No messages received within the timeout period');
-                batchResolve([]);
-            }
-        }, timeout);
-
-        // Start consuming messages
-        channel.consume(
-            queueName,
-            async (msg) => {
-                if (msg !== null) {
-                    try {
-                        const choppingData = JSON.parse(msg.content.toString());
-                        logger.info(`Received chopping data: ${JSON.stringify(choppingData)}`);
-
-                        // Await transformData and add to messages array
-                        const transformedData = await transformData(choppingData);
-                        messages.push(transformedData);
-
-                        channel.ack(msg);
-
-                        if (messages.length >= batchSize) {
-                            clearTimeout(batchTimeout); // Clear timeout if batch is filled
-                            batchResolve(messages);
-                        }
-                    } catch (parseError) {
-                        logger.error(`Failed to parse message content: ${parseError.message}`);
-                        // channel.nack(msg, false, false); // Move to dead-letter queue
-                    }
-                } else {
-                    logger.warn('Received null message');
-                }
-            },
-            { noAck: false }
-        );
-
-        // Wait for the batch to be filled or timeout
-        const batch = await batchPromise;
-
-        // Flatten nested arrays of production orders
-        const flattenProductionOrders = (nestedOrders) => {
-            return nestedOrders.flat();
-        };
-
-        const flattenedData = flattenProductionOrders(batch);
-
-        // Cleanup and close the channel
         await channel.close();
 
-        // Return the flattened array of objects
-        return flattenedData.flat(); // Ensures no additional nesting
+        return messages.flat(); // Return flattened messages array
     } catch (error) {
-        logger.error('Error consuming chopping data from RabbitMQ: ' + error.message);
+        logger.error(`Error consuming chopping data: ${error.message}`);
         throw error;
     }
 };
 
+// Example usage
 // (async () => {
 //     try {
 //         const data = await consumechoppingData();
