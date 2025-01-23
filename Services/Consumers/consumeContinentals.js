@@ -10,7 +10,7 @@ export const processContinentalsQueue = async () => {
             queueName,
             routingKey,
             batchSize: 1, // Customize batch size
-            timeout: 5000, // Customize timeout
+            timeout: 10000, // Customize timeout
             finalProcess
         });
 

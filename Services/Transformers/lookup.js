@@ -9,7 +9,7 @@ export const processLookup = {
       input_location: "1020", 
       output_location: "1570", 
       production_order_series: `P${String(0).padStart(2, '0')}`,
-      process_loss: 0.02 // 5% loss
+      process_loss: 0.00 // 5% loss
     //   process_loss: 0.00 // 5% loss
   },
   2: { 
@@ -40,7 +40,7 @@ export const processLookup = {
       input_location: "1570", 
       output_location: "1570", 
       production_order_series: `P${String(3).padStart(2, '0')}`,
-      process_loss: 0.06 // 6% loss
+      process_loss: 0.00 // 6% loss
   },
   5: { 
       process_code: 4, 
@@ -80,7 +80,7 @@ export const processLookup = {
       input_location: "1570", 
       output_location: "1570", 
       production_order_series: `P${String(7).padStart(2, '0')}`,
-      process_loss: 0.05 // 5% loss
+      process_loss: 0.00 // 5% loss
   },
 //   9: { 
 //     process_code: 8, 
@@ -111,7 +111,7 @@ export const processLookup = {
       input_location: "1570", 
       output_location: "1570", 
       production_order_series: `P${String(9).padStart(2, '0')}`,
-      process_loss: 0.04 // 4% loss
+      process_loss: 0.00 // 4% loss
   },
   10006: { 
       process_code: 18, 
@@ -121,7 +121,7 @@ export const processLookup = {
       input_location: "1570", 
       output_location: "1570", 
       production_order_series: `P${String(8).padStart(2, '0')}`,
-      process_loss: 0.03 // 3% loss
+      process_loss: 0.00 // 3% loss
   },
   20005: { 
       process_code: 101, 
@@ -131,7 +131,7 @@ export const processLookup = {
       input_location: "1570", 
       output_location: "1570", 
       production_order_series: `P${String(101).padStart(2, '0')}`,
-      process_loss: 0.05 // 5% loss
+      process_loss: 0.00 // 5% loss
   }
   
 

@@ -6,7 +6,7 @@ export const consumeCarcassSales = async () => {
     const queueName = 'production_sales_transfers.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_sales_transfers.bc';
-    const batchSize = 10; // Desired batch size
+    const batchSize = 60; // Set the desired batch size
     const timeout = 2000; // Timeout in milliseconds (e.g., 2 seconds)
 
     const queueOptions = {
@@ -31,7 +31,7 @@ export const consumeCarcassSales = async () => {
 
         const messages = [];
 
-        // Process messages within a batch or until timeout
+        // Handle batching and timeout logic
         await new Promise((resolve) => {
             channel.consume(
                 queueName,
@@ -45,17 +45,17 @@ export const consumeCarcassSales = async () => {
 
                             if (transformedData) {
                                 messages.push(transformedData);
-                                channel.ack(msg); // Acknowledge message
+                                channel.ack(msg);
 
                                 if (messages.length >= batchSize) {
-                                    resolve(); // Complete batch
+                                    resolve(); // Resolve when batch size is met
                                 }
                             } else {
-                                logger.warn(`Transformer returned null or undefined for message: ${JSON.stringify(salesData)}`);
+                                logger.warn('Transformer returned null or undefined data.');
                                 channel.nack(msg, false, false); // Dead-letter the message
                             }
                         } catch (error) {
-                            logger.error(`Failed to parse message: ${error.message}`);
+                            logger.error(`Failed to process message: ${error.message}`);
                             channel.nack(msg, false, false); // Dead-letter the message
                         }
                     }
@@ -69,9 +69,19 @@ export const consumeCarcassSales = async () => {
 
         await channel.close();
 
-        return messages; // Return collected messages
+        return messages.flat(); // Flatten nested arrays if necessary
     } catch (error) {
-        logger.error(`Error consuming sales data from RabbitMQ: ${error.message}`);
+        logger.error(`Error consuming sales data: ${error.message}`);
         throw error;
     }
 };
+
+// Example usage
+// (async () => {
+//     try {
+//         const data = await consumeCarcassSales();
+//         console.log(JSON.stringify(data, null, 2)); // Pretty-print the output
+//     } catch (error) {
+//         console.error('Error processing sales data:', error.message);
+//     }
+// })();

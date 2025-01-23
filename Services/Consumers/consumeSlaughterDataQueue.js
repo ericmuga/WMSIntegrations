@@ -51,7 +51,7 @@ export const consumeSlaughterData = async () => {
                         const slaughterData = JSON.parse(msg.content.toString());
                         logger.info(`Received slaughter data: ${JSON.stringify(slaughterData)}`);
                         messages.push(transformData(slaughterData)); // Transform the data
-                        channel.ack(msg);
+                        // channel.ack(msg);
 
                         // Resolve the promise if the batch size is reached
                         if (messages.length >= batchSize) {

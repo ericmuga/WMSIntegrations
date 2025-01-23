@@ -91,6 +91,10 @@ const removeZeroQuantityLines = (productionOrders) => {
 };
 
 export const transformData = async (responseData) => {
+
+    // console.log("Transforming data...");
+    // console.log("Data:", responseData);
+
     const spicePremixFilePath = 'SpicePremix.xlsx';
     const spicePremixData = readExcelFile(spicePremixFilePath);
 
@@ -155,19 +159,20 @@ export const transformData = async (responseData) => {
 
         const outputDetails = await resolveItemDetails(outputItem.item_code, true);
 
-        const mainProductionOrder = {
-            production_order_no: `${outputItem.chopping_id}_${outputItem.id}`,
-            ItemNo: replaceItemIfNeeded(outputItem.item_code),
-            Quantity: roundTo4Decimals(outputItem.weight),
-            uom: outputDetails.uom,
-            LocationCode: outputDetails.location,
-            BIN: "",
-            user: "DefaultUser",
-            line_no: 1000,
-            routing: "production_data_chopping.bc",
-            date_time: dateTime,
-            ProductionJournalLines: []
-        };
+        const datePart = dateTime.split('T')[0]; // Extract date part (YYYY-MM-DD)
+    const mainProductionOrder = {
+        production_order_no: `${outputItem.chopping_id}_${outputItem.id}_${datePart}`, // Append date
+        ItemNo: replaceItemIfNeeded(outputItem.item_code),
+        Quantity: roundTo4Decimals(outputItem.weight),
+        uom: outputDetails.uom,
+        LocationCode: outputDetails.location,
+        BIN: "",
+        user: "DefaultUser",
+        line_no: 1000,
+        routing: "production_data_chopping.bc",
+        date_time: dateTime,
+        ProductionJournalLines: []
+    };
 
         // Add output line
         mainProductionOrder.ProductionJournalLines.push({

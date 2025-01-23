@@ -61,7 +61,7 @@ export const consume2055_3600 = async () => {
 
                         if (transformedData && transformedData.length > 0) {
                             messages.push(...transformedData); // Add transformed results
-                            channel.ack(msg); // Acknowledge the message
+                            // channel.ack(msg); // Acknowledge the message
                         } else {
                             logger.warn(`Transformer returned empty data for: ${JSON.stringify(transferData)}`);
                             channel.nack(msg, false, false); // Send to dead-letter queue

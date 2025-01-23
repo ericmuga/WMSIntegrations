@@ -6,8 +6,8 @@ export const consumeBreakingData = async () => {
     const queueName = 'production_data_order_breaking.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_breaking.bc';
-    const batchSize = 10; // Set batch size here
-    const timeout = 2000; // Timeout in milliseconds (e.g., 2 seconds)
+    const batchSize = 50; // Set batch size here
+    const timeout = 5000; // Timeout in milliseconds (e.g., 2 seconds)
 
     const queueOptions = {
         durable: true,
@@ -43,26 +43,35 @@ export const consumeBreakingData = async () => {
                             channel.ack(msg);
 
                             if (messages.length >= batchSize) {
+                                clearTimeout(batchTimeout); // Clear timeout if batch is filled
                                 resolve();
                             }
                         } catch (err) {
                             logger.error(`Failed to parse message content: ${err.message}`);
-                            channel.nack(msg, false, false);
+                            channel.nack(msg, false, false); // Move to dead-letter queue
                         }
                     }
                 },
                 { noAck: false }
             );
 
-            setTimeout(() => {
+            // Timeout for consuming messages
+            const batchTimeout = setTimeout(() => {
+                logger.info(`Timeout reached for queue: ${queueName}, resolving with ${messages.length} messages.`);
                 resolve();
-            }, timeout); // Resolve after timeout if no messages or batch not filled
+            }, timeout);
         });
 
         await channel.close();
+
+        if (messages.length === 0) {
+            logger.info(`No messages processed from queue: ${queueName}`);
+        }
+
         return messages;
     } catch (error) {
         logger.error(`Error consuming breaking data: ${error.message}`);
         throw error;
     }
 };
+

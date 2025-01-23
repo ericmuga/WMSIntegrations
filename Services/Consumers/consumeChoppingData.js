@@ -1,86 +1,75 @@
 import { getRabbitMQConnection } from '../../config/default.js';
-import { transformData } from '../Transformers/choppingTransformer.js';
 import logger from '../../logger.js'; // Assuming you have a logger module set up
+import { transformData } from '../Transformers/choppingTransformer.js';
 
 export const consumechoppingData = async () => {
     const queueName = 'production_data_order_chopping.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_chopping.bc';
-    const batchSize = 1; // Process one message at a time
-    const timeout = 4000; // Timeout in milliseconds (e.g., 4 seconds)
+    const batchSize = 1; // Number of messages to process at once
 
-    const queueOptions = {
-        durable: true,
-        arguments: {
-            'x-dead-letter-exchange': 'fcl.exchange.dlx',
-            'x-dead-letter-routing-key': routingKey,
-        },
-    };
+    let connection, channel;
+    const messages = [];
 
     try {
-        const connection = await getRabbitMQConnection();
-        const channel = await connection.createChannel();
+        connection = await getRabbitMQConnection();
+        channel = await connection.createChannel();
 
+        // Assert the exchange and queue
         await channel.assertExchange(exchange, 'direct', { durable: true });
-        await channel.assertQueue(queueName, queueOptions);
+        await channel.assertQueue(queueName, {
+            durable: true,
+            arguments: {
+                'x-dead-letter-exchange': 'fcl.exchange.dlx',
+                'x-dead-letter-routing-key': routingKey,
+            },
+        });
         await channel.bindQueue(queueName, exchange, routingKey);
 
-        channel.prefetch(batchSize);
+        channel.prefetch(batchSize); // Control message flow
 
-        logger.info(`Waiting for up to ${batchSize} message(s) in queue: ${queueName}`);
+        logger.info(`Consuming from queue: ${queueName}`);
 
-        const messages = [];
+        await new Promise((resolve, reject) => {
+            const stopConsumption = () => {
+                logger.info(`Finished consuming from queue: ${queueName}`);
+                resolve();
+            };
 
-        // Promise to handle batch processing
-        await new Promise((resolve) => {
             channel.consume(
                 queueName,
                 async (msg) => {
                     if (msg) {
                         try {
-                            const choppingData = JSON.parse(msg.content.toString());
-                            logger.info(`Received chopping data: ${JSON.stringify(choppingData)}`);
+                            const data = JSON.parse(msg.content.toString());
+                            const transformedData = await transformData(data);
+                            messages.push(transformedData);
 
-                            const transformedData = await transformData(choppingData);
+                            channel.ack(msg); // Acknowledge the message
 
-                            if (transformedData) {
-                                messages.push(transformedData);
-                                channel.ack(msg);
-
-                                if (messages.length >= batchSize) {
-                                    resolve(); // Resolve when batch size is met
-                                }
-                            } else {
-                                logger.warn('Transformation returned null or undefined data.');
-                                channel.nack(msg, false, false); // Send to dead-letter queue
+                            if (messages.length >= batchSize) {
+                                stopConsumption(); // Stop consuming after batch
                             }
                         } catch (error) {
-                            logger.error(`Failed to process message: ${error.message}`);
-                            channel.nack(msg, false, false); // Send to dead-letter queue
+                            logger.error(`Error transforming message: ${error.message}`);
+                            channel.nack(msg, false, false); // Reject message without requeuing
+                            return [];
                         }
+                    } else {
+                        stopConsumption(); // Stop if no message is received
                     }
                 },
                 { noAck: false }
             );
-
-            setTimeout(() => resolve(), timeout); // Resolve after timeout
         });
 
-        await channel.close();
-
-        return messages.flat(); // Return flattened messages array
+        return messages; // Return the processed messages
     } catch (error) {
-        logger.error(`Error consuming chopping data: ${error.message}`);
+        logger.error(`Error consuming data from RabbitMQ: ${error.message}`);
         throw error;
+    } finally {
+        if (channel) await channel.close();
+        // if (connection) await connection.close();
     }
 };
 
-// Example usage
-// (async () => {
-//     try {
-//         const data = await consumechoppingData();
-//         logger.info(JSON.stringify(data, null, 2)); // Pretty-print the output
-//     } catch (error) {
-//         console.error('Error processing chopping data:', error.message);
-//     }
-// })();

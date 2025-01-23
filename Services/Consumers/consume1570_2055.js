@@ -45,10 +45,11 @@ export const consume1570_2055 = async () => {
 
                             if (transformedData && transformedData.length > 0) {
                                 messages.push(...transformedData); // Spread to add all transformed results
-                                // channel.ack(msg); // Acknowledge the message
+                                channel.ack(msg); // Acknowledge the message
                             } else {
                                 logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
                                 channel.nack(msg, false, false); // Move to dead-letter queue
+                                resolve([]); // Resolve with an empty array
                             }
 
                             // Resolve batch if filled
@@ -58,6 +59,7 @@ export const consume1570_2055 = async () => {
                         } catch (error) {
                             logger.error(`Failed to parse message content: ${error.message}`);
                             channel.nack(msg, false, false); // Move to dead-letter queue
+                            resolve([]); // Resolve with an empty array
                         }
                     }
                 },

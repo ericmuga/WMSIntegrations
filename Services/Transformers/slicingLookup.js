@@ -8,7 +8,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -19,7 +19,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -30,7 +30,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -41,7 +41,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -52,7 +52,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -63,7 +63,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -74,7 +74,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -85,7 +85,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -96,7 +96,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -107,7 +107,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -118,7 +118,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -129,7 +129,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -140,7 +140,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -151,7 +151,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -162,7 +162,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -173,7 +173,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -184,7 +184,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -195,7 +195,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -206,7 +206,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -217,7 +217,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -228,7 +228,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -239,7 +239,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -250,7 +250,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -261,7 +261,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -272,7 +272,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -283,7 +283,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -294,7 +294,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -305,7 +305,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -316,7 +316,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   },
   {
     "process_code": 8,
@@ -327,7 +327,7 @@ export const processLookup = [
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",
-    "process_loss": 0
+    "process_loss": 0.01
   }
 ];
 
