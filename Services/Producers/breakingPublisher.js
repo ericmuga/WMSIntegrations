@@ -1,7 +1,9 @@
-import { publishBeheadingData, 
+import { 
+  
+  // publishBeheadingData, 
          publishBreakingData,
-            publishDeboningData, 
-         publishCarcassSalesData,
+            // publishDeboningData, 
+        //  publishCarcassSalesData,
         //  publishMincing ,
         //  publishChoppingData,
         //  publishButcheryPacking,
@@ -15,10 +17,10 @@ import { publishContinentals} from "./publishContinentals.js";
 const mainPublisher =(async ()=>{
 
   try{
-         publishCarcassSalesData();
-         publishBeheadingData ();
+        //  publishCarcassSalesData();
+        //  publishBeheadingData ();
          publishBreakingData();
-         publishDeboningData();
+        //  publishDeboningData();
         //  publishButcheryPacking();
         //  publishMincing(); 
         //  publishChoppingData();

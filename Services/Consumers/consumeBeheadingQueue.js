@@ -8,7 +8,7 @@ export const consumeBeheadingData = async () => {
     const queueName = 'production_data_order_beheading.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_beheading.bc';
-    const batchSize = 50;
+    const batchSize = 100;
 
     try {
         const connection = await getRabbitMQConnection();

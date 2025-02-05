@@ -14,76 +14,15 @@ const pool = await getPool('wms');
 
 // const start_date = '2025-01-04'; 
 // Function to fetch data from idt_transfers table
-const start_date = '2025-01-04';
+const start_date = '2025-01-29';
 
 // Function to fetch data from idt_transfers table
-async function fetchTransferData() {
-    try {
-        const result = await pool.request()
-            .input('startDate', sql.Date, start_date) // Pass the date as a parameter
-            .query(`
-                SELECT id
-                    ,product_code
-                    ,location_code AS transfer_to
-                    ,transfer_from
-                    ,receiver_total_pieces
-                    ,receiver_total_weight
-                    ,received_by
-                    ,created_at
-                FROM idt_transfers
-                WHERE created_at >= @startDate
-                AND received_by IS NOT NULL
-                AND NOT EXISTS (
-                    SELECT 1 
-                    FROM [100.100.2.39].[BOM].[dbo].[queue_status]
-                    WHERE [record_id] = idt_transfers.id 
-                    AND [table_name] = 'idt_transfers'
-                )
-            `);
-        return result.recordset;
-    } catch (error) {
-        console.error('Error fetching transfer data:', error.message);
-        throw error;
-    }
-}
+
 
 // RabbitMQ Connection Details
 const RABBITMQ_URL = process.env.RABBITMQ_URL;
 const EXCHANGE_NAME = "fcl.exchange.direct";
 const QUEUE_NAME = "production_data_order_chopping.bc";
-
-
-
-// Resolve the Excel file path
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const filePath = path.resolve(__dirname, './ChoppingV1.xlsx'); // Update with your Excel file name
-
-async function fetchDataFromExcel() {
-    try {
-        // Read the Excel file
-        const workbook = xlsx.readFile(filePath);
-        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-        const rows = xlsx.utils.sheet_to_json(worksheet);
-
-        // Map data to match the expected schema
-        const data = rows.map((row, index) => ({
-            id: index + 1, // Generate a unique ID (optional if not in Excel)
-            chopping_id: row['Run Id'],
-            item_code: row['item Code'],
-            weight: parseFloat(row['Weight']),
-            batch_no: row['Batch No'] || null,
-            created_at: row['Timestamp'],
-            updated_at: row['Timestamp'],
-        }));
-
-        console.log('Fetched data from Excel:', data);
-        return data;
-    } catch (err) {
-        console.error('Error reading Excel file:', err.message);
-        throw err;
-    }
-}
 
 
 // Fetch data from the database
@@ -100,7 +39,6 @@ async function fetchData() {
                     SELECT 1
                     FROM [100.100.2.39].[BOM].[dbo].[queue_status]
                     WHERE record_id = chopping_lines.id
-                    -- and item_code not in ('G2042','G2159')
                     AND table_name = '[FCL-WMS].[calibra].[dbo].chopping_lines'
                     
                 )
@@ -115,20 +53,6 @@ async function fetchData() {
     }
 }
 
-
-
-// Group data by chopping_id
-// function groupDataByChoppingId(data) {
-//     return data.reduce((acc, row) => {
-//         if (!acc[row.chopping_id]) {
-//             acc[row.chopping_id] = [];
-//         }
-//         row.timestamp = new Date().toISOString(); // Add timestamp
-//         acc[row.chopping_id].push(row);
-//         return acc;
-//     }, {});
-
-// }
 
 function groupAndFlattenDataWithGroupId(data) {
     return data.map(row => {
@@ -289,6 +213,7 @@ const fetchSalesData = async () => {
                     created_at
                 FROM sales
                 WHERE created_at >= @startDate
+               
                   AND NOT EXISTS (
                       SELECT 1
                       FROM [100.100.2.39].[BOM].[dbo].[queue_status]
@@ -336,7 +261,7 @@ async function fetchBeheadingData() {
                     AND [table_name] = '[FCL-WMS].[calibra].[dbo].beheading_data'
                 )
 
-                UNION
+               UNION
 
                 SELECT 
                     a.id,
@@ -390,7 +315,7 @@ async function fetchBreakingData() {
                 
                 INNER JOIN processes AS b ON a.process_code = b.process_code
                 WHERE a.created_at >= @startDate
-                AND NOT EXISTS (
+               AND NOT EXISTS (
                     SELECT 1
                     FROM [100.100.2.39].[BOM].[dbo].[queue_status] 
                     WHERE [record_id] = a.id 
@@ -428,7 +353,7 @@ async function fetchDeboningData() {
                 FROM deboned_data AS a
                 INNER JOIN processes AS b ON a.process_code = b.process_code 
                 WHERE a.created_at >= @startDate 
-                  AND a.process_code NOT IN (0, 1) 
+                  AND a.process_code NOT IN (0, 1)
                   AND a.product_type <>3
                   AND NOT EXISTS (
                       SELECT 1 
@@ -446,6 +371,49 @@ async function fetchDeboningData() {
     }
 }
 
+
+
+
+async function fetchTransferData(fromLocation, toLocation) {
+    try {
+        const formattedStartDate = start_date; // Use the global `start_date` as is
+
+        const query = `
+            SELECT id
+                ,product_code
+                ,location_code AS transfer_to
+                ,transfer_from
+                ,receiver_total_pieces
+                ,receiver_total_weight
+                ,received_by
+                ,created_at
+            FROM idt_transfers
+            WHERE created_at >= '${formattedStartDate}'
+            AND transfer_from = '${fromLocation}'
+            AND location_code = '${toLocation}'
+            AND receiver_total_weight > 0
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM [100.100.2.39].[BOM].[dbo].[queue_status]
+                WHERE [record_id] = idt_transfers.id 
+                AND [table_name] = 'idt_transfers'
+            )
+        `;
+
+        // console.log('Executing Query:', query);
+
+        const result = await pool.request()
+            .input('startDate', sql.Date, formattedStartDate)
+            .input('fromLocation', sql.VarChar, fromLocation)
+            .input('toLocation', sql.VarChar, toLocation)
+            .query(query);
+
+        return result.recordset;
+    } catch (error) {
+        console.error('Error fetching transfer data:', error.message);
+        throw error;
+    }
+}
 
 
 
@@ -514,36 +482,28 @@ function mapDeboningData(data) {
     }));
 }
 
-// Publish transfer data to RabbitMQ
-async function publishTransferDataToQueue(data) {
-    let connection, channel;
-    try {
-        connection = await amqp.connect(RABBITMQ_URL);
-        channel = await connection.createChannel();
 
-        await channel.assertExchange(EXCHANGE_NAME, "direct", { 
-            durable: true,
-        });
-
-        const routingKey = 'production_data_transfer.bc';
-
-        for (const message of data) {
-            await channel.publish(
-                EXCHANGE_NAME,
-                routingKey,
-                Buffer.from(JSON.stringify(message)),
-                { persistent: true },
-            );
-
-            console.log(`Published transfer data for id: ${message.id}`);
-        }
-    } catch (err) {
-        console.error("RabbitMQ publish error:", err.message);
-    } finally {
-        if (channel) await channel.close();
-        if (connection) await connection.close();
-    }
+function mapTransferData(data, companyName = "FCL") {
+    return data.map(transfer => ({
+        product_code: transfer.product_code,
+        receiver_total_pieces: transfer.receiver_total_pieces,
+        receiver_total_weight: transfer.receiver_total_weight,
+        transfer_from: transfer.transfer_from,
+        transfer_to: transfer.transfer_to,
+        created_at: transfer.created_at,
+        received_by: transfer.received_by,
+        production_date: null, // Placeholder for missing data
+        // with_variance: null,   // Placeholder for missing data
+        timestamp: transfer.created_at.toISOString(), // Ensure the timestamp is in ISO format
+        id: transfer.id.toString(), // Convert id to string if needed
+        company_name: companyName
+    }));
 }
+
+
+
+// Publish transfer data to RabbitMQ
+
 
 // Publish sales data to RabbitMQ
 async function publishSalesDataToQueue(data) {
@@ -610,7 +570,9 @@ async function publishBeheadingDataToQueue(data) {
             
             
            // Determine the table_name based on the data
-            const table_name = message.process_code > 1 ? 'beheading_data' : 'deboned_data';
+            //   console.log(message);
+
+            const table_name = ['G1030', 'G1031', 'G1032', 'G1033'].includes(message.item_code) ? 'beheading_data' : 'deboned_data';
 
             // Insert data for this specific message
             await insertDataAfterPublishing(routingKey, [message], table_name);
@@ -694,6 +656,41 @@ async function publishDeboningDataToQueue(data) {
     }
 }
 
+async function publishTransferDataToQueue(data, routingKey, queueName) {
+    let connection, channel;
+    try {
+        connection = await amqp.connect(RABBITMQ_URL);
+        channel = await connection.createChannel();
+
+        await channel.assertExchange(EXCHANGE_NAME, "direct", { 
+            durable: true,
+        });
+
+        for (const message of data) {
+            await channel.publish(
+                EXCHANGE_NAME,
+                routingKey,
+                Buffer.from(JSON.stringify(message)),
+                { persistent: true },
+            );
+
+            console.log(`Published sales data for id: ${message.id} with routing key: ${routingKey}`);
+        }
+
+        // Insert data after successful publishing
+        try {
+            const result = await insertDataAfterPublishing(queueName, data, 'idt_transfers');
+            console.log('Data inserted into queue_status:', result);
+        } catch (error) {
+            console.error('Error inserting data:', error.message);
+        }
+    } catch (err) {
+        console.error("RabbitMQ publish error:", err.message);
+    } finally {
+        if (channel) await channel.close();
+        if (connection) await connection.close();
+    }
+}
 
 
 export const publishChoppingData = async () => {
@@ -709,8 +706,6 @@ export const publishChoppingData = async () => {
         console.error("Error in publishChoppingData:", err.message);
     }
 };
-
-
 
 
 
@@ -747,52 +742,90 @@ export const publishDeboningData = async () => {
 
 }
 
+export const publishMincing = async () => {
+        const mincingData = await fetchTransferData('1570', '2055');
+        const mappedMincingData = mapTransferData(mincingData);
+        await publishTransferDataToQueue(mappedMincingData,'production_data_order_mincing.bc','mincing');
+        console.log("Mincing data published to RabbitMQ successfully!");
+}
 
 
-//insertdataAfterPublishing
-// prefix [FCL-WMS].[calibra].[dbo]
-// queue_name
 
 export const insertDataAfterPublishing = async (queue_name, data, table_name) => {
+    // Get the ids and prepare values for batch insert
     if (data.length > 0) {
         const ids = data.map(row => row.id);
         const tablePrefix = '[FCL-WMS].[calibra].[dbo]';
         const queueTable = '[100.100.2.39].[BOM].[dbo].[queue_status]';
         const batchSize = 1000; // Maximum allowed number of rows per batch
 
+        // Split data into batches of 1000 rows or less
         for (let i = 0; i < ids.length; i += batchSize) {
-            const batch = ids.slice(i, i + batchSize);
+            const batch = ids.slice(i, i + batchSize); // Get the current batch
             const values = batch
-                .map(id => `(${id}, '${tablePrefix}.${table_name}', '${queue_name}', 'published')`)
+                .map(id =>`(${id}, '${tablePrefix}.${table_name}', '${queue_name}', 'published')`)
                 .join(', ');
 
-            const query = `
+            
+            const query =` 
                 INSERT INTO ${queueTable} (record_id, table_name, queue_name, status)
-                SELECT record_id, table_name, queue_name, status
-                FROM (VALUES ${values}) AS temp (record_id, table_name, queue_name, status)
-                WHERE NOT EXISTS (
-                    SELECT 1 
-                    FROM ${queueTable} 
-                    WHERE ${queueTable}.record_id = temp.record_id
-                      AND ${queueTable}.table_name = temp.table_name
-                      AND ${queueTable}.queue_name = temp.queue_name
-                      AND ${queueTable}.status = temp.status
-                );
-            `;
+                VALUES ${values}`;
+            ;
 
             console.log(`Executing batch ${Math.floor(i / batchSize) + 1}...`);
             console.log(query);
 
+            // Execute the batch insert query
             try {
                 await pool.request().query(query);
                 console.log(`Batch ${Math.floor(i / batchSize) + 1} inserted successfully`);
             } catch (err) {
-                console.error(`Error inserting batch ${Math.floor(i / batchSize) + 1}:`, err.message);
+                console.error(`Error inserting batch ${Math.floor(i / batchSize) + 1}:, err.message`);
                 throw err;
             }
         }
     }
 };
+
+// export const insertDataAfterPublishing = async (queue_name, data, table_name) => {
+//     if (data.length > 0) {
+//         const ids = data.map(row => row.id);
+//         const tablePrefix = '[FCL-WMS].[calibra].[dbo]';
+//         const queueTable = '[100.100.2.39].[BOM].[dbo].[queue_status]';
+//         const batchSize = 1000; // Maximum allowed number of rows per batch
+
+//         for (let i = 0; i < ids.length; i += batchSize) {
+//             const batch = ids.slice(i, i + batchSize);
+//             const values = batch
+//                 .map(id => `(${id}, '[100.100.2.39].[BOM].[dbo].[queue_status].${table_name}', '${queue_name}', 'published')`)
+//                 .join(', ');
+
+//             const query = `
+//                 INSERT INTO [100.100.2.39].[BOM].[dbo].[queue_status]  (record_id, table_name, queue_name,status)
+//                 SELECT record_id, table_name, queue_name,status
+//                 FROM (VALUES ${values}) AS temp (record_id, table_name, queue_name,status)
+//                 WHERE NOT EXISTS (
+//                     SELECT 1 
+//                     FROM  [100.100.2.39].[BOM].[dbo].[queue_status] 
+//                     WHERE record_id = temp.record_id
+//                       AND table_name = temp.table_name
+                     
+//                 );
+//             `;
+
+//             console.log(`Executing batch ${Math.floor(i / batchSize) + 1}...`);
+//             console.log(query);
+
+//             try {
+//                 await pool.request().query(query);
+//                 console.log(`Batch ${Math.floor(i / batchSize) + 1} inserted successfully`);
+//             } catch (err) {
+//                 console.error(`Error inserting batch ${Math.floor(i / batchSize) + 1}:`, err.message);
+//                 throw err;
+//             }
+//         }
+//     }
+// };
 
 
 
