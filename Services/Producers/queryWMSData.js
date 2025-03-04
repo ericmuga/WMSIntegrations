@@ -8,6 +8,7 @@ import { getPool } from "../../config/default.js";
 import xlsx from 'xlsx';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { table } from "console";
 
 
 const pool = await getPool('wms');
@@ -275,6 +276,8 @@ async function fetchBeheadingData() {
                 FROM deboned_data AS a
                 INNER JOIN processes AS b ON a.process_code = b.process_code
                 WHERE a.created_at >= @startDate
+              
+                AND a.item_code in ('G1242','G1243','G1236','G1235','G1234','G1238','G1229','G1251','G1228','G1286','G1225')
                 AND a.process_code IN (0, 1)
                 AND NOT EXISTS (
                     SELECT 1 
@@ -572,7 +575,7 @@ async function publishBeheadingDataToQueue(data) {
            // Determine the table_name based on the data
             //   console.log(message);
 
-            const table_name = ['G1030', 'G1031', 'G1032', 'G1033'].includes(message.item_code) ? 'beheading_data' : 'deboned_data';
+           const table_name = ['G1030', 'G1031', 'G1032', 'G1033'].includes(message.item_code) ? 'beheading_data' : 'deboned_data';
 
             // Insert data for this specific message
             await insertDataAfterPublishing(routingKey, [message], table_name);

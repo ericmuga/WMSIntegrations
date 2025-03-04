@@ -6,7 +6,7 @@ export const consumeBreakingData = async () => {
     const queueName = 'production_data_order_breaking.bc';
     const exchange = 'fcl.exchange.direct';
     const routingKey = 'production_data_order_breaking.bc';
-    const batchSize = 50; // Set batch size here
+    const batchSize = 100; // Set batch size here
     const timeout = 5000; // Timeout in milliseconds (e.g., 2 seconds)
 
     const queueOptions = {

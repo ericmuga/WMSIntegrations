@@ -197,12 +197,24 @@ export const processLookup = [
     "production_order_series": "P08",
     "process_loss": 0.01
   },
+  
   {
     "process_code": 8,
     "shortcode": "SL",
     "process_name": "Slicing parts for slices, portion",
     "intake_item": "G1122",
     "output_item": "G1147",
+    "input_location": "1570",
+    "output_location": "1570",
+    "production_order_series": "P08",
+    "process_loss": 0.01
+  },
+  {
+    "process_code": 8,
+    "shortcode": "SL",
+    "process_name": "Slicing parts for slices, portion",
+    "intake_item": "G1242",
+    "output_item": "G1326",
     "input_location": "1570",
     "output_location": "1570",
     "production_order_series": "P08",

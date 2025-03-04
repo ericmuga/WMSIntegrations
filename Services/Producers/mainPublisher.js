@@ -16,6 +16,7 @@ const mainPublisher =(async ()=>{
 
   try{
          publishCarcassSalesData();
+         //not awaiting..
          publishBeheadingData ();
          publishBreakingData();
          publishDeboningData();

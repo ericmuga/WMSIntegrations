@@ -38,7 +38,7 @@ export const consumeDeboningData = async () => {
                     if (msg) {
                         try {
                             const deboningData = JSON.parse(msg.content.toString());
-                            logger.info(`Received deboning data: ${JSON.stringify(deboningData)}`);
+                            // logger.info(`Received deboning data: ${JSON.stringify(deboningData)}`);
 
                             const transformedData = transformData(deboningData);
 

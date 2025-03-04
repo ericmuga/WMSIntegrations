@@ -196,8 +196,8 @@ app.get('/fetch-production-orders', async (req, res) => {
     // Consume data from queues
     // const carcassSales = await consumeCarcassSales();
     // const beheadingData = await consumeBeheadingData();
-    const breakingData = await consumeBreakingData();
-    // const deboningData = await consumeDeboningData();
+    // const breakingData = await consumeBreakingData();
+    const deboningData = await consumeDeboningData();
     // const mincingFromButchery = await consume1570_2055();
     // const choppingData = await consumechoppingData();
     // const consumeButcheryPackingData = await processButcheryPackingQueue();
@@ -207,8 +207,8 @@ app.get('/fetch-production-orders', async (req, res) => {
     let productionOrders = mergeProductionOrders(
           // carcassSales,
           // beheadingData,
-          breakingData,
-          // deboningData,
+          // breakingData,
+          deboningData,
           // mincingFromButchery,
           // choppingData
 
