@@ -1,6 +1,6 @@
 import amqp from 'amqplib';
 import { rabbitmqConfig } from '../../config/default.js';
-
+import { getRabbitMQConnection } from '../../config/default.js';
 async function queueExists(channel, queueName) {
     try {
         await channel.checkQueue(queueName);
@@ -100,3 +100,32 @@ export async function deleteRabbitMQQueue(queueName) {
         throw error;
     }
 }
+
+
+
+export async function fetchProductionOrdersFromQueue(batchSize = 100) {
+    const connection = await getRabbitMQConnection();
+    const channel = await connection.createChannel();
+
+    await channel.assertQueue('production_orders.bc', { durable: true,arguments: {
+            'x-dead-letter-exchange': 'fcl.exchange.dlx',
+            'x-dead-letter-routing-key': 'production_orders.bc',
+        }, });
+
+    const orders = [];
+
+    for (let i = 0; i < batchSize; i++) {
+        const msg = await channel.get('production_orders.bc', { noAck: false });
+        if (!msg) break;
+
+        const content = JSON.parse(msg.content.toString());
+        orders.push(content);
+        // channel.ack(msg);
+    }
+
+    await channel.close();
+    return orders;
+}
+
+
+
