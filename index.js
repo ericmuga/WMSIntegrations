@@ -84,7 +84,7 @@ app.get('/fetch-production-orders', async (req, res) => {
     try {
         const limit = parseInt(req.query.limit || '100');
         const orders = await fetchProductionOrdersFromQueue(limit);
-        res.json({ success: true, data: orders });
+        res.json([orders ]);
     } catch (err) {
         console.error(err);
         res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
@@ -203,7 +203,7 @@ app.post('/master-data', async (req, res) => {
 
 
 // Start the server
-const port = 4000;
+const port = 3001;
 app.listen(port, () => {
   logger.info(`API running at http://localhost:${port}`);
 });
