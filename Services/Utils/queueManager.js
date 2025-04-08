@@ -120,7 +120,7 @@ export async function fetchProductionOrdersFromQueue(batchSize = 100) {
 
         const content = JSON.parse(msg.content.toString());
         orders.push(content);
-        // channel.ack(msg);
+        channel.ack(msg);
     }
 
     await channel.close();
