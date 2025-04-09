@@ -140,7 +140,7 @@ app.post('/print-receipt', async (req,res) => {
 
 });
 
-app.post('/print-delivery-note', async (req,res) => {
+app.post('/print-delivery', async (req,res) => {
   //console.log(req)
   logger.info(`Received print delivery-note request: ${JSON.stringify(req.body)}`);
   // await pushToPickAndPack(req.body);
