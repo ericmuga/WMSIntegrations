@@ -131,6 +131,33 @@ app.get('/fetch-slaughter-data', async (req, res) => {
 });
 
 
+app.post('/print-receipt', async (req,res) => {
+  //console.log(req)
+  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+  // await pushToPickAndPack(req.body);
+  // initPrinting(req.body);
+  return res.status(201).json({ message: 'success' });
+
+});
+
+app.post('/print-delivery-note', async (req,res) => {
+  //console.log(req)
+  logger.info(`Received print delivery-note request: ${JSON.stringify(req.body)}`);
+  // await pushToPickAndPack(req.body);
+  // initPrinting(req.body);
+  return res.status(201).json({ message: 'success' });
+
+});
+
+app.post('/print-invoice', async (req,res) => {
+  //console.log(req)
+  logger.info(`Received print invoice request: ${JSON.stringify(req.body)}`);
+  // await pushToPickAndPack(req.body);
+  // initPrinting(req.body);
+  return res.status(201).json({ message: 'success' });
+
+});
+
 app.post('/print-order', async (req,res) => {
   //console.log(req)
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
