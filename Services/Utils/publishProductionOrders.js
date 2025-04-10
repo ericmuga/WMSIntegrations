@@ -13,6 +13,11 @@ export async function fetchAndPublishProductionOrders() {
     `);
 
     const rows = result.recordset;
+//save the production order no for later updating as published
+    const productionOrderNos = rows.map(row => row.ProductionOrderNo);
+    const productionOrderNosString = productionOrderNos.join(',');
+   
+
     const groupedOrders = {};
 
    rows.forEach(row => {
@@ -87,21 +92,28 @@ export async function fetchAndPublishProductionOrders() {
         );
         console.log(',');
         // console.log(`Published order ${order.production_order_no} to queue`);
+    
+    
     }
+
+     await pool.request().query(`
+        UPDATE [calibra].[dbo].[ProductionData] SET Published = 1 WHERE ProductionOrderNo IN (${productionOrderNosString})  
+    `);
+    // console.log(`Updated ${rows.length} production orders as published`);
    await channel.close();
     return orders.length;
 }
 
-const count = await fetchAndPublishProductionOrders();
-        console.log(`Published ${count} production orders to RabbitMQ`);
-
-// setInterval(async () => {
-//     try {
-//         const count = await fetchAndPublishProductionOrders();
+// const count = await fetchAndPublishProductionOrders();
 //         console.log(`Published ${count} production orders to RabbitMQ`);
-//     } catch (error) {
-//         console.error(`Error publishing production orders: ${error.message}`);
-//     }
-// }, 10000); // every 10 seconds
+
+setInterval(async () => {
+    try {
+        const count = await fetchAndPublishProductionOrders();
+        console.log(`Published ${count} production orders to RabbitMQ`);
+    } catch (error) {
+        console.error(`Error publishing production orders: ${error.message}`);
+    }
+}, 60000); // every 10 seconds
 
 // setInterval(async () => {
