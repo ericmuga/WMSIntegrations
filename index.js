@@ -82,7 +82,7 @@ app.get('/fetch-return-orders', (req, res) => {
 // GET /consume?limit=50 -> pulls from queue
 app.get('/fetch-production-orders', async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit || '60');
+        const limit = parseInt(req.query.limit || '150');
         const orders = await fetchProductionOrdersFromQueue(limit);
         res.json(orders );
     } catch (err) {
