@@ -9,7 +9,7 @@ const queueName = 'production_orders.bc';
 export async function fetchAndPublishProductionOrders() {
     const pool = await getPool('wms'); // calibra
     const result = await pool.request().query(`
-        SELECT * FROM [calibra].[dbo].[ProductionData] WHERE Published = 0
+        SELECT * FROM [calibra].[dbo].[ProductionData] WHERE Published = 0 and [DateTime] >= DATEADD(d,-2,DATEDIFF(d,0,GETDATE()))
     `);
 
     const rows = result.recordset;
