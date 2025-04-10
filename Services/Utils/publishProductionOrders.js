@@ -90,17 +90,20 @@ export async function fetchAndPublishProductionOrders() {
                 contentType: 'application/json',
             }
         );
-        console.log(',');
+        // console.log(',');
         // console.log(`Published order ${order.production_order_no} to queue`);
     
     
     }
 
-     await pool.request().query(`
-        UPDATE [calibra].[dbo].[ProductionData] SET Published = 1 WHERE ProductionOrderNo IN (${productionOrderNosString})  
-    `);
+     
     // console.log(`Updated ${rows.length} production orders as published`);
    await channel.close();
+
+   await pool.request().query(`
+        UPDATE [calibra].[dbo].[ProductionData] SET Published = 1 WHERE ProductionOrderNo IN (${productionOrderNosString})  
+    `);
+    
     return orders.length;
 }
 
@@ -114,6 +117,7 @@ setInterval(async () => {
     } catch (error) {
         console.error(`Error publishing production orders: ${error.message}`);
     }
-}, 60000); // every 10 seconds
+},300000); // every 5 minutes
+
 
 // setInterval(async () => {
