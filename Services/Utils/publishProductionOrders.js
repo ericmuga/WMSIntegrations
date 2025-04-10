@@ -1,5 +1,3 @@
-
-// setInterval(async () => {
 import { getPool } from '../../config/default.js';
 import { getRabbitMQConnection } from '../../config/default.js';
 import { roundTo4Decimals } from '../utils/utilities.js';
@@ -17,8 +15,14 @@ export async function fetchAndPublishProductionOrders() {
     `);
 
     const rows = result.recordset;
-    const productionOrderNos = rows.map(row => row.ProductionOrderNo);
 
+    // ✅ Early exit if no records to publish
+    if (!rows || rows.length === 0) {
+        logger.info('No new production orders found to publish.');
+        return 0;
+    }
+
+    const productionOrderNos = rows.map(row => row.ProductionOrderNo);
     const groupedOrders = {};
 
     rows.forEach(row => {
@@ -86,10 +90,8 @@ export async function fetchAndPublishProductionOrders() {
     }
 
     logger.info(`Published ${rows.length} production orders to RabbitMQ`);
-
     await channel.close();
 
-    // Bonus: Only update if there are orders to mark as published
     if (productionOrderNos.length > 0) {
         const productionOrderNosString = productionOrderNos.map(no => `'${no}'`).join(',');
         await pool.request().query(`
@@ -120,4 +122,4 @@ setInterval(async () => {
     } catch (error) {
         console.error(`Error publishing production orders: ${error.message}`);
     }
-}, 120000); // 2 minutes
+}, 120000);
