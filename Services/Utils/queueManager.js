@@ -1,6 +1,8 @@
 import amqp from 'amqplib';
 import { rabbitmqConfig } from '../../config/default.js';
 import { getRabbitMQConnection } from '../../config/default.js';
+import logger from '../../logger.js';
+
 async function queueExists(channel, queueName) {
     try {
         await channel.checkQueue(queueName);
@@ -103,29 +105,73 @@ export async function deleteRabbitMQQueue(queueName) {
 
 
 
-export async function fetchProductionOrdersFromQueue(batchSize = 100) {
-    const connection = await getRabbitMQConnection();
-    const channel = await connection.createChannel();
 
-    await channel.assertQueue('production_orders.bc', { durable: true,arguments: {
-            'x-dead-letter-exchange': 'fcl.exchange.dlx',
-            'x-dead-letter-routing-key': 'production_orders.bc',
-        }, });
 
-    const orders = [];
+export const fetchProductionOrdersFromQueue = async (batchSize = 100) => {
+    const queueName = 'production_orders.bc';
+    const exchange = 'fcl.exchange.direct';
+    const routingKey = 'production_orders.bc';
 
-    for (let i = 0; i < batchSize; i++) {
-        const msg = await channel.get('production_orders.bc', { noAck: false });
-        if (!msg) break;
+    try {
+        const connection = await getRabbitMQConnection();
+        const channel = await connection.createChannel();
 
-        const content = JSON.parse(msg.content.toString());
-        orders.push(content);
-        channel.ack(msg);
+        await channel.assertExchange(exchange, 'direct', { durable: true });
+        await channel.assertQueue(queueName, {
+            durable: true,
+            arguments: {
+                'x-dead-letter-exchange': 'fcl.exchange.dlx',
+                'x-dead-letter-routing-key': routingKey,
+            },
+        });
+        await channel.bindQueue(queueName, exchange, routingKey);
+
+        channel.prefetch(batchSize);
+
+        const messages = [];
+
+        await new Promise((resolve) => {
+            channel.consume(
+                queueName,
+                (msg) => {
+                    if (msg) {
+                        try {
+                            const data = JSON.parse(msg.content.toString());
+                            messages.push(data);
+                            channel.ack(msg);
+
+                            if (messages.length >= batchSize) {
+                                resolve();
+                            }
+                        } catch (err) {
+                            logger.error(`Error parsing message: ${err.message}`);
+                            channel.nack(msg, false, false); // Move to DLQ
+                        }
+                    }
+                },
+                { noAck: false }
+            );
+
+            // Timeout to exit gracefully even if fewer messages are available
+            setTimeout(() => {
+                logger.info(`Timeout reached for queue: ${queueName}, fetched ${messages.length} messages.`);
+                resolve();
+            }, 5000); // 5 seconds
+        });
+
+        await channel.close();
+
+        if (messages.length === 0) {
+            logger.info(`No messages processed from queue: ${queueName}`);
+        }
+
+        return messages;
+    } catch (error) {
+        logger.error(`Error fetching production orders: ${error.message}`);
+        throw error;
     }
+};
 
-    await channel.close();
-    return orders;
-}
 
 
 
