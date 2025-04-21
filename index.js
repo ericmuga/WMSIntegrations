@@ -151,7 +151,7 @@ app.post('/print-delivery', async (req,res) => {
 });
 
 
-app.post('qr-code', async (req,res) => {
+app.post('qrcode', async (req,res) => {
 //response content type text/plain
   res.set('Content-Type', 'text/plain');
 
