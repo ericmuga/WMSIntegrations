@@ -226,7 +226,7 @@ app.post('/:user/print-delivery', async (req,res) => {
                             logger.info('Response from external API:', response.data);
             break;}
        case 'JMATHENGE': {
-        const response = await axios.post('http://100.100.4.57:3001/print-delivery', req.body);
+        const response = await axios.post('http://100.100.4.56:3001/print-delivery', req.body);
         logger.info('Response from external API:', response.data);
         break;
       }
@@ -254,7 +254,7 @@ app.post('/:user/print-delivery', async (req,res) => {
       case 'sales':
         logger.info(`Received print delivery request for sales: ${JSON.stringify(req.body)}`);
         break;
-        
+
       default:
         logger.warn(`Unknown user type: ${user}`);
         return res.status(400).json({ error: 'Invalid user type' });
