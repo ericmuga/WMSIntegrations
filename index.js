@@ -150,6 +150,14 @@ app.post('/print-delivery', async (req,res) => {
 
 });
 
+
+app.post('qr-code', async (req,res) => {
+//response content type text/plain
+  res.set('Content-Type', 'text/plain');
+
+  return res.status(200).json({ message: 'success' });
+})
+
 app.post('/:user/print-invoice', async (req,res) => {
 
 
@@ -157,13 +165,13 @@ app.post('/:user/print-invoice', async (req,res) => {
 
     switch (user) { 
       case 'DWANGARI':
-                      axios.post('http://100.100.2.152:3001/print-invoice', req.body)
+                      await axios.post('http://100.100.2.152:3001/print-invoice', req.body)
                             then(response => {
                                   logger.info('Response from external API:', response.data);
                                 });
             break;
     case 'JKIMANI':
-                      axios.post('http://100.100.4.57:3001/print-invoice', req.body)
+                      await axios.post('http://100.100.4.57:3001/print-invoice', req.body)
                             then(response => {
                                   logger.info('Response from external API:', response.data);
                                 });
