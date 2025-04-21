@@ -7,7 +7,10 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
     "watch": "nodemon index.js",
-    "printer": "node Services/printerService.js"
+    "printer": "node Services/printerService.js",
+    "manage-queue": "node scripts/manageQueue.js",
+    "cq": "npm run manage-queue setupRabbitMQQueue",
+    "dq": "npm run manage-queue delete"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +21,7 @@
     "async-mutex": "^0.5.0",
     "axios": "^1.7.7",
     "dayjs": "^1.11.13",
-    "dotenv": "^16.4.7",
+    "dotenv": "^16.5.0",
     "express": "^4.21.1",
     "fs": "^0.0.1-security",
     "jspdf": "^2.5.2",

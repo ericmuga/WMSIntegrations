@@ -28,6 +28,7 @@ import { processButcheryPackingQueue } from './Services/Consumers/consume1570_35
 import { getRawProductionOrders, markProductionOrdersAsProcessed } from './Services/Utils/dbUtils.js';
 
 import { fetchProductionOrdersFromQueue } from './Services/Utils/queueManager.js';
+import axios from 'axios';
 const app = express();
 app.use(express.json());
 
@@ -161,6 +162,12 @@ app.post('/print-invoice', async (req,res) => {
 app.post('/print-order', async (req,res) => {
   //console.log(req)
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+//call external API
+   axios.post('http://localhost:3000/print-order', req.body)
+  .then(response => {
+    logger.info('Response from external API:', response.data);
+  })
+
   // await pushToPickAndPack(req.body);
   // initPrinting(req.body);
   return res.status(201).json({ message: 'success' });
