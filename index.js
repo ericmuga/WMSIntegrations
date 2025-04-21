@@ -150,7 +150,38 @@ app.post('/print-delivery', async (req,res) => {
 
 });
 
-app.post('/print-invoice', async (req,res) => {
+app.post('/:user/print-invoice', async (req,res) => {
+
+
+    const { user } = req.params;
+
+    switch (user) { 
+      case 'DWANGARI':
+                      axios.post('http://100.100.2.152:3001/print-invoice', req.body)
+                            then(response => {
+                                  logger.info('Response from external API:', response.data);
+                                });
+            break;
+    case 'DWANGARI':
+                      axios.post('http://100.100.2.152:3001/print-invoice', req.body)
+                            then(response => {
+                                  logger.info('Response from external API:', response.data);
+                                });
+            break;
+
+
+        
+      case 'sales':
+        logger.info(`Received print invoice request for sales: ${JSON.stringify(req.body)}`);
+        break;
+      default:
+        logger.warn(`Unknown user type: ${user}`);
+        return res.status(400).json({ error: 'Invalid user type' });
+    }
+
+
+
+
   //console.log(req)
   logger.info(`Received print invoice request: ${JSON.stringify(req.body)}`);
   // await pushToPickAndPack(req.body);
@@ -163,7 +194,7 @@ app.post('/print-order', async (req,res) => {
   //console.log(req)
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
 //call external API
-   axios.post('http://localhost:3000/print-order', req.body)
+   await axios.post('http://localhost:3000/print-order', req.body)
   .then(response => {
     logger.info('Response from external API:', response.data);
   })
