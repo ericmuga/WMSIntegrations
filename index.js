@@ -142,45 +142,42 @@ app.post('/print-delivery', async (req,res) => {
 
 
 
-app.post('/:user/print-invoice', async (req,res) => {
 
 
-    const { user } = req.params;
+app.post('/:user/print-invoice', async (req, res) => {
+  const { user } = req.params;
 
-    switch (user) { 
-      case 'DWANGARI':
-                      await axios.post('http://100.100.2.152:3001/print-invoice', req.body)
-                            then(response => {
-                                  logger.info('Response from external API:', response.data);
-                                });
-            break;
-    case 'JKIMANI':
-                      await axios.post('http://100.100.4.57:3001/print-invoice', req.body)
-                            then(response => {
-                                  logger.info('Response from external API:', response.data);
-                                });
-            break;
+  try {
+    switch (user) {
+      case 'DWANGARI': {
+        const response = await axios.post('http://100.100.2.152:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
 
+      case 'JKIMANI': {
+        const response = await axios.post('http://100.100.4.57:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
 
-        
       case 'sales':
         logger.info(`Received print invoice request for sales: ${JSON.stringify(req.body)}`);
         break;
+
       default:
         logger.warn(`Unknown user type: ${user}`);
         return res.status(400).json({ error: 'Invalid user type' });
     }
 
+    return res.status(200).json({ message: 'success' });
 
-
-
-  //console.log(req)
-  logger.info(`Received print invoice request: ${JSON.stringify(req.body)}`);
-  // await pushToPickAndPack(req.body);
-  // initPrinting(req.body);
-  return res.status(201).json({ message: 'success' });
-
+  } catch (err) {
+    logger.error('Error posting invoice:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
+  }
 });
+
 
 
 
