@@ -1,6 +1,6 @@
 // rabbitmqTracker.js
 // import amqp from 'amqplib';
-import { getRabbitMQConnection } from './config/rabbitConfig.js';
+import { getRabbitMQConnection } from '../config/rabbitConfig.js';
 
 const QUEUE_NAME = 'bot_order_last_line';
 
