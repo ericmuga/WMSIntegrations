@@ -162,8 +162,8 @@ app.post('/:user/print-invoice', async (req,res) => {
                                   logger.info('Response from external API:', response.data);
                                 });
             break;
-    case 'DWANGARI':
-                      axios.post('http://100.100.2.152:3001/print-invoice', req.body)
+    case 'JKIMANI':
+                      axios.post('http://100.100.4.57:3001/print-invoice', req.body)
                             then(response => {
                                   logger.info('Response from external API:', response.data);
                                 });
