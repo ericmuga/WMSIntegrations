@@ -5,27 +5,15 @@ import logger from './logger.js';
 
 
 import { generateOrders } from './Services/fetchPortalOrders.js';
+import { fetchGroupedOrdersWithIntegrity } from './Services/fetchBOTOrders.js';
 
-import { groupOrdersByExtDocNo } from './Services/fetchBOTOrders.js';
 import { generateTransferOrders } from './Services/transferOrderGenerator.js';
 import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
 import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
-import { consumeBeheadingData} from './Services/Consumers/consumeBeheadingQueue.js';
-import { consumeCarcassSales } from './Services/Consumers/consumeCarcassSales.js';
-import { consumeBreakingData } from './Services/Consumers/consumeBreakingQueue.js';
-import { consumeDeboningData } from './Services/Consumers/consumeDeboningQueue.js';
-import { consumechoppingData } from './Services/Consumers/consumeChoppingData.js';
-import { initPrinting } from './Services/printerService.js'
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
-import { generateMtn,generateResponse } from './Services/QRCode.js';
-import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
-import {processSausageQueue } from './Services/Consumers/consumeSausages.js';
-import { pushToPickAndPack } from './Services/Utils/insertIntoPP.js';
-import {processContinentalsQueue} from './Services/Consumers/consumeContinentals.js';
-import { processButcheryPackingQueue } from './Services/Consumers/consume1570_3535.js';
-import { getRawProductionOrders, markProductionOrdersAsProcessed } from './Services/Utils/dbUtils.js';
+import { generateResponse } from './Services/QRCode.js';
 
 import { fetchProductionOrdersFromQueue } from './Services/Utils/queueManager.js';
 import axios from 'axios';
@@ -99,14 +87,16 @@ app.get('/fetch-item-journals',async(req,res)=>{
 
 app.get('/fetch-portal-orders', (req, res) => res.json(generateOrders(3, 5)));
 app.get('/fetch-portal-invoices', (req, res) => res.json(generateInvoices(3, 5)));
+
+
 app.get('/fetch-bot-orders', async (req, res) => {
-  try {
-    const groupedOrders = await groupOrdersByExtDocNo();
-    res.json(groupedOrders);
-  } catch (error) {
-    logger.error(`Error fetching BOT orders: ${error.message}`);
-    res.status(500).json({ error: 'Failed to fetch BOT orders' });
-  }
+  const today = new Date().toISOString().split('T')[0];
+
+  fetchGroupedOrdersWithIntegrity({ query: { company: 'FCL', received_date: today } })
+    .then((result) => res.json(result))
+    .catch((error) => console.error('Error:', error.message));
+
+
 });
 
 app.get('/fetch-transfer-orders', (req, res) => {

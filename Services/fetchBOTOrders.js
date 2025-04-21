@@ -85,7 +85,7 @@ export const fetchGroupedOrdersWithIntegrity = async (req) => {
   const apiKey = process.env.BOT_ORDERS_KEY;
 
   let from = await getLastFetchedLine(receivedDate) || 1;
-  const batchSize = 100;
+  const batchSize = 200;
 
   let to = from + batchSize - 1;
   const fetched = await fetchBOTOrders({ apiKey, company, receivedDate, from, to });
@@ -112,12 +112,12 @@ export const fetchGroupedOrdersWithIntegrity = async (req) => {
 
   const grouped = groupOrders(trimmedFetched);
   await setLastFetchedLine(receivedDate, to + 1);
-
+   
+ logger.info(`Fetched ${trimmedFetched.length} orders from ${from} to ${to}`);
+  logger.info(`Last fetched line for ${receivedDate} is now ${to + 1}`);
   return grouped;
 };
 
-
-// Same grouping logic as before
 const groupOrders = (data) => {
   const ordersMap = {};
   data.forEach((item) => {
@@ -150,3 +150,4 @@ const groupOrders = (data) => {
   return Object.values(ordersMap);
 };
 
+// Define 'today' as the current date in YYYY-MM-DD format
