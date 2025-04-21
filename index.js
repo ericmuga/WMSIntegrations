@@ -229,6 +229,12 @@ app.post('/:user/print-delivery', async (req,res) => {
         break;
       }
 
+      case 'EMUGA': {
+        const response = await axios.post('http://100.100.4.57:3001/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
       case 'AMWAI': {
         const response = await axios.post('http://100.100.4.56:3001/print-delivery', req.body);
         logger.info('Response from external API:', response.data);
