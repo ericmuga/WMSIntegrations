@@ -194,7 +194,7 @@ app.post('/print-order', async (req,res) => {
   //console.log(req)
   logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
 //call external API
-   await axios.post('http://localhost:4500/print-order', req.body)
+   await axios.post('http://100.100.2.39:3000/print-order', req.body)
   .then(response => {
     logger.info('Response from external API:', response.data);
   })
