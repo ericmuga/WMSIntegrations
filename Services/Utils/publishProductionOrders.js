@@ -139,6 +139,8 @@ export async function fetchAndPublishSlaughterData() {
             classification_code: row.classification_code,
             manual_weight: row.manual_weight,
             user_id: row.user_id,
+            company_name:'FCL',
+            timestamp: row.created_at,
         }]);
 
         await channel.publish(
@@ -181,8 +183,8 @@ export async function fetchAndPublishSlaughterData() {
 // Schedule every 2 minutes
 setInterval(async () => {
     try {
-        const productionCount = await fetchAndPublishProductionOrders();
-        console.log(`Published ${productionCount} production orders to RabbitMQ`);
+        // const productionCount = await fetchAndPublishProductionOrders();
+        // console.log(`Published ${productionCount} production orders to RabbitMQ`);
 
         const slaughterCount = await fetchAndPublishSlaughterData();
         console.log(`Published ${slaughterCount} slaughter data to RabbitMQ`);
