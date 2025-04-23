@@ -3,8 +3,6 @@ import { getRabbitMQConnection } from '../../config/default.js';
 import { roundTo4Decimals } from '../utils/utilities.js';
 import logger from '../../logger.js';
 
-const queueName = 'production_orders.bc';
-
 export async function fetchAndPublishProductionOrders() {
     const pool = await getPool('wms');
 
@@ -71,6 +69,7 @@ export async function fetchAndPublishProductionOrders() {
 
     const connection = await getRabbitMQConnection();
     const channel = await connection.createChannel();
+    const queueName = 'production_orders.bc';
     await channel.assertExchange('fcl.exchange.direct', 'direct', { durable: true });
 
     const orders = Object.values(groupedOrders);
@@ -104,22 +103,91 @@ export async function fetchAndPublishProductionOrders() {
     return orders.length;
 }
 
+export async function fetchAndPublishSlaughterData() {
+    const pool = await getPool('wms');
+
+    const result = await pool.request().query(`
+        SELECT * FROM [calibra].[dbo].[slaughter_data] 
+        WHERE Published = 0 
+        AND [created_at] >= DATEADD(d, -2, DATEDIFF(d, 0, GETDATE()))
+    `);
+
+    const rows = result.recordset;
+
+    if (!rows || rows.length === 0) {
+        logger.info('No new slaughter data found to publish.');
+        return 0;
+    }
+
+    const connection = await getRabbitMQConnection();
+    const channel = await connection.createChannel();
+    const queueName = 'slaughter_line.bc'; // Replace this with your actual routing key
+    await channel.assertExchange('fcl.exchange.direct', 'direct', { durable: true });
+
+    for (const row of rows) {
+        const payload = JSON.stringify([{
+            id: row.id,
+            slapmark: row.slapmark,
+            receipt_no: row.receipt_no,
+            item_code: row.carcass_type,
+            vendor_no: row.vendor_no,
+            vendor_name: row.vendor_name,
+            actual_weight: row.reading,
+            net_weight: row.net,
+            settlement_weight: row.settlement_weight,
+            meat_percent: row.meat_percent,
+            classification_code: row.classification_code,
+            manual_weight: row.manual_weight,
+            user_id: row.user_id,
+        }]);
+
+        await channel.publish(
+            'fcl.exchange.direct',
+            queueName,
+            Buffer.from(payload),
+            {
+                persistent: true,
+                contentType: 'application/json',
+            }
+        );
+    }
+
+    logger.info(`Published ${rows.length} slaughter data to RabbitMQ`);
+    await channel.close();
+
+    const slaughterDataIds = rows.map(row => row.id).join(',');
+    await pool.request().query(`
+        UPDATE [calibra].[dbo].[slaughter_data] 
+        SET Published = 1 
+        WHERE id IN (${slaughterDataIds})
+    `);
+
+    return rows.length;
+}
+
 // Run once on launch
 (async () => {
     try {
-        const count = await fetchAndPublishProductionOrders();
-        console.log(`Published ${count} production orders to RabbitMQ`);
+        const productionCount = await fetchAndPublishProductionOrders();
+        console.log(`Published ${productionCount} production orders to RabbitMQ`);
+
+        const slaughterCount = await fetchAndPublishSlaughterData();
+        console.log(`Published ${slaughterCount} slaughter data to RabbitMQ`);
     } catch (error) {
-        console.error(`Error publishing production orders: ${error.message}`);
+        console.error(`Error publishing data: ${error.message}`);
     }
 })();
 
-// Schedule every 5 minutes
+// Schedule every 2 minutes
 setInterval(async () => {
     try {
-        const count = await fetchAndPublishProductionOrders();
-        console.log(`Published ${count} production orders to RabbitMQ`);
+        const productionCount = await fetchAndPublishProductionOrders();
+        console.log(`Published ${productionCount} production orders to RabbitMQ`);
+
+        const slaughterCount = await fetchAndPublishSlaughterData();
+        console.log(`Published ${slaughterCount} slaughter data to RabbitMQ`);
     } catch (error) {
-        console.error(`Error publishing production orders: ${error.message}`);
+        console.error(`Error publishing data: ${error.message}`);
     }
-}, 120000);
+}, 120000); // 2 minutes in ms
+
