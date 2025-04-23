@@ -183,8 +183,8 @@ export async function fetchAndPublishSlaughterData() {
 // Schedule every 2 minutes
 setInterval(async () => {
     try {
-        // const productionCount = await fetchAndPublishProductionOrders();
-        // console.log(`Published ${productionCount} production orders to RabbitMQ`);
+        const productionCount = await fetchAndPublishProductionOrders();
+        console.log(`Published ${productionCount} production orders to RabbitMQ`);
 
         const slaughterCount = await fetchAndPublishSlaughterData();
         console.log(`Published ${slaughterCount} slaughter data to RabbitMQ`);
