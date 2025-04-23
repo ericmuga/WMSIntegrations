@@ -123,10 +123,8 @@ app.get('/fetch-slaughter-data', async (req, res) => {
 
 
 app.post('/print-receipt', async (req,res) => {
-  //console.log(req)
-  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
-  // await pushToPickAndPack(req.body);
-  // initPrinting(req.body);
+   const response = await axios.post('http://100.100.4.51:3001/print-receipt', req.body);
+        logger.info('Printing Cash office receipt.Response from external API:', response.data);
   return res.status(201).json({ message: 'success' });
 
 });
