@@ -320,6 +320,20 @@ app.post('/print-order-export', async (req,res) => {
 
 });
 
+app.post('/print-cheque', async (req,res) => {
+  //console.log(req)
+  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+//call external API
+   await axios.post('http://100.100.4.50:3001/print-cheque', req.body)
+  .then(response => {
+    logger.info('Response from external API:', response.data);
+  })
+  return res.status(201).json({ message: 'success' });
+
+});
+
+
+
 
 app.post('/order-status', (req, res) => {
   logger.info(`Received order status update: ${JSON.stringify(req.body)}`);
