@@ -322,7 +322,7 @@ app.post('/print-order-export', async (req,res) => {
 
 app.post('/print-cheque', async (req,res) => {
   //console.log(req)
-  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+  logger.info(`Received print cheque request: ${JSON.stringify(req.body)}`);
 //call external API
    await axios.post('http://100.100.4.50:3001/print-cheque', req.body)
   .then(response => {
