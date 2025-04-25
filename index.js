@@ -129,14 +129,14 @@ app.post('/print-receipt', async (req,res) => {
 
 });
 
-app.post('/print-delivery', async (req,res) => {
-  //console.log(req)
-  logger.info(`Received print delivery-note request: ${JSON.stringify(req.body)}`);
-  // await pushToPickAndPack(req.body);
-  // initPrinting(req.body);
-  return res.status(201).json({ message: 'success' });
+// app.post('/print-delivery', async (req,res) => {
+//   //console.log(req)
+//   logger.info(`Received print delivery-note request: ${JSON.stringify(req.body)}`);
+//   // await pushToPickAndPack(req.body);
+//   // initPrinting(req.body);
+//   return res.status(201).json({ message: 'success' });
 
-});
+// });
 
 
 
@@ -194,6 +194,13 @@ app.post('/:user/print-invoice', async (req, res) => {
         break;
       }
 
+      case 'DWANZA': {
+         //SEND AN INVOICE VIA EMAIL
+
+        // const response = await axios.post('http://100.100.4.54:3001/print-invoice', req.body);
+        // logger.info('Response from external API:', response.data);
+        break;
+      }
        
 
       case 'sales':
@@ -266,6 +273,16 @@ app.post('/:user/print-delivery', async (req,res) => {
           const response = await axios.post('http://100.100.2.39:3001/print-delivery', req.body);
           logger.info('Response from external API:', response.data);
           break;
+        }
+
+
+      case 'DWANZA': {
+
+        //SEND DELIVERY VIA EMAIL
+        
+          // const response = await axios.post('http://100.100.2.39:3001/print-delivery', req.body);
+          // logger.info('Response from external API:', response.data);
+          // break;
         }
 
 
