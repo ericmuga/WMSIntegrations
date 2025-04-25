@@ -197,7 +197,7 @@ app.post('/:user/print-invoice', async (req, res) => {
       case 'DWANZA': {
          //SEND AN INVOICE VIA EMAIL
 
-        const response = await axios.post('http://100.100.2.59:3001/print-invoice', req.body);
+        const response = await axios.post('http://100.100.2.39:3001/print-invoice', req.body);
         logger.info('Response from external API:', response.data);
         break;
       }
