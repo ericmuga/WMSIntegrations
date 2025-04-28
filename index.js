@@ -203,7 +203,7 @@ app.post('/:user/print-invoice', async (req, res) => {
       case 'DWANZA': {
          //SEND AN INVOICE VIA EMAIL
 
-        const response = await axios.post('http://100.100.2.39:3001/print-invoice', req.body);
+        const response = await axios.post('http://100.100.2.54:3050/print-invoice', req.body);
         logger.info('Response from external API:', response.data);
         break;
       }
@@ -301,7 +301,7 @@ app.post('/:user/print-delivery', async (req,res) => {
 
         //SEND DELIVERY VIA EMAIL
         
-          const response = await axios.post('http://100.100.2.39:3001/print-delivery', req.body);
+          const response = await axios.post('http://100.100.2.54:3050/print-delivery', req.body);
           logger.info('Response from external API:', response.data);
           break;
         }
