@@ -195,13 +195,7 @@ app.post('/:user/print-invoice', async (req, res) => {
       }
 
       case 'JMBAE': {
-        const response = await axios.post('http://100.100.4.59:3001/print-invoice', req.body);
-        logger.info('Response from external API:', response.data);
-        break;
-      }
-
-      case 'FNDUNGU': {
-        const response = await axios.post('http://100.100.4.57:3001/print-invoice', req.body);
+        const response = await axios.post('http://100.100.4.56:3001/print-invoice', req.body);
         logger.info('Response from external API:', response.data);
         break;
       }
@@ -279,13 +273,7 @@ app.post('/:user/print-delivery', async (req,res) => {
 
       
       case 'JMBAE': {
-        const response = await axios.post('http://100.100.4.59:3001/print-delivery', req.body);
-        logger.info('Response from external API:', response.data);
-        break;
-      }
-
-      case 'FNDUNGU': {
-        const response = await axios.post('http://100.100.4.57:3001/print-delivery', req.body);
+        const response = await axios.post('http://100.100.4.56:3001/print-delivery', req.body);
         logger.info('Response from external API:', response.data);
         break;
       }
