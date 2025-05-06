@@ -370,6 +370,9 @@ app.post('/print-order', async (req,res) => {
   .then(response => {
     logger.info('Response from external API:', response.data);
   })
+  return res.status(201).json({ message: 'success' });
+
+});
 
   app.post('/print-order-cm', async (req,res) => {
   //console.log(req)
@@ -379,11 +382,12 @@ app.post('/print-order', async (req,res) => {
   .then(response => {
     logger.info('Response from external API:', response.data);
   })
-  // await pushToPickAndPack(req.body);
-  // initPrinting(req.body);
-  return res.status(201).json({ message: 'success' });
+   return res.status(201).json({ message: 'success' });
 
 });
+  // await pushToPickAndPack(req.body);
+  // initPrinting(req.body);
+ 
 
 app.post('/print-order-export', async (req,res) => {
   //console.log(req)
