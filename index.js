@@ -371,6 +371,14 @@ app.post('/print-order', async (req,res) => {
     logger.info('Response from external API:', response.data);
   })
 
+  app.post('/print-order-cm', async (req,res) => {
+  //console.log(req)
+  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+//call external API
+   await axios.post('http://100.100.4.61:3002/print-order', req.body)
+  .then(response => {
+    logger.info('Response from external API:', response.data);
+  })
   // await pushToPickAndPack(req.body);
   // initPrinting(req.body);
   return res.status(201).json({ message: 'success' });

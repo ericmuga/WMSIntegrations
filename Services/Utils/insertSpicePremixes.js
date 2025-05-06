@@ -45,6 +45,11 @@ async function processAndInsertData(filePath) {
         input_item_uom,
         input_item_qt_per,
         input_item_location,
+        process_code,
+        no_series,
+        routing,
+
+
       } = row;
 
       // Skip rows where `recipe` is blank
@@ -60,6 +65,10 @@ async function processAndInsertData(filePath) {
       const sanitizedOutputLocationCode = ensureString(output_item_location);
       const sanitizedInputItemCode = ensureString(input_item);
       const sanitizedInputLocationCode = ensureString(input_item_location);
+      const sanitizedProcessCode = ensureString(process_code);
+      const sanitizedNoSeries = ensureString(no_series);
+      const sanitizedRouting = ensureString(routing);
+
 
 
       // Insert the row only if it doesn't exist
@@ -80,7 +89,10 @@ async function processAndInsertData(filePath) {
           [input_item_desc],
           [input_item_uom],
           [input_item_qt_per],
-          [input_item_location]
+          [input_item_location],
+            [process_code],
+          [no_series],
+          [routing]
         )
         VALUES (
           @process,
@@ -94,7 +106,10 @@ async function processAndInsertData(filePath) {
           @input_item_desc,
           @input_item_uom,
           @input_item_qt_per,
-          @input_item_location
+          @input_item_location,
+          @process_code,
+          @no_series,
+          @routing
         );
       `;
 
@@ -111,6 +126,9 @@ async function processAndInsertData(filePath) {
         .input("input_item_uom", sql.NVarChar, input_item_uom)
         .input("input_item_qt_per", sql.Decimal(10, 4), input_item_qt_per)
         .input("input_item_location", sql.NVarChar, sanitizedInputLocationCode)
+        .input("process_code", sql.NVarChar, sanitizedProcessCode)
+        .input("no_series", sql.NVarChar, sanitizedNoSeries)
+        .input("routing", sql.NVarChar, sanitizedRouting)
         .query(query);
 
 
@@ -124,6 +142,6 @@ async function processAndInsertData(filePath) {
   }
 }
 // Example usage
-const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\ox.xlsx";
+const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\PSF.xlsx";
 console.log("File path:", filePath);
 processAndInsertData(filePath);
