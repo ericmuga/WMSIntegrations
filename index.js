@@ -233,6 +233,14 @@ app.post('/:user/print-invoice', async (req, res) => {
         logger.info('Response from external API:', response.data);
         break;
       }
+
+      case 'PKIONGO': {
+        //SEND AN INVOICE VIA EMAIL
+
+        const response = await axios.post('http://100.100.4.52:3002/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
        
        
 
@@ -342,17 +350,23 @@ app.post('/:user/print-delivery', async (req,res) => {
           logger.info('Response from external API:', response.data);
           break;
         }
-         case 'SWANYEKI': {
+      case 'SWANYEKI': {
 
-        //SEND DELIVERY VIA EMAIL
-        
-          const response = await axios.post('http://100.100.4.60:3002/print-delivery', req.body);
-          logger.info('Response from external API:', response.data);
-          break;
-        }
+      //SEND DELIVERY VIA EMAIL
+      
+        const response = await axios.post('http://100.100.4.60:3002/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
 
+      case 'PKIONGO': {
 
-
+      //SEND DELIVERY VIA EMAIL
+      
+        const response = await axios.post('http://100.100.4.52:3002/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
         
       case 'sales':
         logger.info(`Received print delivery request for sales: ${JSON.stringify(req.body)}`);
@@ -397,9 +411,18 @@ app.post('/print-order-cm', async (req,res) => {
    return res.status(201).json({ message: 'success' });
 
 });
-  // await pushToPickAndPack(req.body);
-  // initPrinting(req.body);
- 
+
+app.post('/print-order-cm2', async (req, res) => {
+  //console.log(req)
+  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+  //call external API
+  await axios.post('http://100.100.4.62:3002/print-order', req.body)
+    .then(response => {
+      logger.info('Response from external API:', response.data);
+    })
+  return res.status(201).json({ message: 'success' });
+
+});
 
 app.post('/print-order-export', async (req,res) => {
   //console.log(req)
