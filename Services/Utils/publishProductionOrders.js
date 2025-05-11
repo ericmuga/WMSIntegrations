@@ -109,7 +109,7 @@ export async function fetchAndPublishSlaughterData() {
     const result = await pool.request().query(`
         SELECT * FROM [calibra].[dbo].[slaughter_data] 
         WHERE Published = 0 
-        AND [created_at] >= DATEADD(d, -2, DATEDIFF(d, 0, GETDATE()))
+        AND [created_at] >= DATEADD(d, -4, DATEDIFF(d, 0, GETDATE()))
     `);
 
     const rows = result.recordset;

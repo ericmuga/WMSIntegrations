@@ -142,6 +142,6 @@ async function processAndInsertData(filePath) {
   }
 }
 // Example usage
-const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\PSF.xlsx";
+const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\Edith.xlsx";
 console.log("File path:", filePath);
 processAndInsertData(filePath);
