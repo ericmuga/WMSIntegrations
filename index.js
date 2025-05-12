@@ -40,6 +40,8 @@ app.get('/fetch-executed-lines', async (req, res) => {
 
 
 
+
+
 app.post('/post-shipment', (req, res) => {
 
   logger.info(`Received shipment data: ${JSON.stringify(req.body)}`);
@@ -81,6 +83,50 @@ app.get('/fetch-production-orders', async (req, res) => {
 });
 
 
+app.get('/fetch-orders', async (req, res) => {
+    try {
+         axios.get('https://fchoice-endpoint-prod.docwyn.com/?api_key=412cce7c-a737-4d01-b929-534fcc80e79d&company=FCL&recieved_date=2025-05-12&from=100&to150')
+        .then(response => {
+            const orders = response.data;
+            res.json(orders)});
+    } catch (err) {
+    
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+    }
+});
+
+app.get('/fetch-invoices', async (req, res) => {
+    try {
+         axios.get('http://172.16.10.5:8086/api/invoices?page=1&pageSize=20')
+        .then(response => {
+            const orders = response.data.data;
+            res.json(orders)});
+    } catch (err) {
+    
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+    }
+});
+
+
+app.get('/fetch-slaughter-data', async (req, res) => {
+    try {
+         axios.get('http://100.100.2.54:8086/api/slaughter-data?page=1&pageSize=20')
+        .then(response => {
+            const orders = response.data.data;
+            res.json(orders)});
+    } catch (err) {
+    
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+    }
+});
+
+
+
+
+
 app.get('/fetch-item-journals',async(req,res)=>{
 
 })
@@ -107,19 +153,19 @@ app.get('/fetch-transfer-orders', (req, res) => {
   res.json(transferOrders);
 });
 
-app.get('/fetch-slaughter-data', async (req, res) => {
-  try {
-      const slaughterData = await consumeSlaughterData();
-      if (slaughterData) {
-          res.json(slaughterData);
-      } else {
-          res.status(404).json({ message: 'No slaughter data available in queue.' });
-      }
-  } catch (error) {
-      logger.error(`Error fetching slaughter data: ${error.message}`);
-      res.status(500).json({ error: 'Failed to fetch slaughter data.' });
-  }
-});
+// app.get('/fetch-slaughter-data', async (req, res) => {
+//   try {
+//       const slaughterData = await consumeSlaughterData();
+//       if (slaughterData) {
+//           res.json(slaughterData);
+//       } else {
+//           res.status(404).json({ message: 'No slaughter data available in queue.' });
+//       }
+//   } catch (error) {
+//       logger.error(`Error fetching slaughter data: ${error.message}`);
+//       res.status(500).json({ error: 'Failed to fetch slaughter data.' });
+//   }
+// });
 
 
 app.post('/print-receipt', async (req,res) => {
@@ -387,6 +433,9 @@ app.post('/:user/print-delivery', async (req,res) => {
   return res.status(201).json({ message: 'success' });
 
 });
+
+
+
 
 app.post('/print-order', async (req,res) => {
   //console.log(req)
