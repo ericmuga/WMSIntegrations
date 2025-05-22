@@ -171,4 +171,4 @@ export const publishGroupedOrdersToQueue = async (queueName, groupedOrders) => {
   await channel.close();
 };
 
-// setupRabbitMQQueue('bot_order_last_line')
+ setupRabbitMQQueue('invoices')
