@@ -90,6 +90,93 @@ async function createQueue(channel, queueName, exchange, dlx, forceRecreate = fa
   }
 }
 
+export const fetchProductionOrdersFromQueue = async (batchSize = 100) => {
+  const rawQueueName = 'production_orders';
+  const queueName = ensureBCQueueName(rawQueueName);
+  const exchange = rabbitmqConfig.defaultExchange;
+  const routingKey = queueName;
+
+  try {
+    const connection = await getRabbitMQConnection();
+    const channel = await connection.createChannel();
+
+    await channel.assertExchange(exchange, 'direct', { durable: true });
+    await channel.assertQueue(queueName, {
+      durable: true,
+      arguments: {
+        'x-dead-letter-exchange': rabbitmqConfig.deadLetterExchange,
+        'x-dead-letter-routing-key': routingKey,
+      },
+    });
+    await channel.bindQueue(queueName, exchange, routingKey);
+
+    channel.prefetch(batchSize);
+    const messages = [];
+
+    await new Promise((resolve) => {
+      channel.consume(
+        queueName,
+        (msg) => {
+          if (msg) {
+            try {
+              const data = JSON.parse(msg.content.toString());
+              messages.push(data);
+              channel.ack(msg);
+              if (messages.length >= batchSize) resolve();
+            } catch (err) {
+              logger.error(`Error parsing message: ${err.message}`);
+              channel.nack(msg, false, false);
+            }
+          }
+        },
+        { noAck: false }
+      );
+
+      setTimeout(() => {
+        logger.info(`Timeout reached for queue: ${queueName}, fetched ${messages.length} messages.`);
+        resolve();
+      }, 5000);
+    });
+
+    await channel.close();
+    if (messages.length === 0) logger.info(`No messages processed from queue: ${queueName}`);
+    return messages;
+  } catch (error) {
+    logger.error(`Error fetching production orders: ${error.message}`);
+    throw error;
+  }
+};
+
+export const publishGroupedOrdersToQueue = async (queueName, groupedOrders) => {
+  const primaryQueueName = ensureBCQueueName(queueName);
+  const connection = await getRabbitMQConnection();
+  const channel = await connection.createChannel();
+
+  await channel.assertExchange(rabbitmqConfig.defaultExchange, 'direct', { durable: true });
+  await channel.assertQueue(primaryQueueName, {
+    durable: true,
+    arguments: {
+      'x-dead-letter-exchange': rabbitmqConfig.deadLetterExchange,
+    },
+  });
+  await channel.bindQueue(primaryQueueName, rabbitmqConfig.defaultExchange, primaryQueueName);
+
+  for (const order of groupedOrders) {
+    const payload = JSON.stringify(order);
+    const sent = channel.sendToQueue(primaryQueueName, Buffer.from(payload), {
+      persistent: true,
+    });
+
+    if (!sent) {
+      logger.error(`Failed to publish order: ${order.ext_doc_no}`);
+    } else {
+      logger.info(`Published order: ${order.ext_doc_no}`);
+    }
+  }
+
+  await channel.close();
+};
+
 export async function setupRabbitMQQueue(queueName, forceRecreate = false) {
   try {
     const primaryQueueName = ensureBCQueueName(queueName);
