@@ -10,3 +10,5 @@ todo.txt
 /.idea/modules.xml
 /.idea/vcs.xml
 /.idea/WMSIntegrations.iml
+*.xls
+*.xlsx
