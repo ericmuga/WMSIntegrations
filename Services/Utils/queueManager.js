@@ -200,14 +200,136 @@ export async function setupRabbitMQQueue(queueName, forceRecreate = false) {
   }
 }
 
+export const fetchCMDataFromQueue = async (batchSize = 100) => {
+  const rawQueueName = 'slaughter_line_cm.bc';
+  const queueName = rawQueueName; // use directly unless you need `ensureBCQueueName()`
+  const exchange = rabbitmqConfig.defaultExchange;
+  const routingKey = queueName;
+
+  try {
+    const connection = await getRabbitMQConnection();
+    const channel = await connection.createChannel();
+
+    await channel.assertExchange(exchange, 'direct', { durable: true });
+    await channel.assertQueue(queueName, {
+      durable: true,
+      arguments: {
+        'x-dead-letter-exchange': rabbitmqConfig.deadLetterExchange,
+        'x-dead-letter-routing-key': routingKey,
+      },
+    });
+    await channel.bindQueue(queueName, exchange, routingKey);
+
+    channel.prefetch(batchSize);
+    const messages = [];
+
+    await new Promise((resolve) => {
+      channel.consume(
+        queueName,
+        (msg) => {
+          if (msg) {
+            try {
+              const data = JSON.parse(msg.content.toString());
+              messages.push(data);
+              channel.ack(msg);
+              if (messages.length >= batchSize) resolve();
+            } catch (err) {
+              logger.error(`CM Queue - Error parsing message: ${err.message}`);
+              channel.nack(msg, false, false);
+            }
+          }
+        },
+        { noAck: false }
+      );
+
+      setTimeout(() => {
+        logger.info(`Timeout reached for queue: ${queueName}, fetched ${messages.length} messages.`);
+        resolve();
+      }, 5000);
+    });
+
+    await channel.close();
+    if (messages.length === 0) logger.info(`No messages processed from CM queue: ${queueName}`);
+    return messages;
+  } catch (error) {
+    logger.error(`Error fetching CM data from queue: ${error.message}`);
+    throw error;
+  }
+};
+
+
+
+export const fetchSlaughterDataFromQueue = async (batchSize = 100) => {
+  const rawQueueName = 'slaughter_line.bc';
+  const exchange = 'fcl.exchange.direct';
+  const routingKey = rawQueueName;
+
+  try {
+    const connection = await getRabbitMQConnection();
+    const channel = await connection.createChannel();
+
+    await channel.assertExchange(exchange, 'direct', { durable: true });
+    await channel.assertQueue(rawQueueName, {
+      durable: true,
+      arguments: {
+        'x-dead-letter-exchange': rabbitmqConfig.deadLetterExchange,
+        'x-dead-letter-routing-key': routingKey,
+      },
+    });
+    await channel.bindQueue(rawQueueName, exchange, routingKey);
+    channel.prefetch(batchSize);
+
+    const messages = [];
+
+    await new Promise((resolve) => {
+      channel.consume(
+        rawQueueName,
+        (msg) => {
+          if (msg) {
+            try {
+              const data = JSON.parse(msg.content.toString());
+              messages.push(data);
+              channel.ack(msg);
+              if (messages.length >= batchSize) resolve();
+            } catch (err) {
+              logger.error(`Error parsing slaughter message: ${err.message}`);
+              channel.nack(msg, false, false); // Don't requeue
+            }
+          }
+        },
+        { noAck: false }
+      );
+
+      // Timeout fallback
+      setTimeout(() => {
+        logger.info(`Timeout reached for queue: ${rawQueueName}, fetched ${messages.length} messages.`);
+        resolve();
+      }, 5000);
+    });
+
+    await channel.close();
+
+    if (messages.length === 0) {
+      logger.info(`No messages processed from queue: ${rawQueueName}`);
+    }
+
+    return messages.flat(); // since each payload is an array
+  } catch (error) {
+    logger.error(`Error fetching slaughter data: ${error.message}`);
+    throw error;
+  }
+};
+
 // ... rest of your existing code (deleteRabbitMQQueue, fetchProductionOrdersFromQueue, publishGroupedOrdersToQueue) ...
 
 // Example usage with recreation
 async function recreateAllQueues() {
   try {
-    await setupRabbitMQQueue('invoices_fcl', true);
-    await setupRabbitMQQueue('invoices_cm', true);
-    await setupRabbitMQQueue('invoices_rmk', true);
+    // await setupRabbitMQQueue('invoices_fcl', true);
+    // await setupRabbitMQQueue('invoices_cm', true);
+    // await setupRabbitMQQueue('invoices_rmk', true);
+    // slaughter_line.bc
+    await setupRabbitMQQueue('slaughter_line_cm', true);
     logger.info('All queues recreated successfully');
   } catch (error) {
     logger.error('Error recreating queues:', error);

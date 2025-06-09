@@ -231,6 +231,87 @@ export async function fetchAndPublishMissingSlapsData() {
     return rows.length;
 }
 
+
+export async function fetchAndPublishCMData() {
+    const pool = await getPool('wms');
+
+    const result = await pool.request().query(`
+        SELECT 
+            a.[id] AS entry_no,
+            0 AS missing_slapmark,
+            a.[item_code],
+            a.[total_net] AS stock_weight,
+            0 AS meat_percent,
+            a.[classification_code],
+            CAST(a.[created_at] AS date) AS slaughter_date,
+            a.[receipt_no],
+            '' AS slapmark,
+            b.[username] AS user_id,
+            CAST(a.[created_at] AS time) AS slaughter_time,
+            GETDATE() AS import_time,
+            0 AS promoted_to_slaughter
+        FROM [cml-calibra].[dbo].[slaughter_data] AS a
+        LEFT JOIN [cml-calibra].[dbo].[users] AS b ON a.[user_id] = b.[id]
+        WHERE a.[Published] = 0
+        AND a.[created_at] >= DATEADD(DAY, -2, CAST(GETDATE() AS DATE))
+    `);
+
+    const rows = result.recordset;
+
+    if (!rows || rows.length === 0) {
+        logger.info('No unpublished CM slaughter data found.');
+        return 0;
+    }
+
+    const connection = await getRabbitMQConnection();
+    const channel = await connection.createChannel();
+    const queueName = 'slaughter_line_cm.bc';
+
+    await channel.assertExchange('fcl.exchange.direct', 'direct', { durable: true });
+
+    for (const row of rows) {
+        const payload = JSON.stringify([{
+            entry_no: row.entry_no,
+            missing_slapmark: row.missing_slapmark,
+            item: row.item_code,
+            stock_weight: row.stock_weight,
+            meat_percent: row.meat_percent,
+            classification_code: row.classification_code,
+            slaughter_date: row.slaughter_date,
+            receipt_no: row.receipt_no,
+            slapmark: row.slapmark,
+            user_id: row.user_id,
+            slaughter_time: row.slaughter_time,
+            import_time: row.import_time,
+            promoted_to_slaughter: row.promoted_to_slaughter,
+            company_name: 'FCL'
+        }]);
+
+        await channel.publish(
+            'fcl.exchange.direct',
+            queueName,
+            Buffer.from(payload),
+            {
+                persistent: true,
+                contentType: 'application/json',
+            }
+        );
+    }
+
+    logger.info(`Published ${rows.length} CM slaughter data to RabbitMQ`);
+    await channel.close();
+
+    const idsToUpdate = rows.map(row => row.entry_no).join(',');
+    await pool.request().query(`
+        UPDATE [cml-calibra].[dbo].[slaughter_data]
+        SET Published = 1
+        WHERE id IN (${idsToUpdate})
+    `);
+
+    return rows.length;
+}
+
+
 // Run once on launch
 (async () => {
     try {
@@ -242,6 +323,9 @@ export async function fetchAndPublishMissingSlapsData() {
 
         const missingSlapsCount = await fetchAndPublishMissingSlapsData();
         console.log(`Published ${missingSlapsCount} missing slaps data to RabbitMQ`);
+
+        const cmSlaughter = await fetchAndPublishCMData();
+        console.log(`Published ${cmSlaughter} cm Slaughter data to RabbitMQ`);
     } catch (error) {
         console.error(`Error publishing data: ${error.message}`);
     }
@@ -258,6 +342,9 @@ setInterval(async () => {
 
         const missingSlapsCount = await fetchAndPublishMissingSlapsData();
         console.log(`Published ${missingSlapsCount} missing slaps data to RabbitMQ`);
+
+        const cmSlaughter = await fetchAndPublishCMData();
+        console.log(`Published ${cmSlaughter} cm Slaughter data to RabbitMQ`);
     } catch (error) {
         console.error(`Error publishing data: ${error.message}`);
     }

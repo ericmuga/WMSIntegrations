@@ -8,14 +8,17 @@ import { generateOrders } from './Services/fetchPortalOrders.js';
 import { fetchGroupedOrdersWithIntegrity } from './Services/fetchBOTOrders.js';
 
 import { generateTransferOrders } from './Services/transferOrderGenerator.js';
-import {generateInvoices} from './Services/fetchPortalInvoices.js'
+// import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
-import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
+
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
 import { generateResponse } from './Services/QRCode.js';
 
-import { fetchProductionOrdersFromQueue } from './Services/Utils/queueManager.js';
+import { fetchProductionOrdersFromQueue , fetchCMDataFromQueue, fetchSlaughterDataFromQueue } from './Services/Utils/queueManager.js';
+
+
+
 import axios from 'axios';
 const app = express();
 app.use(express.json());
@@ -25,6 +28,33 @@ app.get('/generate-mtn',async(req,res)=>{
   res.json(generateResponse());
 });
 
+
+
+
+app.get('/fetch-slaughter-data-cm', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || '50');
+    const data = await fetchCMDataFromQueue(limit);
+    res.json(data);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch CM slaughter data from queue.',
+    });
+  }
+});
+
+app.get('/fetch-slaughter-data', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || '50');
+    const records = await fetchSlaughterDataFromQueue(limit);
+    res.json(records);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to fetch slaughter data.' });
+  }
+});
 
 
 app.get('/fetch-executed-lines', async (req, res) => {
@@ -73,7 +103,7 @@ app.get('/fetch-return-orders', (req, res) => {
 // GET /consume?limit=50 -> pulls from queue
 app.get('/fetch-production-orders', async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit || '150');
+        const limit = parseInt(req.query.limit || '50');
         const orders = await fetchProductionOrdersFromQueue(limit);
         res.json(orders );
     } catch (err) {
@@ -110,18 +140,18 @@ app.get('/fetch-invoices', async (req, res) => {
 });
 
 
-app.get('/fetch-slaughter-data', async (req, res) => {
-    try {
-         axios.get('http://100.100.2.54:8086/api/slaughter-data?page=1&pageSize=20')
-        .then(response => {
-            const orders = response.data.data;
-            res.json(orders)});
-    } catch (err) {
+// app.get('/fetch-slaughter-data', async (req, res) => {
+//     try {
+//          axios.get('http://100.100.2.54:8086/api/slaughter-data?page=1&pageSize=20')
+//         .then(response => {
+//             const orders = response.data.data;
+//             res.json(orders)});
+//     } catch (err) {
     
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
-    }
-});
+//         console.error(err);
+//         res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+//     }
+// });
 
 
 
@@ -132,7 +162,7 @@ app.get('/fetch-item-journals',async(req,res)=>{
 })
 
 app.get('/fetch-portal-orders', (req, res) => res.json(generateOrders(3, 5)));
-app.get('/fetch-portal-invoices', (req, res) => res.json(generateInvoices(3, 5)));
+// app.get('/fetch-portal-invoices', (req, res) => res.json(generateInvoices(3, 5)));
 
 
 app.get('/fetch-bot-orders', async (req, res) => {
