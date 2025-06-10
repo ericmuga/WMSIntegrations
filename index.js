@@ -105,7 +105,7 @@ app.get('/fetch-return-orders', (req, res) => {
 // GET /consume?limit=50 -> pulls from queue
 app.get('/fetch-production-orders', async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit || '80');
+    const limit = parseInt(req.query.limit || '100');
     const test = req.query.test === 'true';
     const orders = await fetchProductionOrdersFromQueue(limit, test);
     res.json(orders);
