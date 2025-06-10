@@ -254,7 +254,7 @@ export async function fetchAndPublishCMData() {
             '' AS slapmark,
             fat_group,
             b.[username] AS user_id,
-            CAST(a.[created_at] AS time) AS slaughter_time,
+            a.[created_at] AS slaughter_time,
             GETDATE() AS import_time,
             0 AS promoted_to_slaughter
         FROM [cml-calibra].[dbo].[slaughter_data] AS a
