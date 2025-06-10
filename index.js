@@ -31,30 +31,32 @@ app.get('/generate-mtn',async(req,res)=>{
 
 
 
-app.get('/fetch-slaughter-data-cm', async (req, res) => {
-  try {
-    const limit = parseInt(req.query.limit || '50');
-    const data = await fetchCMDataFromQueue(limit);
-    res.json(data);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch CM slaughter data from queue.',
-    });
-  }
-});
-
 app.get('/fetch-slaughter-data', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit || '50');
-    const records = await fetchSlaughterDataFromQueue(limit);
+    const test = req.query.test === 'true';
+    const company = (req.query.company || '').toLowerCase();
+
+    let records;
+
+    switch (company) {
+      case 'cm':
+        records = await fetchCMDataFromQueue(limit, test);
+        break;
+      case 'fcl':
+        records = await fetchSlaughterDataFromQueue(limit, test);
+        break;
+      default:
+        return res.status(400).json({ success: false, message: 'Invalid or missing company. Use ?company=cm or ?company=fcl' });
+    }
+
     res.json(records);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ success: false, message: 'Failed to fetch slaughter data.' });
+    res.status(500).json({ success: false, message: 'Failed to fetch data.' });
   }
 });
+
 
 
 app.get('/fetch-executed-lines', async (req, res) => {
@@ -102,15 +104,18 @@ app.get('/fetch-return-orders', (req, res) => {
 
 // GET /consume?limit=50 -> pulls from queue
 app.get('/fetch-production-orders', async (req, res) => {
-    try {
-        const limit = parseInt(req.query.limit || '50');
-        const orders = await fetchProductionOrdersFromQueue(limit);
-        res.json(orders );
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
-    }
+  try {
+    const limit = parseInt(req.query.limit || '80');
+    const test = req.query.test === 'true';
+    const orders = await fetchProductionOrdersFromQueue(limit, test);
+    res.json(orders);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+  }
 });
+
+
 
 
 app.get('/fetch-orders', async (req, res) => {
