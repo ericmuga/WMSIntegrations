@@ -126,21 +126,23 @@ export async function fetchAndPublishSlaughterData() {
 
     for (const row of rows) {
         const payload = JSON.stringify([{
-            id: row.id,
+           entry_no: row.id,
             slapmark: row.slapmark,
             receipt_no: row.receipt_no,
             item_code: row.carcass_type,
             vendor_no: row.vendor_no,
             vendor_name: row.vendor_name,
-            actual_weight: row.reading,
-            net_weight: row.net,
+            stock_weight: row.net_weight,
             settlement_weight: row.settlement_weight,
             meat_percent: row.meat_percent,
             classification_code: row.classification_code,
+            fat_group: row.fat_group || '',
             manual_weight: row.manual_weight,
             user_id: row.user_id,
             company_name:'FCL',
-            timestamp: row.created_at,
+            slaughter_time: row.created_at,
+			slaughter_date: row.created_at,
+            missing_slapmark:false
         }]);
 
         await channel.publish(
@@ -190,21 +192,22 @@ export async function fetchAndPublishMissingSlapsData() {
 
     for (const row of rows) {
         const payload = JSON.stringify([{
-            id: row.id,
+           entry_no: row.id,
             slapmark: row.slapmark,
             receipt_no: '',
             item_code: row.item_code,
-            vendor_no: '',
-            vendor_name: '',
-            actual_weight: row.actual_weight,
-            net_weight: row.net_weight,
+            vendor_no: row.vendor_no|| '',
+            vendor_name: vendor_name|| '',
+            stock_weight: row.net_weight,
             settlement_weight: row.settlement_weight,
             meat_percent: row.meat_percent,
             classification_code: row.classification_code,
-            manual_weight: '',
             user_id: row.user_id,
+            fat_group: row.fat_group|| '',
+            slaughter_date: row.slaughter_date,
+            slaughter_time: row.created_at,
             company_name: 'FCL',
-            timestamp: row.created_at,
+            missing_slapmark: true
         }]);
 
         await channel.publish(
@@ -240,12 +243,16 @@ export async function fetchAndPublishCMData() {
             a.[id] AS entry_no,
             0 AS missing_slapmark,
             a.[item_code],
+            a.vendor_no,
+            a.vendor_name,
             a.[total_net] AS stock_weight,
+            a.[settlement_weight] settlement_weight,
             0 AS meat_percent,
             a.[classification_code],
             CAST(a.[created_at] AS date) AS slaughter_date,
             a.[receipt_no],
             '' AS slapmark,
+            fat_group,
             b.[username] AS user_id,
             CAST(a.[created_at] AS time) AS slaughter_time,
             GETDATE() AS import_time,
@@ -271,20 +278,22 @@ export async function fetchAndPublishCMData() {
 
     for (const row of rows) {
         const payload = JSON.stringify([{
-            entry_no: row.entry_no,
-            missing_slapmark: row.missing_slapmark,
-            item: row.item_code,
+           entry_no: row.entry_no,
+            vendor_no: row.vendor_no,
+            vendor_name: row.vendor_name,
+            missing_slapmark: false,
+            item_code: row.item_code,
             stock_weight: row.stock_weight,
+            settlement_weight: row.settlement_weight,
             meat_percent: row.meat_percent,
             classification_code: row.classification_code,
             slaughter_date: row.slaughter_date,
             receipt_no: row.receipt_no,
+            fat_group:fat_group|| '',
             slapmark: row.slapmark,
             user_id: row.user_id,
             slaughter_time: row.slaughter_time,
-            import_time: row.import_time,
-            promoted_to_slaughter: row.promoted_to_slaughter,
-            company_name: 'FCL'
+            company_name: 'CM'
         }]);
 
         await channel.publish(
