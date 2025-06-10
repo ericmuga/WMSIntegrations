@@ -289,7 +289,7 @@ export async function fetchAndPublishCMData() {
             classification_code: row.classification_code,
             slaughter_date: row.slaughter_date,
             receipt_no: row.receipt_no,
-            fat_group:fat_group|| '',
+            fat_group:row.fat_group|| '',
             slapmark: row.slapmark,
             user_id: row.user_id,
             slaughter_time: row.slaughter_time,
