@@ -194,7 +194,8 @@ export const fetchSlaughterDataFromQueue = async (batchSize = 100, test = false)
     });
 
     await channel.close();
-    return messages.flat();
+    // return messages.flat();
+    return messages.flatMap(m => Array.isArray(m) ? m : [m]);
   } catch (error) {
     logger.error(`Error fetching slaughter data: ${error.message}`);
     throw error;
@@ -250,7 +251,8 @@ export const fetchCMDataFromQueue = async (batchSize = 100, test = false) => {
     });
 
     await channel.close();
-    return messages;
+    // return messages;
+    return messages.flatMap(m => Array.isArray(m) ? m : [m]);
   } catch (error) {
     logger.error(`Error fetching CM data from queue: ${error.message}`);
     throw error;
@@ -306,6 +308,7 @@ export const fetchProductionOrdersFromQueue = async (batchSize = 100, test = fal
     });
 
     await channel.close();
+    
     return messages;
   } catch (error) {
     logger.error(`Error fetching production orders: ${error.message}`);
