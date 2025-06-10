@@ -197,7 +197,7 @@ export async function fetchAndPublishMissingSlapsData() {
             receipt_no: '',
             item_code: row.item_code,
             vendor_no: row.vendor_no|| '',
-            vendor_name: vendor_name|| '',
+            vendor_name: row.vendor_name|| '',
             stock_weight: row.net_weight,
             settlement_weight: row.settlement_weight,
             meat_percent: row.meat_percent,
