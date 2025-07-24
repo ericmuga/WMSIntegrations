@@ -2,6 +2,7 @@
 
 import express from 'express';
 import logger from './logger.js';
+import QRCode from 'qrcode';
 
 
 import { generateOrders } from './Services/fetchPortalOrders.js';
@@ -448,6 +449,58 @@ app.post('/:user/print-delivery', async (req,res) => {
         logger.info('Response from external API:', response.data);
         break;
       }
+
+      const randomFloat = (min, max, decimals = 2) => {
+    return (Math.random() * (max - min) + min).toFixed(decimals);
+};
+
+const randomInt = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+// Utility to generate random invoice number
+const generateInvoiceNo = () => {
+    return `009${randomInt(1000000000000, 9999999999999)}`;
+};
+
+// Mock Endpoint
+app.get('/mock-invoice', (req, res) => {
+    const invoiceNo = generateInvoiceNo();
+    const now = new Date().toISOString().slice(0, 23); // Trim milliseconds to 3 decimals
+
+    const mockResponse = {
+        DateTime: now,
+        invoiceExtension: "TAX INVOICE",
+        mtn: invoiceNo,
+        verificationUrl: `https://itax.kra.go.ke/KRA-Portal/invoiceChk.htm?actionCode=loadPage&invoiceNo=${invoiceNo}`,
+        messages: "Success",
+        totalAmount: parseFloat(randomFloat(500, 100000, 2)),
+        totalItems: randomInt(1, 10),
+        msn: `KRAMW009${randomInt(2020, 2025)}07${invoiceNo.slice(-6)}`,
+    };
+
+    res.json(mockResponse);
+});
+
+// Endpoint to generate QR code
+app.get('/generate', async (req, res) => {
+    try {
+        const url = req.query.url;
+        if (!url) {
+            return res.status(400).send('Missing url parameter');
+        }
+
+        const qrBuffer = await QRCode.toBuffer(url, { type: 'png', margin: 1, width: 300 });
+        res.setHeader('Content-Type', 'image/png');
+        res.send(qrBuffer);
+    } catch (err) {
+        console.error(err);
+        if (!res.headersSent) {
+            res.status(500).send('Error generating QR code');
+        }
+    }
+});
+
         
       case 'sales':
         logger.info(`Received print delivery request for sales: ${JSON.stringify(req.body)}`);
