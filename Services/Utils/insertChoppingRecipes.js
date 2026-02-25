@@ -2,7 +2,8 @@
 // npm i mssql xlsx
 import xlsx from "xlsx";
 import sql from "mssql";
-
+import dotenv from "dotenv";
+dotenv.config();
 const dbConfig = {
   user: process.env.WMS_DB_USER,
   password: process.env.WMS_DB_PASSWORD,

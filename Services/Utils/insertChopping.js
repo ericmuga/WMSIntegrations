@@ -1,7 +1,8 @@
 import xlsx from "xlsx";
 import sql from "mssql";
 import readline from "readline";
-
+import dotenv from "dotenv";
+dotenv.config();
 // Database configuration
 
 

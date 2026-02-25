@@ -1,6 +1,9 @@
 import xlsx from "xlsx";
 import sql from "mssql";
 
+import dotenv from "dotenv";
+dotenv.config();
+
 // Database configuration
 
 
