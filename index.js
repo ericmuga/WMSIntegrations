@@ -121,7 +121,7 @@ app.get('/fetch-production-orders', async (req, res) => {
 
 app.get('/fetch-orders', async (req, res) => {
     try {
-         axios.get('https://fchoice-endpoint-prod.docwyn.com/?api_key=412cce7c-a737-4d01-b929-534fcc80e79d&company=FCL&recieved_date=2025-05-12&from=100&to150')
+         axios.get(`https://fchoice-endpoint-prod.docwyn.com/?api_key=${process.env.FCHOICE_API_KEY}&company=FCL&recieved_date=2025-05-12&from=100&to150`)
         .then(response => {
             const orders = response.data;
             res.json(orders)});
