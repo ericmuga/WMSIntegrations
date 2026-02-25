@@ -6,7 +6,7 @@ const dbConfig = {
     user: "reporter",
     password: "p3u!~XuEdx?u2kK",
     server: "fcl-wms", // e.g., localhost
-    database: "calibra",
+    database: "cml-calibra",
     options: {
         encrypt: false, // Set to true if using Azure
         enableArithAbort: true,
@@ -74,10 +74,10 @@ async function processAndInsertData(filePath) {
       // Insert the row only if it doesn't exist
       const query = `
         IF NOT EXISTS (
-          SELECT 1 FROM [calibra].[dbo].[RecipeData]
+          SELECT 1 FROM [cml-calibra].[dbo].[RecipeData]
           WHERE [recipe] = @recipe AND [input_item] = @input_item AND [output_item] = @output_item
         )
-        INSERT INTO [calibra].[dbo].[RecipeData] (
+        INSERT INTO [cml-calibra].[dbo].[RecipeData] (
           [Process],
           [output_item],
           [recipe],
@@ -142,6 +142,6 @@ async function processAndInsertData(filePath) {
   }
 }
 // Example usage
-const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\1230M33.xlsx";
+const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\CMDD.xlsx";
 console.log("File path:", filePath);
 processAndInsertData(filePath);
