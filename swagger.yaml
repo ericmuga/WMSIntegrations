@@ -1,0 +1,548 @@
+openapi: 3.0.3
+info:
+  title: Website → Business Central Sales Integration API
+  version: 1.0.0
+  description: |
+    API for creating Sales Orders in Business Central from a website.
+    Includes:
+      - Full Sales Order details
+      - Pickup (shop/warehouse) details
+      - Destination delivery details
+      - Payment data
+      - Dimensions/metadata
+
+servers:
+  - url: https://your-bc-api-host.example.com
+    description: Replace with real BC API URL
+
+paths:
+  /api/v1/sales-orders:
+    post:
+      summary: Create a sales order in Business Central
+      tags: [Sales Orders]
+      security: [{ ApiKeyAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SalesOrderRequest'
+            examples:
+              example1:
+                summary: Example website order
+                value:
+                  externalOrderNo: "WEB-2025-000123"
+                  salesChannel: "WEB"
+                  documentDate: "2025-11-27"
+                  orderDate: "2025-11-27"
+                  currencyCode: "KES"
+                  sellToCustomer:
+                    customerNo: "10000"
+                    name: "John Doe"
+                    email: "john@example.com"
+                    phoneNo: "+254700000000"
+                    address:
+                      addressLine1: "Karen"
+                      city: "Nairobi"
+                      countryRegionCode: "KE"
+                  pickupDetails:
+                    pickupCode: "KASARANI"
+                    pickupType: "STORE"
+                    locationCode: "3619"
+                    name: "Westlands Shop"
+                    contactName: "Jane Clerk"
+                    phoneNo: "+254711111111"
+                    address:
+                      addressLine1: "Waiyaki Way"
+                      addressLine2: "Mall 2nd Floor"
+                      city: "Nairobi"
+                      county: "Nairobi"
+                      postCode: "00100"
+                      countryRegionCode: "KE"
+                    geoLocation:
+                      latitude: -1.268
+                      longitude: 36.8
+                    salespersonCode: "555"
+                    pickupDate: "2025-11-28"
+                    pickupTimeSlot: "09:00-12:00"
+                  destinationDetails:
+                    deliveryType: "DELIVERY"
+                    name: "John Doe"
+                    phoneNo: "+254700000000"
+                    address:
+                      addressLine1: "Riverside Drive"
+                      addressLine2: "Apartment 12B"
+                      city: "Nairobi"
+                      county: "Nairobi"
+                      postCode: "00100"
+                      countryRegionCode: "KE"
+                    geoLocation:
+                      latitude: -1.2805
+                      longitude: 36.8102
+                    landmark: "Near ABC Mall, brown gate"
+                    deliveryInstructions: "Call on arrival"
+                  lines:
+                    - lineNo: 10000
+                      itemNo: "J31010101"
+                      description: "Pork Chipolatas 200g"
+                      quantity: 2
+                      unitOfMeasureCode: "PCS"
+                      unitPrice: 1000
+                      locationCode: "3619"
+                    - lineNo: 20000
+                      itemNo: "ITEM-002"
+                      description: "Item 2"
+                      quantity: 1
+                      unitOfMeasureCode: "PCS"
+                      unitPrice: 2500
+                      lineDiscountPercent: 5
+                      locationCode: "MAIN"
+                  payment:
+                    paymentMethodCode: "MPESA"
+                    amount: 4300
+                    currencyCode: "KES"
+                    transactionReference: "MPESA-ABC123"
+      responses:
+        '201':
+          description: Sales order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrderResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '409':
+          description: Duplicate or business rule conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/v1/sales-orders/{externalOrderNo}:
+    get:
+      summary: Get order integration status
+      tags: [Sales Orders]
+      security: [{ ApiKeyAuth: [] }]
+      parameters:
+        - name: externalOrderNo
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Status info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SalesOrderStatusResponse'
+        '404':
+          description: Order not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/v1/items/availability:
+    get:
+      summary: Get available items and inventory from cache
+      description: |
+        Returns the current "available for web" inventory snapshot.
+        This includes Business Central stock minus reserved quantities from website orders.
+        This endpoint is used by the website to display item availability.
+      tags:
+        - Inventory
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Inventory snapshot retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventorySnapshot'
+        '500':
+          description: Error loading inventory cache
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/v1/inventory/refresh:
+    post:
+      summary: Refresh inventory from Business Central
+      description: |
+        Refreshes the inventory cache using real-time data from Business Central.
+        This is used at the start of the day or when new stock is received.
+        The response will overwrite the local cached inventory.
+      tags:
+        - Inventory
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Inventory refreshed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryRefreshResponse'
+        '500':
+          description: Business Central refresh failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+# -------------------------------------------------------------------
+# COMPONENTS
+# -------------------------------------------------------------------
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+
+    # ------------------------ COMMON STRUCTS ------------------------
+
+    GeoCoordinate:
+      type: object
+      properties:
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+      required:
+        - latitude
+        - longitude
+
+    Address:
+      type: object
+      required:
+        - addressLine1
+        - city
+        - countryRegionCode
+      properties:
+        addressLine1: { type: string }
+        addressLine2: { type: string, nullable: true }
+        city: { type: string }
+        county: { type: string, nullable: true }
+        postCode: { type: string, nullable: true }
+        countryRegionCode:
+          type: string
+          example: "KE"
+
+    # ------------------------ MAIN STRUCTS ------------------------
+
+    SalesOrderRequest:
+      type: object
+      required:
+        - externalOrderNo
+        - documentDate
+        - orderDate
+        - currencyCode
+        - sellToCustomer
+        - lines
+      properties:
+        externalOrderNo: { type: string }
+        salesChannel: { type: string }
+        documentDate: { type: string, format: date }
+        orderDate: { type: string, format: date }
+        postingDate: { type: string, format: date, nullable: true }
+        currencyCode: { type: string }
+        sellToCustomer:
+          $ref: '#/components/schemas/SellToCustomer'
+        pickupDetails:
+          $ref: '#/components/schemas/PickupDetails'
+        destinationDetails:
+          $ref: '#/components/schemas/DestinationDetails'
+        payment:
+          $ref: '#/components/schemas/PaymentDetails'
+        lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/SalesOrderLine'
+        additionalMetadata:
+          type: object
+          additionalProperties:
+            type: string
+
+    SellToCustomer:
+      type: object
+      required: [name]
+      properties:
+        customerNo:
+          type: string
+          nullable: true
+        name: { type: string }
+        email:
+          type: string
+          format: email
+        phoneNo: { type: string }
+        vatRegistrationNo:
+          type: string
+          nullable: true
+        address:
+          $ref: '#/components/schemas/Address'
+
+    # ------------------------ PICKUP ------------------------
+
+    PickupDetails:
+      type: object
+      required:
+        - pickupCode
+        - name
+        - address
+      description: Pickup location information
+      properties:
+        pickupCode:
+          type: string
+          description: Static code from your shop/warehouse list
+        pickupType:
+          type: string
+          enum: [WAREHOUSE, STORE, OTHER]
+        locationCode:
+          type: string
+          nullable: true
+        code:
+          type: string
+          nullable: true
+        name:
+          type: string
+        contactName:
+          type: string
+          nullable: true
+        phoneNo:
+          type: string
+          nullable: true
+        address:
+          $ref: '#/components/schemas/Address'
+        geoLocation:
+          $ref: '#/components/schemas/GeoCoordinate'
+        salespersonCode:
+          type: string
+          nullable: true
+        pickupDate:
+          type: string
+          format: date
+          nullable: true
+        pickupTimeSlot:
+          type: string
+          nullable: true
+
+    # ------------------------ DESTINATION ------------------------
+
+    DestinationDetails:
+      type: object
+      required:
+        - name
+        - address
+      description: Delivery destination
+      properties:
+        deliveryType:
+          type: string
+          enum: [DELIVERY, PICKUP]
+        name:
+          type: string
+        contactName:
+          type: string
+          nullable: true
+        phoneNo:
+          type: string
+          nullable: true
+        address:
+          $ref: '#/components/schemas/Address'
+        geoLocation:
+          $ref: '#/components/schemas/GeoCoordinate'
+        landmark:
+          type: string
+          nullable: true
+        deliveryInstructions:
+          type: string
+          nullable: true
+        requestedDeliveryDate:
+          type: string
+          format: date
+          nullable: true
+
+    # ------------------------ PAYMENT ------------------------
+
+    PaymentDetails:
+      type: object
+      required:
+        - paymentMethodCode
+        - amount
+        - currencyCode
+        - transactionReference
+      properties:
+        paymentMethodCode: { type: string }
+        paymentTermsCode:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          format: decimal
+        currencyCode: { type: string }
+        transactionReference: { type: string }
+        status:
+          type: string
+          nullable: true
+
+    # ------------------------ LINES ------------------------
+
+    SalesOrderLine:
+      type: object
+      required:
+        - lineNo
+        - itemNo
+        - quantity
+        - unitOfMeasureCode
+        - unitPrice
+      properties:
+        lineNo: { type: integer }
+        itemNo: { type: string }
+        variantCode:
+          type: string
+          nullable: true
+        description: { type: string }
+        quantity:
+          type: number
+          format: decimal
+        unitOfMeasureCode: { type: string }
+        unitPrice:
+          type: number
+          format: decimal
+        lineDiscountPercent:
+          type: number
+          nullable: true
+        locationCode:
+          type: string
+          nullable: true
+        shipmentDate:
+          type: string
+          format: date
+          nullable: true
+        externalLineId:
+          type: string
+          nullable: true
+        dimensionCodes:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: string
+
+    # ------------------------ RESPONSES ------------------------
+
+    SalesOrderResponse:
+      type: object
+      properties:
+        externalOrderNo: { type: string }
+        bcDocumentType: { type: string }
+        bcDocumentNo: { type: string }
+        status: { type: string }
+        warnings:
+          type: array
+          items:
+            type: string
+
+    SalesOrderStatusResponse:
+      type: object
+      properties:
+        externalOrderNo: { type: string }
+        bcDocumentType: { type: string }
+        bcDocumentNo: { type: string, nullable: true }
+        status: { type: string }
+        lastUpdatedAt:
+          type: string
+          format: date-time
+        errorMessage:
+          type: string
+          nullable: true
+
+    ApiError:
+      type: object
+      properties:
+        traceId: { type: string }
+        code: { type: string }
+        message: { type: string }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }
+    InventorySnapshot:
+      type: object
+      description: Cached inventory snapshot used to determine website availability.
+      properties:
+        lastRefresh:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp of the last Business Central refresh.
+        items:
+          type: object
+          description: Map of itemNo → shop availability
+          additionalProperties:
+            type: object
+            properties:
+              shops:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    available:
+                      type: integer
+                      description: Remaining available quantity after deducting reserved website orders.
+      example:
+        lastRefresh: "2025-11-27T08:00:00.000Z"
+        items:
+          ITEM-001:
+            shops:
+              MAIN:
+                available: 95
+              SHOP2:
+                available: 10
+          EXP-100:
+            shops:
+              MAIN:
+                available: 5
+    InventoryRefreshResponse:
+      type: object
+      properties:
+        traceId:
+          type: string
+        message:
+          type: string
+        snapshot:
+          $ref: '#/components/schemas/InventorySnapshot'
+      example:
+        traceId: "abc123xyz"
+        message: "Inventory refreshed from Business Central."
+        snapshot:
+          lastRefresh: "2025-11-27T08:00:00.000Z"
+          items:
+            ITEM-001:
+              shops:
+                MAIN:
+                  available: 100
+            EXP-100:
+              shops:
+                MAIN:
+                  available: 10

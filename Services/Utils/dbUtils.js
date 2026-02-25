@@ -303,6 +303,7 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueNa
           AND t.created_at >= @startDate
           AND t.location_code IN (${locationCodeCondition})
           AND t.transfer_from = @transferFrom
+          AND t.receiver_total_weight > 0
           ${additionalConditions}
         )
         -- Insert into queue_status and return fetched records
@@ -332,3 +333,150 @@ export const fetchAndInsertQueueStatus = async (sourceTable, queueTable, queueNa
   }
 };
 
+
+// import { poolPromise } from './db'; // Import your connection pool
+
+export const getRawProductionOrders = async ({ date, item, production_order_no }) => {
+  try {
+    const pool = await poolPromise;
+
+    let query = `
+      SELECT
+        po.production_order_no, po.ItemNo, po.Quantity, po.uom, po.LocationCode, po.routing, po.date_time, po.status,
+        pjl.ItemNo AS JournalItemNo, pjl.Quantity AS JournalQuantity, pjl.uom AS JournalUom, pjl.[type], pjl.date_time AS JournalDateTime, pjl.status AS JournalStatus
+      FROM
+        ProductionOrders po
+      LEFT JOIN
+        ProductionJournalLines pjl ON po.production_order_no = pjl.production_order_no
+      WHERE
+        po.status = 'raw'
+    `;
+    const conditions = [];
+    const values = [];
+
+    if (date) {
+      conditions.push('po.date_time LIKE @date');
+      values.push({ name: 'date', type: pool.NVarChar, value: `${date}%` });
+    }
+
+    if (item) {
+      conditions.push('po.ItemNo = @item');
+      values.push({ name: 'item', type: pool.NVarChar, value: item });
+    }
+
+    if (production_order_no) {
+      conditions.push('po.production_order_no = @production_order_no');
+      values.push({ name: 'production_order_no', type: pool.NVarChar, value: production_order_no });
+    }
+
+    if (conditions.length > 0) {
+      query += ' AND ' + conditions.join(' AND ');
+    }
+
+    const request = pool.request();
+    values.forEach((param) => request.input(param.name, param.type, param.value));
+
+    const result = await request.query(query);
+    return result.recordset;
+  } catch (error) {
+    console.error(`Error fetching raw production orders: ${error.message}`);
+    throw error;
+  }
+};
+
+export const markProductionOrdersAsProcessed = async (productionOrderIds) => {
+  if (!Array.isArray(productionOrderIds) || productionOrderIds.length === 0) {
+    throw new Error('No production order IDs provided.');
+  }
+
+  try {
+    const pool = await poolPromise;
+
+    const idList = productionOrderIds.map((id) => `'${id}'`).join(',');
+
+    // Update production orders
+    await pool.request().query(`
+      UPDATE ProductionOrders
+      SET status = 'processed'
+      WHERE production_order_no IN (${idList});
+    `);
+
+    // Update journal lines
+    await pool.request().query(`
+      UPDATE ProductionJournalLines
+      SET status = 'processed'
+      WHERE production_order_no IN (${idList});
+    `);
+
+    console.log(`Successfully marked ${productionOrderIds.length} production orders and their journal lines as processed.`);
+  } catch (error) {
+    console.error(`Error marking production orders as processed: ${error.message}`);
+    throw error;
+  }
+};
+
+
+export const insertProductionOrder = async (order) => {
+  try {
+    const pool = await poolPromise;
+
+    await pool.request()
+      .input('production_order_no', pool.NVarChar, order.production_order_no)
+      .input('ItemNo', pool.NVarChar, order.ItemNo)
+      .input('Quantity', pool.Decimal(18, 4), order.Quantity)
+      .input('uom', pool.NVarChar, order.uom)
+      .input('LocationCode', pool.NVarChar, order.LocationCode)
+      .input('BIN', pool.NVarChar, order.BIN || null)
+      .input('user', pool.NVarChar, order.user)
+      .input('line_no', pool.Int, order.line_no)
+      .input('routing', pool.NVarChar, order.routing)
+      .input('date_time', pool.DateTime, order.date_time)
+      .input('status', pool.NVarChar, 'raw') // Default status
+      .query(`
+        INSERT INTO ProductionOrders (
+          production_order_no, ItemNo, Quantity, uom, LocationCode, BIN, [user], line_no, routing, date_time, status
+        )
+        VALUES (
+          @production_order_no, @ItemNo, @Quantity, @uom, @LocationCode, @BIN, @user, @line_no, @routing, @date_time, @status
+        );
+      `);
+
+    console.log(`Inserted production order: ${order.production_order_no}`);
+  } catch (error) {
+    console.error(`Error inserting production order: ${error.message}`);
+    throw error;
+  }
+};
+
+
+export const insertProductionJournalLine = async (productionOrderNo, line) => {
+  try {
+    const pool = await poolPromise;
+
+    await pool.request()
+      .input('production_order_no', pool.NVarChar, productionOrderNo)
+      .input('ItemNo', pool.NVarChar, line.ItemNo)
+      .input('Quantity', pool.Decimal(18, 4), line.Quantity)
+      .input('uom', pool.NVarChar, line.uom)
+      .input('LocationCode', pool.NVarChar, line.LocationCode)
+      .input('BIN', pool.NVarChar, line.BIN || null)
+      .input('line_no', pool.Int, line.line_no)
+      .input('type', pool.NVarChar, line.type)
+      .input('date_time', pool.DateTime, line.date_time)
+      .input('user', pool.NVarChar, line.user)
+      .input('status', pool.NVarChar, 'raw') // Default status
+      .query(`
+        INSERT INTO ProductionJournalLines (
+          production_order_no, ItemNo, Quantity, uom, LocationCode, BIN, line_no, [type], date_time, [user], status
+        )
+        VALUES (
+          @production_order_no, @ItemNo, @Quantity, @uom, @LocationCode, @BIN, @line_no, @type, @date_time, @user, @status
+        );
+      `);
+
+    console.log(`Inserted journal line for production order: ${productionOrderNo}, line_no: ${line.line_no}`);
+  } catch (error) {
+    console.error(`Error inserting production journal line: ${error.message}`);
+    throw error;
+  }
+};

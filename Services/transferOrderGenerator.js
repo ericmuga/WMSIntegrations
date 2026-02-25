@@ -66,5 +66,5 @@ const generateTransferOrder = (maxItemsPerOrder = 5) => {
 };
 
 // Function to generate multiple transfer orders
-export const generateTransferOrders = (numOrders = 3, maxItemsPerOrder = 5) => 
-  Array.from({ length: numOrders }, () => generateTransferOrder(maxItemsPerOrder));
+// export const generateTransferOrders = (numOrders = 3, maxItemsPerOrder = 5) => 
+//   Array.from({ length: numOrders }, () => generateTransferOrder(maxItemsPerOrder));

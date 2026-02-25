@@ -13,5 +13,4 @@ const customParams = {
     { rangeStart: 'J31030101', rangeEnd: 'J31032199' },
   ],
 };
-
-runQueueWorkflow(sourceTable, queueTable, queueName, customParams, undefined, transformFn);
+export const publishContinentals = () =>runQueueWorkflow(sourceTable, queueTable, queueName, customParams, undefined, transformFn);

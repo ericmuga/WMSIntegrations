@@ -2,36 +2,60 @@
 
 import express from 'express';
 import logger from './logger.js';
+import QRCode from 'qrcode';
 
 
 import { generateOrders } from './Services/fetchPortalOrders.js';
+import { fetchGroupedOrdersWithIntegrity } from './Services/fetchBOTOrders.js';
 
-import { groupOrdersByExtDocNo } from './Services/fetchBOTOrders.js';
 import { generateTransferOrders } from './Services/transferOrderGenerator.js';
-import {generateInvoices} from './Services/fetchPortalInvoices.js'
+// import {generateInvoices} from './Services/fetchPortalInvoices.js'
 import { sendSlaughterReceipt,sendProductionOrderError } from './RabbitMQService.js';
-import { consumeSlaughterData } from './Services/Consumers/consumeSlaughterDataQueue.js';
-import { consumeBeheadingData} from './Services/Consumers/consumeBeheadingQueue.js';
-import { consumeCarcassSales } from './Services/Consumers/consumeCarcassSales.js';
-import { consumeBreakingData } from './Services/Consumers/consumeBreakingQueue.js';
-import { consumeDeboningData } from './Services/Consumers/consumeDeboningQueue.js';
-import { consumechoppingData } from './Services/Consumers/consumeChoppingData.js';
-import { initPrinting } from './Services/printerService.js'
+
 import { generateReturnOrders } from './Services/fetchReturnOrders.js';
 import { fetchOrderLines } from './Services/fetchExecutedLines.js';
-import { generateMtn,generateResponse } from './Services/QRCode.js';
-import { consume1570_2055 } from './Services/Consumers/consume1570_2055.js';
-import {processSausageQueue } from './Services/Consumers/consumeSausages.js';
-import { pushToPickAndPack } from './Services/Utils/insertIntoPP.js';
-import {processContinentalsQueue} from './Services/Consumers/consumeContinentals.js';
+import { generateResponse } from './Services/QRCode.js';
+
+import { fetchProductionOrdersFromQueue , fetchCMDataFromQueue, fetchSlaughterDataFromQueue } from './Services/Utils/queueManager.js';
 
 
+
+import axios from 'axios';
 const app = express();
 app.use(express.json());
 
 app.get('/generate-mtn',async(req,res)=>{
   logger.info(`Received request to generate MTN`);
   res.json(generateResponse());
+});
+
+
+
+
+app.get('/fetch-slaughter-data', async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit || '50');
+    const test = req.query.test === 'true';
+    const company = (req.query.company || '').toLowerCase();
+
+    let records;
+
+    switch (company) {
+      case 'cm':
+        records = await fetchCMDataFromQueue(limit, test);
+        break;
+      case 'fcl':
+        records = await fetchSlaughterDataFromQueue(limit, test);
+        break;
+      default:
+        return res.status(400).json({ success: false, message: 'Invalid or missing company. Use ?company=cm or ?company=fcl' });
+    }
+
+    res.json(records);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to fetch data.' });
+  }
 });
 
 
@@ -46,6 +70,8 @@ app.get('/fetch-executed-lines', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
 
 
 
@@ -76,52 +102,65 @@ app.get('/fetch-return-orders', (req, res) => {
 });
 
 
+
+// GET /consume?limit=50 -> pulls from queue
 app.get('/fetch-production-orders', async (req, res) => {
-  
-     const mergeProductionOrders = (...arrays) => arrays.flat();
-     const { date, item, production_order_no } = req.query;
-     let beheadingData= await consumeBeheadingData();
-     let carcassSales=await consumeCarcassSales(); 
-     let breakingData= await consumeBreakingData();
-     let deboningData= await consumeDeboningData();
-     let mincingFromButchery= await consume1570_2055();
-    //  let choppingData=await consumechoppingData();
-     let sausageData=await processSausageQueue ();
-     let continentalsData=await processContinentalsQueue();
-     let productionOrders = mergeProductionOrders(
-
-                                                    beheadingData,
-                                                    carcassSales,
-                                                    breakingData,
-                                                    deboningData,
-                                                    mincingFromButchery,
-                                                    // choppingData,
-                                                    sausageData,
-                                                    continentalsData,
-                                                   
-
-                                                  );
-    
-     if (date) {
-        productionOrders = productionOrders.filter(order =>
-          order.date_time.startsWith(date)
-        );
-      }
-    
-      if (item) {
-        productionOrders = productionOrders.filter(order =>
-          order.ItemNo === item
-        );
-      }
-    
-      if (production_order_no) {
-        productionOrders = productionOrders.filter(order =>
-          order.production_order_no === production_order_no
-        );
-      }
-
-      res.json(productionOrders.flat());
+  try {
+    const limit = parseInt(req.query.limit || '100');
+    const test = req.query.test === 'true';
+    const orders = await fetchProductionOrdersFromQueue(limit, test);
+    res.json(orders);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+  }
 });
+
+
+
+
+app.get('/fetch-orders', async (req, res) => {
+    try {
+         axios.get(`https://fchoice-endpoint-prod.docwyn.com/?api_key=${process.env.FCHOICE_API_KEY}&company=FCL&recieved_date=2025-05-12&from=100&to150`)
+        .then(response => {
+            const orders = response.data;
+            res.json(orders)});
+    } catch (err) {
+    
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+    }
+});
+
+app.get('/fetch-invoices', async (req, res) => {
+    try {
+         axios.get('http://172.16.10.5:8086/api/invoices?page=1&pageSize=20')
+        .then(response => {
+            const orders = response.data.data;
+            res.json(orders)});
+    } catch (err) {
+    
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+    }
+});
+
+
+// app.get('/fetch-slaughter-data', async (req, res) => {
+//     try {
+//          axios.get('http://100.100.2.54:8086/api/slaughter-data?page=1&pageSize=20')
+//         .then(response => {
+//             const orders = response.data.data;
+//             res.json(orders)});
+//     } catch (err) {
+    
+//         console.error(err);
+//         res.status(500).json({ success: false, message: 'Failed to fetch orders.' });
+//     }
+// });
+
+
+
 
 
 app.get('/fetch-item-journals',async(req,res)=>{
@@ -129,15 +168,17 @@ app.get('/fetch-item-journals',async(req,res)=>{
 })
 
 app.get('/fetch-portal-orders', (req, res) => res.json(generateOrders(3, 5)));
-app.get('/fetch-portal-invoices', (req, res) => res.json(generateInvoices(3, 5)));
+// app.get('/fetch-portal-invoices', (req, res) => res.json(generateInvoices(3, 5)));
+
+
 app.get('/fetch-bot-orders', async (req, res) => {
-  try {
-    const groupedOrders = await groupOrdersByExtDocNo();
-    res.json(groupedOrders);
-  } catch (error) {
-    logger.error(`Error fetching BOT orders: ${error.message}`);
-    res.status(500).json({ error: 'Failed to fetch BOT orders' });
-  }
+  const today = new Date().toISOString().split('T')[0];
+
+  fetchGroupedOrdersWithIntegrity({ query: { company: 'FCL', received_date: today } })
+    .then((result) => res.json(result))
+    .catch((error) => console.error('Error:', error.message));
+
+
 });
 
 app.get('/fetch-transfer-orders', (req, res) => {
@@ -148,29 +189,414 @@ app.get('/fetch-transfer-orders', (req, res) => {
   res.json(transferOrders);
 });
 
-app.get('/fetch-slaughter-data', async (req, res) => {
+// app.get('/fetch-slaughter-data', async (req, res) => {
+//   try {
+//       const slaughterData = await consumeSlaughterData();
+//       if (slaughterData) {
+//           res.json(slaughterData);
+//       } else {
+//           res.status(404).json({ message: 'No slaughter data available in queue.' });
+//       }
+//   } catch (error) {
+//       logger.error(`Error fetching slaughter data: ${error.message}`);
+//       res.status(500).json({ error: 'Failed to fetch slaughter data.' });
+//   }
+// });
+
+
+app.post('/print-receipt', async (req,res) => {
+   const response = await axios.post('http://100.100.4.51:3001/print-receipt', req.body);
+        logger.info('Printing Cash office receipt.Response from external API:', response.data);
+  return res.status(201).json({ message: 'success' });
+
+});
+
+// app.post('/print-delivery', async (req,res) => {
+//   //console.log(req)
+//   logger.info(`Received print delivery-note request: ${JSON.stringify(req.body)}`);
+//   // await pushToPickAndPack(req.body);
+//   // initPrinting(req.body);
+//   return res.status(201).json({ message: 'success' });
+
+// });
+
+
+
+
+
+app.post('/:user/print-invoice', async (req, res) => {
+  const { user } = req.params;
+
   try {
-      const slaughterData = await consumeSlaughterData();
-      if (slaughterData) {
-          res.json(slaughterData);
-      } else {
-          res.status(404).json({ message: 'No slaughter data available in queue.' });
+    switch (user) {
+      case 'DWANGARI': {
+        const response = await axios.post('http://100.100.4.49:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
       }
-  } catch (error) {
-      logger.error(`Error fetching slaughter data: ${error.message}`);
-      res.status(500).json({ error: 'Failed to fetch slaughter data.' });
+
+      case 'JKIMANI': {
+        const response = await axios.post('http://100.100.4.57:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'CM': {
+        const response = await axios.post('http://100.100.4.61:3002/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'CM2': {
+        const response = await axios.post('http://100.100.4.62:3002/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'CNJERI': {
+        const response = await axios.post('http://100.100.4.57:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+       case 'JMATHENGE': {
+        const response = await axios.post('http://100.100.4.56:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'EWANDIA': {
+        const response = await axios.post('http://100.100.2.39:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'EMUGA': {
+        const response = await axios.post('http://100.100.4.57:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'AMWAI': {
+        const response = await axios.post('http://100.100.4.56:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+      
+      case 'JMITWE': {
+        const response = await axios.post('http://100.100.4.54:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+       case 'SMWAI': {
+        const response = await axios.post('http://100.100.4.55:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'JMBAE': {
+        const response = await axios.post('http://100.100.4.56:3001/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'DWANZA': {
+         //SEND AN INVOICE VIA EMAIL
+
+        const response = await axios.post('http://100.100.2.54:3050/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'SWANYEKI': {
+         //SEND AN INVOICE VIA EMAIL
+
+        const response = await axios.post('http://100.100.4.60:3002/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'PKIONGO': {
+        //SEND AN INVOICE VIA EMAIL
+
+        const response = await axios.post('http://100.100.4.52:3002/print-invoice', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+       
+       
+
+      case 'sales':
+        logger.info(`Received print invoice request for sales: ${JSON.stringify(req.body)}`);
+        break;
+
+      default:
+        logger.warn(`Unknown user type: ${user}`);
+        return res.status(400).json({ error: 'Invalid user type' });
+    }
+
+    return res.status(200).json({ message: 'success' });
+
+  } catch (err) {
+    logger.error('Error posting invoice:', err.message);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 
-app.post('/print-order', async (req,res) => {
+
+
+app.get('/qrcode*', async (req,res) => {
+//response content type text/plain
+  res.set('Content-Type', 'text/plain');
+
+  return res.status(200).json({ message: 'success' });
+})
+
+app.post('/:user/print-delivery', async (req,res) => {
+
+
+    const { user } = req.params;
+
+    switch (user) { 
+      case 'DWANGARI':{
+                      const response=await axios.post('http://100.100.4.59:3001/print-delivery', req.body);
+                       logger.info('Response from external API:', response.data);    
+            break;}
+    case 'JKIMANI':
+                     { const response=await axios.post('http://100.100.4.57:3001/print-delivery', req.body);
+                            logger.info('Response from external API:', response.data);
+            break;}
+
+      case 'CNJERI':
+        {
+          const response = await axios.post('http://100.100.4.57:3001/print-delivery', req.body);
+          logger.info('Response from external API:', response.data);
+          break;
+        }
+       case 'JMATHENGE': {
+        const response = await axios.post('http://100.100.4.56:3001/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'CM': {
+        const response = await axios.post('http://100.100.4.61:3002/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'CM2': {
+        const response = await axios.post('http://100.100.4.62:3002/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'EMUGA': {
+        const response = await axios.post('http://100.100.4.57:3001/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      
+      case 'JMBAE': {
+        const response = await axios.post('http://100.100.4.56:3001/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+      
+      case 'JMITWE': {
+        const response = await axios.post('http://100.100.4.54:3001/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+       case 'SMWAI': {
+        const response = await axios.post('http://100.100.4.55:3001/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'EWANDIA': {
+          const response = await axios.post('http://100.100.2.39:3001/print-delivery', req.body);
+          logger.info('Response from external API:', response.data);
+          break;
+        }
+
+
+      case 'DWANZA': {
+
+        //SEND DELIVERY VIA EMAIL
+        
+          const response = await axios.post('http://100.100.2.54:3050/print-delivery', req.body);
+          logger.info('Response from external API:', response.data);
+          break;
+        }
+      case 'SWANYEKI': {
+
+      //SEND DELIVERY VIA EMAIL
+      
+        const response = await axios.post('http://100.100.4.60:3002/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      case 'PKIONGO': {
+
+      //SEND DELIVERY VIA EMAIL
+      
+        const response = await axios.post('http://100.100.4.52:3002/print-delivery', req.body);
+        logger.info('Response from external API:', response.data);
+        break;
+      }
+
+      const randomFloat = (min, max, decimals = 2) => {
+    return (Math.random() * (max - min) + min).toFixed(decimals);
+};
+
+const randomInt = (min, max) => {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+// Utility to generate random invoice number
+const generateInvoiceNo = () => {
+    return `009${randomInt(1000000000000, 9999999999999)}`;
+};
+
+// Mock Endpoint
+app.get('/mock-invoice', (req, res) => {
+    const invoiceNo = generateInvoiceNo();
+    const now = new Date().toISOString().slice(0, 23); // Trim milliseconds to 3 decimals
+
+    const mockResponse = {
+        DateTime: now,
+        invoiceExtension: "TAX INVOICE",
+        mtn: invoiceNo,
+        verificationUrl: `https://itax.kra.go.ke/KRA-Portal/invoiceChk.htm?actionCode=loadPage&invoiceNo=${invoiceNo}`,
+        messages: "Success",
+        totalAmount: parseFloat(randomFloat(500, 100000, 2)),
+        totalItems: randomInt(1, 10),
+        msn: `KRAMW009${randomInt(2020, 2025)}07${invoiceNo.slice(-6)}`,
+    };
+
+    res.json(mockResponse);
+});
+
+// Endpoint to generate QR code
+app.get('/generate', async (req, res) => {
+    try {
+        const url = req.query.url;
+        if (!url) {
+            return res.status(400).send('Missing url parameter');
+        }
+
+        const qrBuffer = await QRCode.toBuffer(url, { type: 'png', margin: 1, width: 300 });
+        res.setHeader('Content-Type', 'image/png');
+        res.send(qrBuffer);
+    } catch (err) {
+        console.error(err);
+        if (!res.headersSent) {
+            res.status(500).send('Error generating QR code');
+        }
+    }
+});
+
+        
+      case 'sales':
+        logger.info(`Received print delivery request for sales: ${JSON.stringify(req.body)}`);
+        break;
+
+      default:
+        logger.warn(`Unknown user type: ${user}`);
+        return res.status(400).json({ error: 'Invalid user type' });
+    }
+
+
+
+
   //console.log(req)
-  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
-  await pushToPickAndPack(req.body);
-  initPrinting(req.body);
+  logger.info(`Received print invoice request: ${JSON.stringify(req.body)}`);
+  // await pushToPickAndPack(req.body);
+  // initPrinting(req.body);
   return res.status(201).json({ message: 'success' });
 
 });
+
+
+app.post('/payments',async(req,res)=>{
+
+
+	//
+
+	return res.status(201).json({message:'success'});
+});
+
+app.post('/print-order', async (req,res) => {
+  //console.log(req)
+  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+//call external API
+   //await axios.post('http://100.100.2.39:3001/print-order', req.body)
+   await axios.post('http://localhost:4600/print-order', req.body)
+  .then(response => {
+    logger.info('Response from external API:', response.data);
+  })
+  return res.status(201).json({ message: 'success' });
+
+});
+
+app.post('/print-order-cm', async (req,res) => {
+  //console.log(req)
+  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+//call external API
+   //await axios.post('http://100.100.4.61:3002/print-order', req.body)
+   await axios.post('http://localhost:3002/print-order', req.body)
+  .then(response => {
+    logger.info('Response from external API:', response.data);
+  })
+   return res.status(201).json({ message: 'success' });
+
+});
+
+app.post('/print-order-cm2', async (req, res) => {
+  //console.log(req)
+  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+  //call external API
+  await axios.post('http://100.100.4.62:3002/print-order', req.body)
+    .then(response => {
+      logger.info('Response from external API:', response.data);
+    })
+  return res.status(201).json({ message: 'success' });
+
+});
+
+app.post('/print-order-export', async (req,res) => {
+  //console.log(req)
+  logger.info(`Received print order request: ${JSON.stringify(req.body)}`);
+//call external API
+   await axios.post('http://100.100.4.52:3002/print-order', req.body)
+  .then(response => {
+    logger.info('Response from external API:', response.data);
+  })
+
+  // await pushToPickAndPack(req.body);
+  // initPrinting(req.body);
+  return res.status(201).json({ message: 'success' });
+
+});
+
+app.post('/print-cheque', async (req,res) => {
+  //console.log(req)
+  logger.info(`Received print cheque request: ${JSON.stringify(req.body)}`);
+//call external API
+   await axios.post('http://100.100.4.50:3001/print-cheque', req.body)
+  .then(response => {
+    logger.info('Response from external API:', response.data);
+  })
+  return res.status(201).json({ message: 'success' });
+
+});
+
+
 
 
 app.post('/order-status', (req, res) => {
@@ -195,6 +621,7 @@ app.post('/submit-slaughter-receipt', async (req, res) => {
     res.status(500).json({ error: 'Failed to send slaughter receipt.' });
   }
 });
+
 
 app.post('/production-order-error', async (req, res) => {
   const { errorMessage, orderNo } = req.body;
@@ -234,7 +661,7 @@ app.post('/master-data', async (req, res) => {
 
 
 // Start the server
-const port = 3000;
+const port = 3001;
 app.listen(port, () => {
   logger.info(`API running at http://localhost:${port}`);
 });

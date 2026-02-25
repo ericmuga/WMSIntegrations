@@ -8,6 +8,6 @@ const queueName = 'sausages.bc';
 const customParams = {
   location_code: ['3600', '3535'],
   transfer_from: '2055',
-};
+}
 
-runQueueWorkflow(sourceTable, queueTable, queueName, customParams, undefined, transformFn);
+export const publishSausage = () =>runQueueWorkflow(sourceTable, queueTable, queueName, customParams, undefined, transformFn);

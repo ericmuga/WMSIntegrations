@@ -45,7 +45,7 @@ export const transformData = (responseData) => {
             line_no: 1000, // Increment line_no by 1000 for each line
             type: "output",
             date_time: dateTime,
-            user: item.user_id
+            user: item.user_id||"DEFAULT"
           },
           {
             ItemNo: processDetails.intake_item,
@@ -56,7 +56,7 @@ export const transformData = (responseData) => {
             line_no: 2000, // Increment line_no by 1000 for each line
             type: "consumption",
             date_time: dateTime,
-            user: item.user_id
+            user: item.user_id||"DEFAULT"
           }
         ];
       })

@@ -36,6 +36,7 @@ export const transformData = (responseData) => {
       processDetails = SlicingLookup(item.process_code, item.item_code);
     }
 
+    console.log(processDetails);
     // Skip this item if no matching process details are found
     if (!processDetails) {
       return acc; // Skip adding anything for this item

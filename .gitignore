@@ -2,6 +2,7 @@
 /node_modules
 app.log
 todo.txt
+.env
 /pdf
 /printed
 /.idea/.gitignore
@@ -9,3 +10,5 @@ todo.txt
 /.idea/modules.xml
 /.idea/vcs.xml
 /.idea/WMSIntegrations.iml
+*.xls
+*.xlsx

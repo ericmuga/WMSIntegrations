@@ -2,116 +2,107 @@ import { getRabbitMQConnection, rabbitmqConfig } from '../../config/default.js';
 import logger from '../../logger.js';
 import { transformData } from '../Transformers/transformData.js';
 
-
 /**
- * Generic RabbitMQ Consumer
- * 
+ * Consumes messages from a RabbitMQ queue with controlled processing.
+ *
  * @param {Object} options - Consumer options.
- * @param {string} options.queueName - The name of the queue to consume from.
- * @param {string} options.routingKey - The routing key for the queue.
- * @param {Array} options.sequence - The sequence of processes for transforming data.
- * @param {number} [options.batchSize] - The number of messages to process in a batch.
- * @param {number} [options.timeout] - The timeout in milliseconds for batch processing.
+ * @param {string} options.queueName - Name of the queue to consume messages from.
+ * @param {string} options.routingKey - Routing key for the queue.
+ * @param {number} [options.batchSize] - Number of messages to process in a batch.
+ * @param {number} [options.timeout] - Timeout in milliseconds for batch processing.
+ * @param {string} [options.finalProcess] - Final process name for transformation.
+ * @returns {Promise<Array>} - Array of transformed messages.
  */
 export const consumeRabbitMQ = async ({
     queueName,
     routingKey,
     batchSize = rabbitmqConfig.defaultBatchSize,
     timeout = rabbitmqConfig.defaultTimeout,
-    finalProcess
+    finalProcess,
 }) => {
     const exchange = rabbitmqConfig.defaultExchange;
     const queueOptions = {
         durable: true,
         arguments: {
             ...rabbitmqConfig.queueArguments,
-            'x-dead-letter-routing-key': queueName 
+            'x-dead-letter-routing-key': queueName,
         },
     };
 
-    try {
-        const connection = await getRabbitMQConnection();
-        const channel = await connection.createChannel();
+    let connection;
+    let channel;
 
+    try {
+        // Establish connection and channel
+        connection = await getRabbitMQConnection();
+        channel = await connection.createChannel();
+
+        // Ensure exchange and queue exist
         await channel.assertExchange(exchange, 'direct', { durable: true });
         await channel.assertQueue(queueName, queueOptions);
         await channel.bindQueue(queueName, exchange, routingKey);
 
-        // Prefetch to limit the number of unacknowledged messages delivered
+        // Set prefetch limit
         channel.prefetch(batchSize);
-
-        // logger.info(`Waiting for up to ${batchSize} messages in queue: ${queueName}`);
+        logger.info(`Consuming messages from queue: ${queueName} with batch size: ${batchSize}`);
 
         const messages = [];
         let batchResolve;
-        let batchTimeout;
 
-        // Batch promise to return the messages array
         const batchPromise = new Promise((resolve) => {
             batchResolve = resolve;
         });
 
-        // Set a timeout to resolve with the collected messages
-        batchTimeout = setTimeout(() => {
-            if (messages.length > 0) {
-                logger.info('Timeout reached, resolving with partial batch');
-                batchResolve(messages);
-            }
+        const batchTimeout = setTimeout(() => {
+            logger.info(`Timeout reached for ${queueName}, resolving batch with ${messages.length} messages.`);
+            batchResolve(messages);
         }, timeout);
 
-        // Start consuming messages
+        // Consume messages
         channel.consume(
             queueName,
             async (msg) => {
-                if (msg !== null) {
-                    try {
-                        const transferData = JSON.parse(msg.content.toString());
-                         logger.info(`Received transfer data:queueName ${queueName}`);
-                        // logger.info(`Received transfer data: ${JSON.stringify(transferData,null,2)}`);
+                if (!msg) return;
 
-                        try {
-                            // Transform the data using the provided sequence
-                            const transformedData = await transformData(transferData, finalProcess);
+                try {
+                    const messageContent = JSON.parse(msg.content.toString());
+                    logger.info(`Received message: ${JSON.stringify(messageContent)}`);
 
-                            if (transformedData && transformedData.length > 0) {
-                                messages.push(...transformedData); // Spread to add all transformed results
-                                channel.ack(msg); // Acknowledge the message
-                                
-                            } else {
-                                logger.warn(`Transformer returned null or empty array for message: ${JSON.stringify(transferData)}`);
-                                channel.nack(msg, false, false); // Move to dead-letter queue
-                            }
+                    // Transform the data
+                    const transformedData = await transformData(messageContent, finalProcess);
 
-                            // Resolve batch if filled
-                            if (messages.length >= batchSize) {
-                                clearTimeout(batchTimeout); // Clear timeout if batch is filled
-                                batchResolve(messages);
-                            }
-                        } catch (transformError) {
-                            logger.error(`Error transforming data: ${transformError.message}`);
-                            channel.nack(msg, false, false); // Move to dead-letter queue
+                    if (transformedData && transformedData.length > 0) {
+                        messages.push(...transformedData);
+                        logger.info(`Transformed data: ${JSON.stringify(transformedData)}`);
+
+                        // Acknowledge the message only after processing
+                        channel.ack(msg);
+
+                        // Resolve the batch if the size is met
+                        if (messages.length >= batchSize) {
+                            clearTimeout(batchTimeout);
+                            batchResolve(messages);
                         }
-                    } catch (parseError) {
-                        logger.error(`Failed to parse message content: ${parseError.message}`);
-                        channel.nack(msg, false, false); // Move to dead-letter queue
+                    } else {
+                        logger.warn(`No transformed data for message: ${JSON.stringify(messageContent)}`);
+                        channel.nack(msg, false, false); // Send to dead-letter queue
                     }
-                } else {
-                    logger.warn('Received null message');
+                } catch (error) {
+                    logger.error(`Error processing message: ${error.message}`);
+                    channel.nack(msg, false, false);
                 }
             },
-            { noAck: false }
+            { noAck: false } // Ensure manual acknowledgment
         );
 
-        // Wait for the batch to be filled or timeout
-        const batch = await batchPromise;
-           console.log('batch',JSON.stringify(batch,null,2));
-        logger.info(`Processd ${batch.length} orders from queue: ${queueName}`);
-
-        // Cleanup and close the channel
-        await channel.close();
-        return batch; // Return the flat array of messages
+        // Wait for batch processing to complete
+        const result = await batchPromise;
+        return result;
     } catch (error) {
-        logger.error('Error consuming messages from RabbitMQ: ' + error.message);
+        logger.error(`Error in consumeRabbitMQ: ${error.message}`);
         throw error;
+    } finally {
+        logger.info(`Leaving the connection and channel open for queue: ${queueName}`);
+        // Connections and channels are left open intentionally to allow further consumption.
     }
 };
