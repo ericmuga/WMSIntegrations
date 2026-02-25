@@ -2,15 +2,19 @@ import xlsx from "xlsx";
 import sql from "mssql";
 
 // Database configuration
+
+
 const dbConfig = {
-    user: "reporter",
-    password: "p3u!~XuEdx?u2kK",
-    server: "fcl-wms", // e.g., localhost
-    database: "cml-calibra",
-    options: {
-        encrypt: false, // Set to true if using Azure
-        enableArithAbort: true,
-    },
+  user: process.env.CM_DB_USER,
+  password: process.env.CM_DB_PASSWORD,
+  server: process.env.CM_DB_SERVER,
+  database: process.env.CM_DB_DATABASE,
+  port: parseInt(process.env.CM_DB_PORT || "1433"),
+  options: {
+    encrypt: process.env.CM_DB_ENCRYPT === "true",
+    trustServerCertificate: process.env.CM_DB_TRUST_CERT === "true",
+    enableArithAbort: true,
+  },
 };
 
 // Function to process the Excel file and insert data

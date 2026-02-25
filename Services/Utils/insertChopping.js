@@ -3,15 +3,18 @@ import sql from "mssql";
 import readline from "readline";
 
 // Database configuration
+
+
 const dbConfig = {
-  user: "reporter",
-  password: "p3u!~XuEdx?u2kK",
-  server: "fcl-wms",
-  database: "calibra",
+  user: process.env.WMS_DB_USER,
+  password: process.env.WMS_DB_PASSWORD,
+  server: process.env.WMS_DB_SERVER,
+  database: process.env.WMS_DB_DATABASE,
+  port: parseInt(process.env.WMS_DB_PORT || "1433"),
   options: {
-    encrypt: false,
+    encrypt: process.env.WMS_DB_ENCRYPT === "true",
+    trustServerCertificate: process.env.WMS_DB_TRUST_CERT === "true",
     enableArithAbort: true,
-    trustServerCertificate: true,
   },
 };
 

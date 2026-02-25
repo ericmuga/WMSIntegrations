@@ -2,15 +2,18 @@ import xlsx from "xlsx";
 import sql from "mssql";
 
 // Database configuration
+
+
 const dbConfig = {
-  user: "reporter",
-  password: "p3u!~XuEdx?u2kK",
-  server: "172.16.10.9", // e.g. "localhost"
-  database: "FCLWHS",
+  user: process.env.WHS_DB_USER,
+  password: process.env.WHS_DB_PASSWORD,
+  server: process.env.WHS_DB_SERVER,
+  database: process.env.WHS_DB_DATABASE,
+  port: parseInt(process.env.WHS_DB_PORT || "1433"),
   options: {
-    encrypt: false,
+    encrypt: process.env.WHS_DB_ENCRYPT === "true",
+    trustServerCertificate: process.env.WHS_DB_TRUST_CERT === "true",
     enableArithAbort: true,
-    trustServerCertificate: true, // helpful for local/on-prem
   },
 };
 
