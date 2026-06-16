@@ -274,7 +274,7 @@ async function run(filePath) {
 // run("D:\\code\\WMSIntegrations\\Services\\Utils\\hjjkj.xlsx");
 
 // Or your local Windows path:
-const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\1230M33.xlsx";
+const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\Casings2.xlsx";
 run(filePath);
 console.log("File path:", filePath);
 // processAndInsertTemplates(filePath);
