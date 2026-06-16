@@ -43,7 +43,7 @@ function ensureNumber(value) {
 
 // Main import function
 async function processAndInsertWeeklyTargets(filePath) {
-  const MONTH_NAME_SORTED = "2026-02";
+//   const MONTH_NAME_SORTED = "";
   const watermarkLoadedAt = new Date();
 
   let pool;

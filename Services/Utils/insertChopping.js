@@ -257,7 +257,7 @@ async function processAndInsertData(filePath, templateNoFilter) {
 }
 
 // ---- main ----
-const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\Chp.xlsx";
+const filePath = "D:\\code\\WMSIntegrations\\Services\\Utils\\Casings2.xlsx";
 
 const rows = loadExcel(filePath);
 const recipes = getDistinctRecipes(rows);
